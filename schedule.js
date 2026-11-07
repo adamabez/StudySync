@@ -1,24 +1,31 @@
-// StudySync - saving and loading classes.
-// Classes are stored in schedule.json (created automatically next to this file).
+// StudySync - saving and loading calendar items (classes, tasks, other).
+// Stored in the Supabase "classes" table (see supabase/schema.sql).
+//
+// Every function takes `db` first: the Supabase client for the logged-in user,
+// from auth.supabaseFor(req). Row Level Security means each user only ever
+// sees and changes their own items.
 
-const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
-
-const DATA_FILE = path.join(__dirname, "schedule.json");
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const KINDS = ["class", "task", "other"]; // what can go on the calendar
 
-function loadClasses() {
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-  } catch {
-    return []; // no file yet → empty schedule
-  }
+// Database row → the shape the browser expects
+function fromRow(row) {
+  return {
+    id: row.id,
+    kind: row.kind,
+    category: row.category,
+    name: row.name,
+    location: row.location,
+    days: row.days,
+    start: row.start_time,
+    end: row.end_time,
+  };
 }
 
-function saveClasses(classes) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(classes, null, 2));
+async function loadClasses(db) {
+  const { data, error } = await db.from("classes").select("*").order("created_at");
+  if (error) throw error;
+  return data.map(fromRow);
 }
 
 // Check what the browser sent before saving it
@@ -38,21 +45,21 @@ function validateClass(input) {
   if (!isTime(input.start) || !isTime(input.end)) return { error: "Enter a start and end time." };
   if (input.end <= input.start) return { error: "End time must be after the start time." };
 
-  return { value: { id: crypto.randomUUID(), kind, category, name, location, days, start: input.start, end: input.end } };
+  return { value: { kind, category, name, location, days, start_time: input.start, end_time: input.end } };
 }
 
-// Validate and save a new class. Returns { value } on success or { error } if something's wrong.
-function addClass(input) {
+// Validate and save a new item. Returns { value } on success or { error } if something's wrong.
+async function addClass(db, input) {
   const result = validateClass(input);
   if (result.error) return result;
-  const classes = loadClasses();
-  classes.push(result.value);
-  saveClasses(classes);
-  return result;
+  const { data, error } = await db.from("classes").insert(result.value).select().single();
+  if (error) throw error;
+  return { value: fromRow(data) };
 }
 
-function removeClass(id) {
-  saveClasses(loadClasses().filter((c) => c.id !== id));
+async function removeClass(db, id) {
+  const { error } = await db.from("classes").delete().eq("id", id);
+  if (error) throw error;
 }
 
 module.exports = { loadClasses, addClass, removeClass };

@@ -71,7 +71,14 @@ Agree on these first, so everyone can build at the same time with placeholders.
 function getUserId(req) { ... }
 ```
 
-Every function in `schedule.js`, `materials.js`, `chats.js` and `canvas.js` takes a `userId` as its first argument.
+Every function in `schedule.js`, `materials.js` and `chats.js` takes `db` as its first argument: the Supabase client for the logged-in user. `canvas.js` should do the same:
+
+```js
+const db = auth.supabaseFor(req);   // acts as the logged-in user, so Row Level Security applies
+const { data, error } = await db.from("canvas_connections").select("*").maybeSingle();
+```
+
+You never need to send `user_id` when inserting: the database fills it in with the logged-in user. The tables are created by `supabase/schema.sql`.
 
 **Anthony → Gurkirat:** the `canvas_connections` table
 

@@ -1,80 +1,93 @@
 // StudySync - saving and loading course materials for the Virtual Notebook.
-// Everything is stored in the notebook-data/ folder (created automatically):
-//   notebook-data/sources.json   → the list of materials (title, course, type...)
-//   notebook-data/<id>.txt|.pdf  → the actual content of each one
+// Stored in Supabase (see supabase/schema.sql):
+//   "sources" table          → the list of materials (title, course, type...) + pasted text
+//   "sources" Storage bucket → PDFs, at <user_id>/<source id>.pdf
+//
+// Every function takes `db` first: the Supabase client for the logged-in user,
+// from auth.supabaseFor(req). Row Level Security means each user only ever
+// sees and changes their own materials.
 
 const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
 
-const DATA_DIR = path.join(__dirname, "notebook-data");
-const INDEX_FILE = path.join(DATA_DIR, "sources.json");
-
+const BUCKET = "sources";
 const MAX_TEXT_CHARS = 500_000;          // about 250 pages of notes
 const MAX_PDF_BYTES = 10 * 1024 * 1024;  // 10 MB per PDF
 
-function listSources() {
-  try {
-    return JSON.parse(fs.readFileSync(INDEX_FILE, "utf8"));
-  } catch {
-    return []; // nothing added yet
-  }
+// The columns the browser needs (leaves out the text itself, which can be big)
+const LIST_COLUMNS = "id, user_id, title, course, type, size, added_at";
+
+function fromRow(row) {
+  return { id: row.id, userId: row.user_id, title: row.title, course: row.course, type: row.type, size: row.size, addedAt: row.added_at };
 }
 
-function saveIndex(sources) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(INDEX_FILE, JSON.stringify(sources, null, 2));
+// What the browser gets: everything except userId
+function forBrowser({ userId, ...source }) {
+  return source;
 }
 
-function contentPath(source) {
-  return path.join(DATA_DIR, source.id + (source.type === "pdf" ? ".pdf" : ".txt"));
+function pdfPath(source) {
+  return `${source.userId}/${source.id}.pdf`;
 }
 
-// Check and save a new piece of material. Returns { value } or { error }.
-function addSource(input) {
+async function listSources(db) {
+  const { data, error } = await db.from("sources").select(LIST_COLUMNS).order("added_at");
+  if (error) throw error;
+  return data.map(fromRow);
+}
+
+// Check and save a new piece of material. `userId` names the user's PDF folder.
+// Returns { value } or { error }.
+async function addSource(db, userId, input) {
   const title = typeof input.title === "string" ? input.title.trim() : "";
   const course = typeof input.course === "string" ? input.course.trim() : "";
   if (!title || title.length > 120) return { error: "Give the material a title (120 characters max)." };
   if (course.length > 60) return { error: "Course name is 60 characters max." };
 
-  const id = crypto.randomUUID();
-  let size;
+  const row = { id: crypto.randomUUID(), title, course, type: input.type };
 
   if (input.type === "text") {
     const text = typeof input.text === "string" ? input.text.trim() : "";
     if (!text) return { error: "The material is empty." };
     if (text.length > MAX_TEXT_CHARS) return { error: "That's too much text for one source. Split it into smaller parts." };
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(path.join(DATA_DIR, id + ".txt"), text);
-    size = text.length;
+    row.text_content = text;
+    row.size = text.length;
   } else if (input.type === "pdf") {
     const pdf = typeof input.data === "string" ? Buffer.from(input.data, "base64") : Buffer.alloc(0);
     if (pdf.subarray(0, 5).toString() !== "%PDF-") return { error: "That file doesn't look like a PDF." };
     if (pdf.length > MAX_PDF_BYTES) return { error: "PDFs can be 10 MB max." };
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(path.join(DATA_DIR, id + ".pdf"), pdf);
-    size = pdf.length;
+    const upload = await db.storage.from(BUCKET).upload(`${userId}/${row.id}.pdf`, pdf, { contentType: "application/pdf" });
+    if (upload.error) throw upload.error;
+    row.size = pdf.length;
   } else {
     return { error: "Unknown material type." };
   }
 
-  const source = { id, title, course, type: input.type, size, addedAt: new Date().toISOString() };
-  saveIndex([...listSources(), source]);
-  return { value: source };
+  const { data, error } = await db.from("sources").insert(row).select(LIST_COLUMNS).single();
+  if (error) {
+    if (row.type === "pdf") await db.storage.from(BUCKET).remove([`${userId}/${row.id}.pdf`]); // don't leave an orphan file
+    throw error;
+  }
+  return { value: forBrowser(fromRow(data)) };
 }
 
-function removeSource(id) {
-  const sources = listSources();
-  const source = sources.find((s) => s.id === id);
-  if (!source) return;
-  fs.rmSync(contentPath(source), { force: true });
-  saveIndex(sources.filter((s) => s.id !== id));
+async function removeSource(db, id) {
+  const { data, error } = await db.from("sources").delete().eq("id", id).select(LIST_COLUMNS);
+  if (error) throw error;
+  for (const source of data.map(fromRow)) {
+    if (source.type === "pdf") await db.storage.from(BUCKET).remove([pdfPath(source)]);
+  }
 }
 
 // Text sources come back as text; PDFs come back as base64 (what Claude expects)
-function readContent(source) {
-  const data = fs.readFileSync(contentPath(source));
-  return source.type === "pdf" ? data.toString("base64") : data.toString("utf8");
+async function readContent(db, source) {
+  if (source.type === "pdf") {
+    const { data, error } = await db.storage.from(BUCKET).download(pdfPath(source));
+    if (error) throw error;
+    return Buffer.from(await data.arrayBuffer()).toString("base64");
+  }
+  const { data, error } = await db.from("sources").select("text_content").eq("id", source.id).single();
+  if (error) throw error;
+  return data.text_content;
 }
 
-module.exports = { listSources, addSource, removeSource, readContent };
+module.exports = { listSources, addSource, removeSource, readContent, forBrowser };
