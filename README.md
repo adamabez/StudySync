@@ -23,7 +23,7 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 - **Saved chats**: start a new chat any time, switch between chats from the dropdown, or delete them.
 
 **Less clutter**
-- The Add section and the Virtual Notebook collapse with **−** and expand with **+**. The page remembers your choice.
+- The Add section and the Virtual Notebook collapse and expand with the arrow button. The page remembers your choice.
 - The layout adapts to phone screens.
 
 ## Getting started
@@ -93,7 +93,7 @@ StudySync/
 │   ├── dashboard.js    Calendar logic and colors (COLOR_FAMILIES)
 │   ├── notebook.css    Virtual Notebook
 │   ├── notebook.js     Sources, drop zone, chat and saved chats
-│   └── collapse.js     − / + collapsible sections
+│   └── collapse.js     Collapsible sections (arrow button)
 ├── .vscode/launch.json  F5 run setup for VS Code
 ├── .env              Your keys: Supabase, Anthropic (you create this; never committed)
 ├── .env.example      Template for .env
