@@ -81,9 +81,10 @@ If Supabase has **Confirm email** turned on (Authentication → Sign In / Provid
 StudySync/
 ├── server.js         Starts the server and decides what each URL does (routes)
 ├── auth.js           Login with Supabase, who's logged in (getUserId, supabaseFor)
-├── schedule.js       Saves/loads calendar items → schedule.json
-├── materials.js      Saves/loads notebook sources → notebook-data/
-├── chats.js          Saves/loads notebook chats → notebook-data/chats.json
+├── schedule.js       Saves/loads calendar items → Supabase "classes" table
+├── materials.js      Saves/loads notebook sources → Supabase "sources" table + Storage
+├── chats.js          Saves/loads notebook chats → Supabase "chats" table
+├── supabase/schema.sql  Creates the tables and security rules (run once in Supabase)
 ├── ai.js             Sends sources + questions to Claude, formats citations
 ├── pages/            HTML for each page (login, signup, loading, dashboard, 404)
 ├── public/           CSS and browser JavaScript
@@ -100,15 +101,15 @@ StudySync/
 ```
 
 ### Where your data lives
-Everything you add is saved as files next to the code, so it survives restarts:
+Everything is saved in Supabase, separately for each student:
 
-| Data | File |
+| Data | Where |
 |---|---|
-| Calendar items | `schedule.json` |
-| Notebook sources | `notebook-data/sources.json` + one `.txt`/`.pdf` per source |
-| Notebook chats | `notebook-data/chats.json` |
+| Calendar items | `classes` table |
+| Notebook sources | `sources` table (pasted text) + `sources` Storage bucket (PDFs, in a folder per user) |
+| Notebook chats | `chats` table |
 
-These files are created automatically and are **ignored by git**, so your personal data never ends up on GitHub. Someone who downloads the project starts with an empty calendar and notebook.
+Row Level Security makes sure each student can only see and change their own rows and files. To set it up in a new Supabase project, run `supabase/schema.sql` once in the Supabase SQL Editor.
 
 Which sections are collapsed and which chat was last open are stored in your browser only.
 
@@ -138,7 +139,7 @@ All `/api/` routes require being logged in.
 
 ## Good to know
 
-- **This is a learning project, not production-ready.** Everyone still shares one calendar and notebook; moving that data into Supabase for each user is in progress (see `TEAM_PLAN.md`).
+- **This is a learning project, not production-ready.** Canvas tokens are stored as plain text in Supabase, readable only by the server.
 - **AI answers cost money.** They're billed to the API key's Anthropic account. A question about a ~20-page PDF costs roughly 10–15¢. Follow-ups on the same sources are cheaper thanks to caching. Consider setting a spending limit in the Anthropic Console.
 - **Limits:** PDFs up to 10 MB, pasted or text files up to 500,000 characters per source.
 

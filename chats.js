@@ -1,31 +1,21 @@
 // StudySync - saved Virtual Notebook chats.
-// Stored in notebook-data/chats.json, so every chat is still there after a refresh or restart.
+// Stored in the Supabase "chats" table (see supabase/schema.sql), so every chat
+// is still there after a refresh, a restart, or logging in on another computer.
 //
 // Each chat looks like:
 //   { id, title, createdAt, updatedAt, messages: [
 //       { role: "user", label, question },          ← label = what the bubble shows, question = what Claude got
 //       { role: "assistant", answer, citations },
 //   ] }
+//
+// Every function that touches the database takes `db` first: the Supabase client
+// for the logged-in user, from auth.supabaseFor(req). Row Level Security means
+// each user only ever sees and changes their own chats.
 
-const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
-
-const DATA_DIR = path.join(__dirname, "notebook-data");
-const CHATS_FILE = path.join(DATA_DIR, "chats.json");
 const MAX_TURNS_SENT = 20; // how many earlier questions + answers Claude sees as context
 
-function loadChats() {
-  try {
-    return JSON.parse(fs.readFileSync(CHATS_FILE, "utf8"));
-  } catch {
-    return [];
-  }
-}
-
-function saveChats(chats) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(CHATS_FILE, JSON.stringify(chats, null, 2));
+function fromRow(row) {
+  return { id: row.id, title: row.title, createdAt: row.created_at, updatedAt: row.updated_at, messages: row.messages };
 }
 
 // The short version used for the chat dropdown
@@ -33,12 +23,16 @@ function summary(chat) {
   return { id: chat.id, title: chat.title, updatedAt: chat.updatedAt, questions: chat.messages.length / 2 };
 }
 
-function listChats() {
-  return loadChats().map(summary).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+async function listChats(db) {
+  const { data, error } = await db.from("chats").select("*").order("updated_at", { ascending: false });
+  if (error) throw error;
+  return data.map(fromRow).map(summary);
 }
 
-function getChat(id) {
-  return loadChats().find((c) => c.id === id) ?? null;
+async function getChat(db, id) {
+  const { data, error } = await db.from("chats").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data ? fromRow(data) : null;
 }
 
 // The conversation so far, in the shape Claude expects (most recent turns only)
@@ -55,23 +49,23 @@ function makeTitle(label) {
   return title.length > 40 ? title.slice(0, 39).trimEnd() + "…" : title;
 }
 
-// Save one question + answer. Creates the chat if chatId is null. Returns the chat.
-function addExchange(chatId, { label, question, answer, citations }) {
-  const chats = loadChats();
+// Save one question + answer. Creates the chat if `chat` is null. Returns the saved chat.
+async function addExchange(db, chat, { label, question, answer, citations }) {
+  const exchange = [{ role: "user", label, question }, { role: "assistant", answer, citations }];
   const now = new Date().toISOString();
-  let chat = chatId ? chats.find((c) => c.id === chatId) : null;
-  if (!chat) {
-    chat = { id: crypto.randomUUID(), title: makeTitle(label), createdAt: now, updatedAt: now, messages: [] };
-    chats.push(chat);
-  }
-  chat.messages.push({ role: "user", label, question }, { role: "assistant", answer, citations });
-  chat.updatedAt = now;
-  saveChats(chats);
-  return chat;
+
+  const query = chat
+    ? db.from("chats").update({ messages: [...chat.messages, ...exchange], updated_at: now }).eq("id", chat.id)
+    : db.from("chats").insert({ title: makeTitle(label), messages: exchange, created_at: now, updated_at: now });
+
+  const { data, error } = await query.select().single();
+  if (error) throw error;
+  return fromRow(data);
 }
 
-function deleteChat(id) {
-  saveChats(loadChats().filter((c) => c.id !== id));
+async function deleteChat(db, id) {
+  const { error } = await db.from("chats").delete().eq("id", id);
+  if (error) throw error;
 }
 
 module.exports = { listChats, getChat, historyFor, addExchange, deleteChat, summary };

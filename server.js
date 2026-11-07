@@ -5,9 +5,9 @@
 // Where everything lives:
 //   server.js     → this file: starts the server + routes (which URL does what)
 //   auth.js       → login with Supabase and who's logged in
-//   schedule.js   → saving / loading classes (schedule.json)
-//   materials.js  → saving / loading Virtual Notebook materials (notebook-data/)
-//   chats.js      → saved Virtual Notebook chats (notebook-data/chats.json)
+//   schedule.js   → saving / loading calendar items (Supabase)
+//   materials.js  → saving / loading Virtual Notebook materials (Supabase)
+//   chats.js      → saved Virtual Notebook chats (Supabase)
 //   ai.js         → asking Claude about those materials
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
@@ -66,6 +66,13 @@ function sendPublicFile(res, urlPath) {
   res.end(fs.readFileSync(filePath));
 }
 
+// Something went wrong (usually talking to Supabase): log it, and tell the browser
+function handleError(res, error) {
+  console.error("Request failed:", error);
+  if (res.headersSent) return res.end();
+  sendJson(res, { error: "Something went wrong saving or loading your data. Try again." }, 500);
+}
+
 // Collect the data a browser sends with a POST request (up to `limit` characters)
 function readBody(req, res, limit, callback) {
   let body = "";
@@ -77,7 +84,9 @@ function readBody(req, res, limit, callback) {
   });
   req.on("end", () => {
     if (tooBig) return sendJson(res, { error: "That's too big to send." }, 413);
-    callback(body);
+    Promise.resolve()
+      .then(() => callback(body))
+      .catch((error) => handleError(res, error));
   });
 }
 
@@ -90,12 +99,16 @@ function readJson(req, res, limit, callback) {
     } catch {
       return sendJson(res, { error: "Bad request" }, 400);
     }
-    callback(data && typeof data === "object" ? data : {});
+    return callback(data && typeof data === "object" ? data : {});
   });
 }
 
 // ---------- Routes: which URL shows what ----------
-const server = http.createServer(async (req, res) => {
+const server = http.createServer((req, res) => {
+  handleRequest(req, res).catch((error) => handleError(res, error));
+});
+
+async function handleRequest(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
   // CSS and browser JavaScript (no login check needed)
@@ -159,14 +172,18 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname.startsWith("/api/")) {
     if (!loggedIn) return sendJson(res, { error: "Not logged in" }, 401);
 
+    // Every query below runs as the logged-in user, so they only see their own data
+    const db = auth.supabaseFor(req);
+    const userId = auth.getUserId(req);
+
     // --- Class schedule ---
     if (req.method === "GET" && url.pathname === "/api/classes") {
-      return sendJson(res, schedule.loadClasses());
+      return sendJson(res, await schedule.loadClasses(db));
     }
 
     if (req.method === "POST" && url.pathname === "/api/classes") {
-      return readJson(req, res, 10_000, (input) => {
-        const result = schedule.addClass(input);
+      return readJson(req, res, 10_000, async (input) => {
+        const result = await schedule.addClass(db, input);
         if (result.error) return sendJson(res, { error: result.error }, 400);
         sendJson(res, result.value, 201);
       });
@@ -174,18 +191,18 @@ const server = http.createServer(async (req, res) => {
 
     const classMatch = url.pathname.match(/^\/api\/classes\/([\w-]+)$/);
     if (req.method === "DELETE" && classMatch) {
-      schedule.removeClass(classMatch[1]);
+      await schedule.removeClass(db, classMatch[1]);
       return sendJson(res, { ok: true });
     }
 
     // --- Virtual Notebook: course materials ---
     if (req.method === "GET" && url.pathname === "/api/sources") {
-      return sendJson(res, materials.listSources());
+      return sendJson(res, (await materials.listSources(db)).map(materials.forBrowser));
     }
 
     if (req.method === "POST" && url.pathname === "/api/sources") {
-      return readJson(req, res, 15_000_000, (input) => { // room for a 10 MB PDF
-        const result = materials.addSource(input);
+      return readJson(req, res, 15_000_000, async (input) => { // room for a 10 MB PDF
+        const result = await materials.addSource(db, userId, input);
         if (result.error) return sendJson(res, { error: result.error }, 400);
         sendJson(res, result.value, 201);
       });
@@ -193,22 +210,22 @@ const server = http.createServer(async (req, res) => {
 
     const sourceMatch = url.pathname.match(/^\/api\/sources\/([\w-]+)$/);
     if (req.method === "DELETE" && sourceMatch) {
-      materials.removeSource(sourceMatch[1]);
+      await materials.removeSource(db, sourceMatch[1]);
       return sendJson(res, { ok: true });
     }
 
     // --- Virtual Notebook: saved chats ---
     if (req.method === "GET" && url.pathname === "/api/chats") {
-      return sendJson(res, chats.listChats());
+      return sendJson(res, await chats.listChats(db));
     }
 
     const chatMatch = url.pathname.match(/^\/api\/chats\/([\w-]+)$/);
     if (req.method === "GET" && chatMatch) {
-      const chat = chats.getChat(chatMatch[1]);
+      const chat = await chats.getChat(db, chatMatch[1]);
       return chat ? sendJson(res, chat) : sendJson(res, { error: "Chat not found" }, 404);
     }
     if (req.method === "DELETE" && chatMatch) {
-      chats.deleteChat(chatMatch[1]);
+      await chats.deleteChat(db, chatMatch[1]);
       return sendJson(res, { ok: true });
     }
 
@@ -227,26 +244,28 @@ const server = http.createServer(async (req, res) => {
         if (!question || question.length > 5_000) return sendJson(res, { error: "Type a question (5,000 characters max)." }, 400);
 
         // Continue an existing chat, or start a new one when there's no chatId
-        const chat = input.chatId ? chats.getChat(input.chatId) : null;
+        const isChatId = typeof input.chatId === "string" && /^[\w-]+$/.test(input.chatId);
+        const chat = isChatId ? await chats.getChat(db, input.chatId) : null;
         if (input.chatId && !chat) return sendJson(res, { error: "That chat was deleted. Start a new chat." }, 404);
         const history = chat ? chats.historyFor(chat) : [];
 
-        const selected = materials.listSources().filter((s) => ids.includes(s.id));
+        const selected = (await materials.listSources(db)).filter((s) => ids.includes(s.id));
         if (selected.length === 0) return sendJson(res, { error: "Tick at least one source to ask about." }, 400);
 
-        const sources = selected.map((source) => ({ source, content: materials.readContent(source) }));
+        const sources = await Promise.all(selected.map(async (source) => ({ source: materials.forBrowser(source), content: await materials.readContent(db, source) })));
         const totalSize = sources.reduce((sum, s) => sum + s.content.length, 0);
         if (totalSize > 25_000_000) return sendJson(res, { error: "That's too much material at once. Untick a few sources." }, 400);
 
+        let result;
         try {
-          const result = await ai.askNotebook({ sources, history, question });
-          if (result.error) return sendJson(res, { error: result.error }, 422);
-          const saved = chats.addExchange(chat?.id ?? null, { label, question, ...result });
-          sendJson(res, { ...result, chat: chats.summary(saved) });
+          result = await ai.askNotebook({ sources, history, question });
         } catch (error) {
           console.error("Notebook question failed:", error);
-          sendJson(res, { error: ai.explainError(error) }, 502);
+          return sendJson(res, { error: ai.explainError(error) }, 502);
         }
+        if (result.error) return sendJson(res, { error: result.error }, 422);
+        const saved = await chats.addExchange(db, chat, { label, question, ...result });
+        sendJson(res, { ...result, chat: chats.summary(saved) });
       });
     }
 
@@ -254,7 +273,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   sendPage(res, "404.html", 404);
-});
+}
 
 // ---------- Start the server ----------
 server.listen(PORT, () => {
