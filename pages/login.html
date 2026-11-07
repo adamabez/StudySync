@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudySync – Log in</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <div class="box">
+    <h1>StudySync</h1>
+    <p>Log in to continue</p>
+    <form method="POST" action="/login">
+      <label>Username
+        <input name="username" autocomplete="username" required autofocus>
+      </label>
+      <label>Password
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <p id="login-error" class="error" hidden>Wrong username or password.</p>
+      <button type="submit">Log in</button>
+    </form>
+  </div>
+
+  <script>
+    // The server sends you back to /?error=1 after a wrong login
+    if (new URLSearchParams(location.search).has("error")) {
+      document.getElementById("login-error").hidden = false;
+    }
+  </script>
+</body>
+</html>

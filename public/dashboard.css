@@ -1,0 +1,180 @@
+/* StudySync - dashboard and weekly calendar */
+
+.dash-header { text-align: center; }
+.dash-header a { display: inline-block; margin-top: 4px; }
+
+h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
+
+/* ---------- Add-a-class form ---------- */
+.add-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin: 0;
+  padding: 16px;
+  background: #f7f8fc;
+  border-radius: 10px;
+}
+.add-form label { min-width: 0; }
+.add-form input { height: 42px; }
+.add-form button { grid-column: 5; grid-row: 1; }
+.add-form .days {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.days span { font-size: 14px; color: #444; margin-right: 4px; }
+
+/* Day buttons (they're really checkboxes, styled as pills) */
+.day-chip { position: relative; }
+.day-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.day-chip label {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid #ccd;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+  user-select: none;
+}
+.day-chip input:checked + label { background: #2b4acb; border-color: #2b4acb; color: white; }
+.day-chip input:focus-visible + label { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+#form-error { grid-column: 1 / -1; text-align: left; }
+
+/* ---------- Week grid ---------- */
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.day-col {
+  background: #f7f8fc;
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 160px;
+}
+.day-col.today { outline: 2px solid #2b4acb; }
+.day-col h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #2b4acb;
+  text-align: center;
+}
+.day-col.today h3::after { content: " · Today"; font-weight: normal; color: #666; }
+.empty { color: #999; font-size: 13px; text-align: center; margin: 20px 0 0; }
+
+/* One class on the calendar */
+.class-card {
+  position: relative;
+  background: white;
+  border-left: 4px solid var(--c);
+  border-radius: 6px;
+  padding: 8px 26px 8px 8px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.class-card strong { display: block; color: #222; margin-bottom: 2px; }
+.class-card .meta { color: #666; }
+.class-card .remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 0 6px;
+  background: none;
+  color: #999;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.class-card .remove:hover { background: #fdecec; color: #c62828; }
+
+/* ---------- Phones and small windows: stack things ---------- */
+@media (max-width: 900px) {
+  .add-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .add-form .name, .add-form .location { grid-column: 1 / -1; }
+  .add-form button { grid-column: 1 / -1; grid-row: auto; }
+  .add-form .days { grid-row: auto; }
+  .week { grid-template-columns: 1fr; }
+  .day-col { min-height: 0; }
+}
+
+/* ---------- "Add a Class / Task / Other" dropdown ---------- */
+.kind-select {
+  font: inherit;            /* looks like the other headings */
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  padding: 4px 32px 4px 10px;
+  margin-left: -10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%232b4acb' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 10px center;
+  appearance: none;
+  cursor: pointer;
+}
+.kind-select:hover, .kind-select:focus-visible { border-color: #ccd; background-color: white; }
+
+/* Tasks have no Room field, so the name gets the extra space */
+.add-form[data-kind="task"] .name { grid-column: span 2; }
+
+/* Tag on tasks and "other" items (TASK, WORK...) */
+.kind-tag {
+  display: inline-block;
+  margin-bottom: 3px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #555;
+  background: #eef0f6;
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .add-form[data-kind="task"] .name, .add-form .category { grid-column: 1 / -1; }
+}
+
+/* ---------- Color key next to "Your week" ---------- */
+.week-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.legend { display: flex; gap: 14px; list-style: none; margin: 0 0 12px; padding: 0; font-size: 13px; color: #555; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.swatch { width: 18px; height: 10px; border-radius: 3px; }
+/* Swatch colors are filled in by dashboard.js from COLOR_FAMILIES */
+
+/* ---------- Collapsible sections (− / +) ---------- */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 28px 0 12px;
+}
+.section-head h2 { margin: 0; }
+.section-tools { display: flex; align-items: center; gap: 12px; }
+
+.collapse-toggle {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: #2b4acb;
+  background: white;
+  border: 1px solid #ccd5f5;
+  border-radius: 8px;
+}
+.collapse-toggle:hover { background: #eef1fc; }
+
+/* Hidden sections stay hidden even if their own CSS sets display (like the notebook's grid) */
+.collapse-body[hidden] { display: none !important; }
+
+/* The notebook filter only matters when the notebook is open */
+.section-head.is-collapsed .nb-filter { display: none; }

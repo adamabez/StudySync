@@ -1,0 +1,11 @@
+# Secret API key — never commit this
+.env
+
+# Installed packages (recreate with: npm install)
+node_modules/
+
+# Saved data from using the app
+schedule.json
+notebook-data/
+
+.DS_Store

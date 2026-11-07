@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudySync – Dashboard</title>
+  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/dashboard.css">
+  <link rel="stylesheet" href="/public/notebook.css">
+</head>
+<body>
+  <div class="box wide">
+    <div class="dash-header">
+      <h1>StudySync</h1>
+      <p>Welcome to your dashboard!</p>
+      <a href="/logout">Log out</a>
+    </div>
+
+    <!-- ========== Add a Class / Task / Other (collapsible) ========== -->
+    <div class="section-head">
+      <h2 class="add-heading">
+        <select id="kind" class="kind-select" aria-label="What do you want to add?">
+          <option value="class">Add a Class</option>
+          <option value="task">Add a Task</option>
+          <option value="other">Add Other</option>
+        </select>
+      </h2>
+      <button type="button" class="collapse-toggle" data-target="add-body" data-name="Add section">−</button>
+    </div>
+    <div id="add-body" class="collapse-body">
+    <form id="add-form" class="add-form">
+      <label class="name"><span id="name-label">Class name</span>
+        <input id="name" maxlength="60" placeholder="e.g. Biology 101" required>
+      </label>
+      <label>Starts
+        <input id="start" type="time" required>
+      </label>
+      <label>Ends
+        <input id="end" type="time" required>
+      </label>
+      <!-- Only shows for classes -->
+      <label class="location" id="location-field">Room (optional)
+        <input id="location" maxlength="60" placeholder="e.g. Science Hall 204">
+      </label>
+      <!-- Only shows for "Other" -->
+      <label class="category" id="category-field" hidden>What is it?
+        <input id="category" maxlength="30" placeholder="e.g. Work, Gym, Club">
+      </label>
+      <div class="days">
+        <span>Days:</span>
+        <span class="day-chip"><input type="checkbox" id="day-mon" value="mon"><label for="day-mon">Mon</label></span>
+        <span class="day-chip"><input type="checkbox" id="day-tue" value="tue"><label for="day-tue">Tue</label></span>
+        <span class="day-chip"><input type="checkbox" id="day-wed" value="wed"><label for="day-wed">Wed</label></span>
+        <span class="day-chip"><input type="checkbox" id="day-thu" value="thu"><label for="day-thu">Thu</label></span>
+        <span class="day-chip"><input type="checkbox" id="day-fri" value="fri"><label for="day-fri">Fri</label></span>
+        <span class="day-chip"><input type="checkbox" id="day-sat" value="sat"><label for="day-sat">Sat</label></span>
+        <span class="day-chip"><input type="checkbox" id="day-sun" value="sun"><label for="day-sun">Sun</label></span>
+      </div>
+      <button type="submit" id="add-button">Add class</button>
+      <p id="form-error" class="error"></p>
+    </form>
+    </div>
+
+    <div class="week-heading">
+      <h2>Your week</h2>
+      <ul class="legend" aria-label="Color key">
+        <li><span class="swatch class"></span>Classes</li>
+        <li><span class="swatch task"></span>Tasks</li>
+        <li><span class="swatch other"></span>Other</li>
+      </ul>
+    </div>
+    <div id="week" class="week"></div>
+
+    <!-- ========== Virtual Notebook (collapsible) ========== -->
+    <div class="section-head nb-heading">
+      <h2>Add Course Material ~ Virtual Notebook</h2>
+      <div class="section-tools">
+        <label class="nb-filter">Notebook
+          <select id="nb-course"><option value="">All courses</option></select>
+        </label>
+        <button type="button" class="collapse-toggle" data-target="notebook-body" data-name="Virtual Notebook">−</button>
+      </div>
+    </div>
+
+    <div id="notebook-body" class="notebook collapse-body">
+      <!-- Left: sources -->
+      <section class="nb-panel nb-sources" aria-labelledby="sources-title">
+        <h3 id="sources-title">Sources</h3>
+
+        <form id="source-form" class="source-form">
+          <div class="nb-tabs" role="tablist">
+            <button type="button" class="nb-tab active" data-mode="paste" role="tab" aria-selected="true">Paste text</button>
+            <button type="button" class="nb-tab" data-mode="file" role="tab" aria-selected="false">Upload file</button>
+          </div>
+
+          <label>Title
+            <input id="source-title" maxlength="120" placeholder="e.g. Chapter 3 – Cell Biology">
+          </label>
+          <label>Course
+            <select id="source-course"></select>
+          </label>
+
+          <label id="paste-field">Notes or text
+            <textarea id="source-text" rows="5" placeholder="Paste lecture notes, a reading, slides text…"></textarea>
+          </label>
+          <label id="file-field" class="drop-zone" hidden>
+            <input id="source-file" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown">
+            <span class="drop-icon" aria-hidden="true">⬆</span>
+            <span id="drop-text" class="drop-text"><strong>Drop a file here</strong> or click to choose one</span>
+            <span class="drop-hint">PDF, .txt or .md · PDFs up to 10 MB</span>
+          </label>
+
+          <button type="submit" id="source-submit">Add source</button>
+          <p id="source-error" class="error"></p>
+        </form>
+
+        <ul id="source-list" class="source-list"></ul>
+      </section>
+
+      <!-- Right: chat -->
+      <section class="nb-panel nb-chat" aria-labelledby="chat-title">
+        <div class="nb-chat-head">
+          <h3 id="chat-title">Ask your notebook</h3>
+          <div class="chat-tools">
+            <select id="chat-picker" aria-label="Switch between saved chats"></select>
+            <button type="button" id="delete-chat" class="link-button danger" title="Delete this chat">Delete</button>
+            <button type="button" id="new-chat" class="link-button">+ New chat</button>
+          </div>
+        </div>
+
+        <div id="ai-off" class="ai-off" hidden>
+          <strong>AI answers are off.</strong>
+          <p>To turn them on, create a file named <code>.env</code> in your StudySync folder containing
+            <code>ANTHROPIC_API_KEY=your-key-here</code>, then restart the server.
+            You can still add and organize sources in the meantime.</p>
+        </div>
+
+        <div class="nb-actions">
+          <button type="button" class="chip-button" data-prompt="summary">Summarize</button>
+          <button type="button" class="chip-button" data-prompt="guide">Study guide</button>
+          <button type="button" class="chip-button" data-prompt="quiz">Quiz me</button>
+          <button type="button" class="chip-button" data-prompt="terms">Key terms</button>
+        </div>
+
+        <div id="chat-log" class="chat-log" aria-live="polite"></div>
+
+        <form id="ask-form" class="ask-form">
+          <textarea id="question" rows="2" maxlength="5000" placeholder="Ask a question about your sources…" aria-label="Question"></textarea>
+          <button type="submit" id="ask-button">Ask</button>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script src="/public/dashboard.js"></script>
+  <script src="/public/notebook.js"></script>
+  <script src="/public/collapse.js"></script>
+</body>
+</html>

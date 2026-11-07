@@ -1,0 +1,245 @@
+// StudySync - the server: starts it up and decides what each URL shows.
+// Run with:  node --watch server.js   (or press F5 in VS Code)
+// Then open: http://localhost:3000
+//
+// Where everything lives:
+//   server.js     → this file: starts the server + routes (which URL does what)
+//   auth.js       → login check and who's logged in
+//   schedule.js   → saving / loading classes (schedule.json)
+//   materials.js  → saving / loading Virtual Notebook materials (notebook-data/)
+//   chats.js      → saved Virtual Notebook chats (notebook-data/chats.json)
+//   ai.js         → asking Claude about those materials
+//   pages/        → the HTML for each page
+//   public/       → CSS and browser JavaScript the pages load
+//   .env          → your secret Anthropic API key (never commit this!)
+
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+
+// Load secrets (like ANTHROPIC_API_KEY) from .env, if that file exists
+try {
+  process.loadEnvFile(path.join(__dirname, ".env"));
+} catch {
+  // no .env yet → the notebook still works, just without AI answers
+}
+
+const auth = require("./auth");
+const schedule = require("./schedule");
+const materials = require("./materials");
+const chats = require("./chats");
+const ai = require("./ai");
+
+const PORT = 3000;
+
+// ---------- Helpers for sending responses ----------
+
+// Send one of the HTML files from the pages/ folder
+function sendPage(res, fileName, status = 200) {
+  const html = fs.readFileSync(path.join(__dirname, "pages", fileName), "utf8");
+  res.writeHead(status, { "Content-Type": "text/html; charset=utf-8" });
+  res.end(html);
+}
+
+function sendJson(res, data, status = 200) {
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
+
+function redirect(res, location, extraHeaders = {}) {
+  res.writeHead(302, { Location: location, ...extraHeaders });
+  res.end();
+}
+
+// Send a CSS or JS file from the public/ folder (e.g. /public/style.css)
+const FILE_TYPES = {
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+};
+
+function sendPublicFile(res, urlPath) {
+  const fileName = path.basename(urlPath); // basename blocks tricks like /public/../server.js
+  const type = FILE_TYPES[path.extname(fileName)];
+  const filePath = path.join(__dirname, "public", fileName);
+  if (!type || !fs.existsSync(filePath)) return sendPage(res, "404.html", 404);
+  res.writeHead(200, { "Content-Type": type });
+  res.end(fs.readFileSync(filePath));
+}
+
+// Collect the data a browser sends with a POST request (up to `limit` characters)
+function readBody(req, res, limit, callback) {
+  let body = "";
+  let tooBig = false;
+  req.on("data", (chunk) => {
+    if (tooBig) return;
+    body += chunk;
+    if (body.length > limit) tooBig = true;
+  });
+  req.on("end", () => {
+    if (tooBig) return sendJson(res, { error: "That's too big to send." }, 413);
+    callback(body);
+  });
+}
+
+// Same as readBody, but parses JSON (replies "Bad request" if it isn't valid JSON)
+function readJson(req, res, limit, callback) {
+  readBody(req, res, limit, (body) => {
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch {
+      return sendJson(res, { error: "Bad request" }, 400);
+    }
+    callback(data && typeof data === "object" ? data : {});
+  });
+}
+
+// ---------- Routes: which URL shows what ----------
+const server = http.createServer((req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const loggedIn = auth.isLoggedIn(req);
+
+  // CSS and browser JavaScript
+  if (req.method === "GET" && url.pathname.startsWith("/public/")) {
+    return sendPublicFile(res, url.pathname);
+  }
+
+  // Front page: the login form (skip it if already logged in)
+  if (req.method === "GET" && url.pathname === "/") {
+    if (loggedIn) return redirect(res, "/home");
+    return sendPage(res, "login.html");
+  }
+
+  // The login form submits here
+  if (req.method === "POST" && url.pathname === "/login") {
+    return readBody(req, res, 10_000, (body) => {
+      const form = new URLSearchParams(body);
+      if (auth.checkLogin(form.get("username"), form.get("password"))) {
+        return redirect(res, "/home", { "Set-Cookie": auth.startSession() });
+      }
+      redirect(res, "/?error=1");
+    });
+  }
+
+  // Loading screen, then the dashboard (logged-in users only)
+  if (req.method === "GET" && url.pathname === "/home") {
+    if (!loggedIn) return redirect(res, "/");
+    return sendPage(res, "loading.html");
+  }
+
+  if (req.method === "GET" && url.pathname === "/dashboard") {
+    if (!loggedIn) return redirect(res, "/");
+    return sendPage(res, "dashboard.html");
+  }
+
+  // Log out
+  if (req.method === "GET" && url.pathname === "/logout") {
+    return redirect(res, "/", { "Set-Cookie": auth.endSession(req) });
+  }
+
+  // ----- API: the dashboard's JavaScript talks to these -----
+  if (url.pathname.startsWith("/api/")) {
+    if (!loggedIn) return sendJson(res, { error: "Not logged in" }, 401);
+
+    // --- Class schedule ---
+    if (req.method === "GET" && url.pathname === "/api/classes") {
+      return sendJson(res, schedule.loadClasses());
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/classes") {
+      return readJson(req, res, 10_000, (input) => {
+        const result = schedule.addClass(input);
+        if (result.error) return sendJson(res, { error: result.error }, 400);
+        sendJson(res, result.value, 201);
+      });
+    }
+
+    const classMatch = url.pathname.match(/^\/api\/classes\/([\w-]+)$/);
+    if (req.method === "DELETE" && classMatch) {
+      schedule.removeClass(classMatch[1]);
+      return sendJson(res, { ok: true });
+    }
+
+    // --- Virtual Notebook: course materials ---
+    if (req.method === "GET" && url.pathname === "/api/sources") {
+      return sendJson(res, materials.listSources());
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/sources") {
+      return readJson(req, res, 15_000_000, (input) => { // room for a 10 MB PDF
+        const result = materials.addSource(input);
+        if (result.error) return sendJson(res, { error: result.error }, 400);
+        sendJson(res, result.value, 201);
+      });
+    }
+
+    const sourceMatch = url.pathname.match(/^\/api\/sources\/([\w-]+)$/);
+    if (req.method === "DELETE" && sourceMatch) {
+      materials.removeSource(sourceMatch[1]);
+      return sendJson(res, { ok: true });
+    }
+
+    // --- Virtual Notebook: saved chats ---
+    if (req.method === "GET" && url.pathname === "/api/chats") {
+      return sendJson(res, chats.listChats());
+    }
+
+    const chatMatch = url.pathname.match(/^\/api\/chats\/([\w-]+)$/);
+    if (req.method === "GET" && chatMatch) {
+      const chat = chats.getChat(chatMatch[1]);
+      return chat ? sendJson(res, chat) : sendJson(res, { error: "Chat not found" }, 404);
+    }
+    if (req.method === "DELETE" && chatMatch) {
+      chats.deleteChat(chatMatch[1]);
+      return sendJson(res, { ok: true });
+    }
+
+    // --- Virtual Notebook: asking Claude ---
+    if (req.method === "GET" && url.pathname === "/api/notebook/status") {
+      return sendJson(res, { aiEnabled: ai.aiEnabled() });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/notebook/ask") {
+      return readJson(req, res, 2_000_000, async (input) => {
+        if (!ai.aiEnabled()) return sendJson(res, { error: "AI answers are off. Add your Anthropic API key to .env and restart the server." }, 503);
+
+        const question = typeof input.question === "string" ? input.question.trim() : "";
+        const label = typeof input.label === "string" && input.label.trim() ? input.label.trim().slice(0, 200) : question;
+        const ids = Array.isArray(input.sourceIds) ? input.sourceIds : [];
+        if (!question || question.length > 5_000) return sendJson(res, { error: "Type a question (5,000 characters max)." }, 400);
+
+        // Continue an existing chat, or start a new one when there's no chatId
+        const chat = input.chatId ? chats.getChat(input.chatId) : null;
+        if (input.chatId && !chat) return sendJson(res, { error: "That chat was deleted. Start a new chat." }, 404);
+        const history = chat ? chats.historyFor(chat) : [];
+
+        const selected = materials.listSources().filter((s) => ids.includes(s.id));
+        if (selected.length === 0) return sendJson(res, { error: "Tick at least one source to ask about." }, 400);
+
+        const sources = selected.map((source) => ({ source, content: materials.readContent(source) }));
+        const totalSize = sources.reduce((sum, s) => sum + s.content.length, 0);
+        if (totalSize > 25_000_000) return sendJson(res, { error: "That's too much material at once. Untick a few sources." }, 400);
+
+        try {
+          const result = await ai.askNotebook({ sources, history, question });
+          if (result.error) return sendJson(res, { error: result.error }, 422);
+          const saved = chats.addExchange(chat?.id ?? null, { label, question, ...result });
+          sendJson(res, { ...result, chat: chats.summary(saved) });
+        } catch (error) {
+          console.error("Notebook question failed:", error);
+          sendJson(res, { error: ai.explainError(error) }, 502);
+        }
+      });
+    }
+
+    return sendJson(res, { error: "Not found" }, 404);
+  }
+
+  sendPage(res, "404.html", 404);
+});
+
+// ---------- Start the server ----------
+server.listen(PORT, () => {
+  console.log(`StudySync is running at http://localhost:${PORT}`);
+  if (!ai.aiEnabled()) console.log("Virtual Notebook: AI answers are off (no ANTHROPIC_API_KEY in .env).");
+});
