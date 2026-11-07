@@ -1,4 +1,4 @@
-# StudySync
+# StudySync - Capitol Hacks 5.0 (Sacramento State)
 
 A study dashboard for students. Plan your week, then study your course materials with an AI notebook that answers from *your* notes, with citations.
 
