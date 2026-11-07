@@ -10,22 +10,43 @@
   <div class="box">
     <h1>StudySync</h1>
     <p>Log in to continue</p>
+    <p id="login-notice" class="notice" hidden></p>
     <form method="POST" action="/login">
-      <label>Username
-        <input name="username" autocomplete="username" required autofocus>
+      <label>Email
+        <input name="email" type="email" autocomplete="email" required autofocus>
       </label>
       <label>Password
         <input name="password" type="password" autocomplete="current-password" required>
       </label>
-      <p id="login-error" class="error" hidden>Wrong username or password.</p>
+      <p id="login-error" class="error" hidden></p>
       <button type="submit">Log in</button>
     </form>
+    <p class="switch">New here? <a href="/signup">Create an account</a></p>
   </div>
 
   <script>
-    // The server sends you back to /?error=1 after a wrong login
-    if (new URLSearchParams(location.search).has("error")) {
-      document.getElementById("login-error").hidden = false;
+    // The server sends you back to /?error=<code> when logging in fails
+    const MESSAGES = {
+      invalid: "Wrong email or password.",
+      unconfirmed: "Confirm your email first. Check your inbox for the link.",
+      rate: "Too many tries. Wait a minute and try again.",
+      unreachable: "Couldn't reach the login service. Check your connection and try again.",
+      config: "Login isn't set up yet: SUPABASE_URL and SUPABASE_KEY are missing from .env.",
+      unknown: "Something went wrong. Try again.",
+    };
+    const params = new URLSearchParams(location.search);
+
+    if (params.has("error")) {
+      const error = document.getElementById("login-error");
+      error.textContent = MESSAGES[params.get("error")] || MESSAGES.unknown;
+      error.hidden = false;
+    }
+
+    // After signing up, when Supabase wants the email confirmed first
+    if (params.has("checkEmail")) {
+      const notice = document.getElementById("login-notice");
+      notice.textContent = "Check your email for a confirmation link, then log in.";
+      notice.hidden = false;
     }
   </script>
 </body>

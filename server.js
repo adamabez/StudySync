@@ -4,24 +4,24 @@
 //
 // Where everything lives:
 //   server.js     → this file: starts the server + routes (which URL does what)
-//   auth.js       → login check and who's logged in
+//   auth.js       → login with Supabase and who's logged in
 //   schedule.js   → saving / loading classes (schedule.json)
 //   materials.js  → saving / loading Virtual Notebook materials (notebook-data/)
 //   chats.js      → saved Virtual Notebook chats (notebook-data/chats.json)
 //   ai.js         → asking Claude about those materials
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
-//   .env          → your secret Anthropic API key (never commit this!)
+//   .env          → your secret keys: Supabase, Anthropic (never commit this!)
 
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-// Load secrets (like ANTHROPIC_API_KEY) from .env, if that file exists
+// Load secrets (SUPABASE_URL, SUPABASE_KEY, ANTHROPIC_API_KEY) from .env, if that file exists
 try {
   process.loadEnvFile(path.join(__dirname, ".env"));
 } catch {
-  // no .env yet → the notebook still works, just without AI answers
+  // no .env yet → nobody can log in until the Supabase keys are added
 }
 
 const auth = require("./auth");
@@ -95,14 +95,17 @@ function readJson(req, res, limit, callback) {
 }
 
 // ---------- Routes: which URL shows what ----------
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const loggedIn = auth.isLoggedIn(req);
 
-  // CSS and browser JavaScript
+  // CSS and browser JavaScript (no login check needed)
   if (req.method === "GET" && url.pathname.startsWith("/public/")) {
     return sendPublicFile(res, url.pathname);
   }
+
+  // Who's logged in? After this, auth.getUserId(req) gives their Supabase user ID
+  await auth.loadUser(req, res);
+  const loggedIn = auth.isLoggedIn(req);
 
   // Front page: the login form (skip it if already logged in)
   if (req.method === "GET" && url.pathname === "/") {
@@ -112,12 +115,27 @@ const server = http.createServer((req, res) => {
 
   // The login form submits here
   if (req.method === "POST" && url.pathname === "/login") {
-    return readBody(req, res, 10_000, (body) => {
+    return readBody(req, res, 10_000, async (body) => {
       const form = new URLSearchParams(body);
-      if (auth.checkLogin(form.get("username"), form.get("password"))) {
-        return redirect(res, "/home", { "Set-Cookie": auth.startSession() });
-      }
-      redirect(res, "/?error=1");
+      const result = await auth.logIn((form.get("email") || "").trim(), form.get("password") || "");
+      if (result.error) return redirect(res, `/?error=${result.error}`);
+      redirect(res, "/home", { "Set-Cookie": result.cookies });
+    });
+  }
+
+  // Sign-up page, and the sign-up form submits here
+  if (req.method === "GET" && url.pathname === "/signup") {
+    if (loggedIn) return redirect(res, "/home");
+    return sendPage(res, "signup.html");
+  }
+
+  if (req.method === "POST" && url.pathname === "/signup") {
+    return readBody(req, res, 10_000, async (body) => {
+      const form = new URLSearchParams(body);
+      const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "");
+      if (result.error) return redirect(res, `/signup?error=${result.error}`);
+      if (result.confirmEmail) return redirect(res, "/?checkEmail=1");
+      redirect(res, "/home", { "Set-Cookie": result.cookies });
     });
   }
 
@@ -134,7 +152,7 @@ const server = http.createServer((req, res) => {
 
   // Log out
   if (req.method === "GET" && url.pathname === "/logout") {
-    return redirect(res, "/", { "Set-Cookie": auth.endSession(req) });
+    return redirect(res, "/", { "Set-Cookie": await auth.logOut(req) });
   }
 
   // ----- API: the dashboard's JavaScript talks to these -----
@@ -241,5 +259,6 @@ const server = http.createServer((req, res) => {
 // ---------- Start the server ----------
 server.listen(PORT, () => {
   console.log(`StudySync is running at http://localhost:${PORT}`);
+  if (!auth.isConfigured()) console.log("Login: add SUPABASE_URL and SUPABASE_KEY to .env, then restart (see .env.example).");
   if (!ai.aiEnabled()) console.log("Virtual Notebook: AI answers are off (no ANTHROPIC_API_KEY in .env).");
 });

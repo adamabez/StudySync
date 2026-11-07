@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudySync – Sign up</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <div class="box">
+    <h1>StudySync</h1>
+    <p>Create your account</p>
+    <form method="POST" action="/signup">
+      <label>Email
+        <input name="email" type="email" autocomplete="email" required autofocus>
+      </label>
+      <label>Password
+        <input name="password" type="password" autocomplete="new-password" minlength="6" required>
+      </label>
+      <p id="signup-error" class="error" hidden></p>
+      <button type="submit">Sign up</button>
+    </form>
+    <p class="switch">Already have an account? <a href="/">Log in</a></p>
+  </div>
+
+  <script>
+    // The server sends you back to /signup?error=<code> when signing up fails
+    const MESSAGES = {
+      exists: "There's already an account with that email. Log in instead.",
+      weak: "Pick a stronger password (at least 6 characters).",
+      email: "That email address doesn't look right.",
+      rate: "Too many tries. Wait a minute and try again.",
+      unreachable: "Couldn't reach the login service. Check your connection and try again.",
+      config: "Sign-up isn't set up yet: SUPABASE_URL and SUPABASE_KEY are missing from .env.",
+      unknown: "Something went wrong. Try again.",
+    };
+    const code = new URLSearchParams(location.search).get("error");
+    if (code) {
+      const error = document.getElementById("signup-error");
+      error.textContent = MESSAGES[code] || MESSAGES.unknown;
+      error.hidden = false;
+    }
+  </script>
+</body>
+</html>

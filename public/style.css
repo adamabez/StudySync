@@ -65,6 +65,8 @@ button {
 button:hover { background: #2240b0; }
 
 .error { color: #c62828; font-size: 14px; margin: 0; text-align: center; }
+.notice { color: #2e7d32; font-size: 14px; }
+.switch { font-size: 14px; margin: 20px 0 0; }
 
 /* Loading spinner */
 .spinner {
