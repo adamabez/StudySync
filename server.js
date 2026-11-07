@@ -8,7 +8,7 @@
 //   schedule.js   → saving / loading calendar items (Supabase)
 //   materials.js  → saving / loading Virtual Notebook materials (Supabase)
 //   chats.js      → saved Virtual Notebook chats (Supabase)
-//   ai.js         → asking Claude about those materials
+//   ai.js         → asking the AI about those materials
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
 //   .env          → your secret keys: Supabase, Anthropic (never commit this!)
@@ -265,7 +265,7 @@ async function handleRequest(req, res) {
       return sendJson(res, { ok: true });
     }
 
-    // --- Virtual Notebook: asking Claude ---
+    // --- Virtual Notebook: asking the AI ---
     if (req.method === "GET" && url.pathname === "/api/notebook/status") {
       return sendJson(res, { aiEnabled: ai.aiEnabled() });
     }

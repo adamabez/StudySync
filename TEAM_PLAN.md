@@ -6,7 +6,7 @@ How we're splitting the work. Each person owns different files, so we shouldn't 
 
 - The login is hard-coded (`admin` / `123` in `auth.js`), and sessions live in memory, so restarting the server logs everyone out.
 - Everyone shares **one** calendar and **one** notebook. Data is saved as local files (`schedule.json`, `notebook-data/`).
-- AI answers use `claude-opus-5-5` in `ai.js`, the most expensive model, and are billed to whoever's API key is in `.env`.
+- AI answers use the most expensive model (`MODEL` in `ai.js`) and are billed to whoever's API key is in `.env`.
 
 ## The big new feature: Canvas
 
@@ -55,7 +55,7 @@ Data for each user:
 - [ ] A "Connect Canvas" form (Canvas URL + token) and a homework panel showing missing and completed assignments
 - [ ] Until Gurkirat's routes are ready, build the panel from fake data shaped like the example under "Shared interfaces"
 - [ ] Polish the UI and check it on phone screens
-- [ ] Switch `MODEL` in `ai.js` from Opus to Sonnet or Haiku to cut costs, and set a spend limit on the team's Anthropic API key
+- [ ] Switch `MODEL` in `ai.js` to a cheaper model to cut costs, and set a spend limit on the team's Anthropic API key
 - [ ] Deploy the app so judges can open a link (Render or Railway both run a plain Node server)
 - [ ] Prepare the demo and pitch. Use a Canvas account with real assignments, or have a backup plan if the Wi-Fi fails.
 

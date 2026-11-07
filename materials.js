@@ -78,7 +78,7 @@ async function removeSource(db, id) {
   }
 }
 
-// Text sources come back as text; PDFs come back as base64 (what Claude expects)
+// Text sources come back as text; PDFs come back as base64 (what the AI expects)
 async function readContent(db, source) {
   if (source.type === "pdf") {
     const { data, error } = await db.storage.from(BUCKET).download(pdfPath(source));

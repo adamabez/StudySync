@@ -1,4 +1,4 @@
-// StudySync - the Virtual Notebook's AI: sends course materials + a question to Claude.
+// StudySync - the Virtual Notebook's AI: sends course materials + a question to the AI.
 //
 // Needs an Anthropic API key in a file named .env in this folder:
 //   ANTHROPIC_API_KEY=sk-ant-...
@@ -24,7 +24,7 @@ function aiEnabled() {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
-// Turn one saved source into a "document" block Claude can read and cite
+// Turn one saved source into a "document" block the AI can read and cite
 function toDocument({ source, content }) {
   return {
     type: "document",
@@ -43,7 +43,7 @@ function pageLabel(c) {
 }
 
 // sources: [{ source, content }]   history: [{ role, content }]   question: string
-// Returns { answer, citations } on success or { error } if Claude couldn't answer.
+// Returns { answer, citations } on success or { error } if the AI couldn't answer.
 async function askNotebook({ sources, history, question }) {
   const documents = sources.map(toDocument);
   // Cache the documents so follow-up questions about the same materials are cheaper and faster
@@ -62,7 +62,7 @@ async function askNotebook({ sources, history, question }) {
     max_tokens: 16000,
     system: SYSTEM_PROMPT,
     output_config: { effort: "medium" },
-    // If Claude Opus 5.5 declines, Anthropic retries on a recommended fallback model
+    // If the model declines, the API retries on a recommended fallback model
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     messages,
@@ -70,10 +70,10 @@ async function askNotebook({ sources, history, question }) {
   const message = await stream.finalMessage();
 
   if (message.stop_reason === "refusal") {
-    return { error: "Claude couldn't answer that one. Try rephrasing your question." };
+    return { error: "The AI couldn't answer that one. Try rephrasing your question." };
   }
 
-  // Stitch the answer together, putting a ⟦n⟧ marker wherever Claude cited a source
+  // Stitch the answer together, putting a ⟦n⟧ marker wherever the AI cited a source
   let answer = "";
   const citations = [];
   const seen = new Map();
@@ -106,12 +106,12 @@ async function askNotebook({ sources, history, question }) {
 // Turn an API error into a message a student can act on
 function explainError(error) {
   if (error instanceof Anthropic.AuthenticationError) return "The Anthropic API key in .env isn't valid. Check it and restart the server.";
-  if (error instanceof Anthropic.PermissionDeniedError) return "This API key isn't allowed to use Claude. Check your Anthropic Console account.";
-  if (error instanceof Anthropic.RateLimitError) return "Claude is busy right now. Wait a moment and try again.";
-  if (error instanceof Anthropic.BadRequestError) return "Claude couldn't process those materials: " + error.message;
-  if (error instanceof Anthropic.APIConnectionError) return "Couldn't reach Claude. Check your internet connection.";
-  if (error instanceof Anthropic.APIError) return `Claude ran into a problem (error ${error.status}). Try again in a moment.`;
-  return "Something went wrong asking Claude.";
+  if (error instanceof Anthropic.PermissionDeniedError) return "This API key isn't allowed to use the AI. Check your Anthropic Console account.";
+  if (error instanceof Anthropic.RateLimitError) return "The AI is busy right now. Wait a moment and try again.";
+  if (error instanceof Anthropic.BadRequestError) return "The AI couldn't process those materials: " + error.message;
+  if (error instanceof Anthropic.APIConnectionError) return "Couldn't reach the AI. Check your internet connection.";
+  if (error instanceof Anthropic.APIError) return `The AI ran into a problem (error ${error.status}). Try again in a moment.`;
+  return "Something went wrong asking the AI.";
 }
 
 module.exports = { aiEnabled, askNotebook, explainError };
