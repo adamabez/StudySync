@@ -170,11 +170,46 @@
         </form>
       </section>
     </div>
+
+    <!-- ========== Footer: feedback / bug reports ========== -->
+    <footer class="dash-footer">
+      <span>Found a bug or have an idea?</span>
+      <button type="button" id="feedback-open" class="link-button">Tell us!</button>
+    </footer>
   </div>
+
+  <dialog id="feedback-dialog" class="feedback-dialog" aria-labelledby="feedback-title">
+    <form id="feedback-form" class="feedback-form">
+      <h2 id="feedback-title">Send feedback</h2>
+      <label>What kind?
+        <select id="feedback-kind">
+          <option value="bug">Report a bug</option>
+          <option value="feedback">General feedback</option>
+          <option value="idea">Feature idea</option>
+        </select>
+      </label>
+      <label><span id="feedback-message-label">What went wrong?</span>
+        <textarea id="feedback-message" rows="5" maxlength="5000" required
+          placeholder="What did you do, what did you expect, and what happened instead?"></textarea>
+      </label>
+      <p class="feedback-note">We'll include your email and browser so we can follow up.</p>
+      <p id="feedback-error" class="error"></p>
+      <div class="feedback-actions">
+        <button type="button" id="feedback-cancel" class="link-button">Cancel</button>
+        <button type="submit" id="feedback-submit">Send</button>
+      </div>
+    </form>
+    <div id="feedback-thanks" class="feedback-thanks" hidden>
+      <h2>Thanks!</h2>
+      <p>Your message was sent to the StudySync team.</p>
+      <button type="button" id="feedback-done">Close</button>
+    </div>
+  </dialog>
 
   <script src="/public/dashboard.js"></script>
   <script src="/public/notebook.js"></script>
   <script src="/public/collapse.js"></script>
+  <script src="/public/feedback.js"></script>
   <script>
     // ---------- Account circle ----------
     // Computers: hovering or tabbing to the circle opens the card (done in CSS).
