@@ -9,6 +9,7 @@
 //   materials.js  → saving / loading Virtual Notebook materials (Supabase)
 //   chats.js      → saved Virtual Notebook chats (Supabase)
 //   ai.js         → asking the AI about those materials
+//   feedback.js   → feedback / bug reports from the dashboard (Supabase)
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
 //   .env          → your secret keys: Supabase, Anthropic (never commit this!)
@@ -29,6 +30,7 @@ const schedule = require("./schedule");
 const materials = require("./materials");
 const chats = require("./chats");
 const ai = require("./ai");
+const feedback = require("./feedback");
 
 const PORT = 3000;
 
@@ -210,6 +212,15 @@ async function handleRequest(req, res) {
     // --- Who's logged in (for "Logged in as ..." on the dashboard) ---
     if (req.method === "GET" && url.pathname === "/api/me") {
       return sendJson(res, { email: req.user.email });
+    }
+
+    // --- Feedback / bug reports ---
+    if (req.method === "POST" && url.pathname === "/api/feedback") {
+      return readJson(req, res, 20_000, async (input) => {
+        const result = await feedback.addFeedback(db, input, req.headers["user-agent"], req.user.email);
+        if (result.error) return sendJson(res, { error: result.error }, 400);
+        sendJson(res, { ok: true }, 201);
+      });
     }
 
     // --- Class schedule ---

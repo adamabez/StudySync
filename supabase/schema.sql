@@ -53,6 +53,19 @@ create table if not exists public.canvas_connections (
   created_at    timestamptz not null default now()
 );
 
+-- ---------- Feedback and bug reports (from the dashboard's "Send feedback" link) ----------
+-- Users can add reports but not read them. Read them in Table Editor → feedback.
+create table if not exists public.feedback (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  kind        text not null check (kind in ('bug', 'feedback', 'idea')),
+  message     text not null,
+  email       text not null default '',          -- so the team can reply
+  page        text not null default '',          -- which page they were on
+  user_agent  text not null default '',          -- browser + device, helps with bugs
+  created_at  timestamptz not null default now()
+);
+
 -- Async classes have no set time (for projects created before this was allowed)
 alter table public.classes alter column start_time drop not null;
 alter table public.classes alter column end_time drop not null;
@@ -67,6 +80,13 @@ alter table public.classes            enable row level security;
 alter table public.sources            enable row level security;
 alter table public.chats              enable row level security;
 alter table public.canvas_connections enable row level security;
+alter table public.feedback           enable row level security;
+
+-- Insert only: no select/update/delete policy, so users can't read anyone's reports (even their own)
+drop policy if exists "Send feedback" on public.feedback;
+create policy "Send feedback" on public.feedback
+  for insert to authenticated
+  with check (user_id = (select auth.uid()));
 
 drop policy if exists "Own classes" on public.classes;
 create policy "Own classes" on public.classes
