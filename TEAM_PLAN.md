@@ -2,11 +2,20 @@
 
 How we're splitting the work. Each person owns different files, so we shouldn't hit many merge conflicts.
 
+## Status (updated Nov 7)
+
+| Person | Area | Status |
+|---|---|---|
+| Anthony | Supabase, login, per-student data | ✅ Done and merged into `main` |
+| Gurkirat | Canvas integration | ⏳ Not on `main` yet: unblocked, the login and `canvas_connections` table are ready |
+| Adam | Frontend, night mode, deploy, demo | ⏳ Not on `main` yet |
+
 ## Where things stand
 
-- The login is hard-coded (`admin` / `123` in `auth.js`), and sessions live in memory, so restarting the server logs everyone out.
-- Everyone shares **one** calendar and **one** notebook. Data is saved as local files (`schedule.json`, `notebook-data/`).
-- AI answers use the most expensive model (`MODEL` in `ai.js`) and are billed to whoever's API key is in `.env`.
+- Students sign up and log in with email + password (Supabase Auth). Logins survive server restarts, and there's "Forgot password?".
+- Each student has their **own** calendar, notebook sources (text + PDFs) and saved chats, stored in Supabase. Row Level Security makes sure nobody can see anyone else's data.
+- Classes can be **asynchronous** (no set time).
+- AI answers still use the most expensive model (`MODEL` in `ai.js`) and are billed to whoever's API key is in `.env`.
 
 ## The big new feature: Canvas
 
@@ -14,27 +23,39 @@ Users link their Canvas account, and the dashboard shows their **missing** and *
 
 ## Who does what
 
-### Anthony: Supabase and login
+### Anthony: Supabase and login ✅
 
-**Files:** `auth.js`, `pages/login.html`, `schedule.js`, `materials.js`, `chats.js`, the `/login` and `/logout` routes in `server.js`
+**Files:** `auth.js`, `pages/login.html`, `pages/signup.html`, `pages/forgot.html`, `pages/reset-password.html`, `schedule.js`, `materials.js`, `chats.js`, `supabase/schema.sql`, the login/logout routes in `server.js`
 
 Login:
-- [ ] Create the Supabase project and share the keys privately with the team
-- [ ] Replace the hard-coded check with Supabase Auth (email + password)
-- [ ] Add a sign-up page
-- [ ] Keep users logged in after a server restart
-- [ ] Provide `getUserId(req)` (see "Shared interfaces" below)
+- [x] Create the Supabase project and share the keys privately with the team
+- [x] Replace the hard-coded check with Supabase Auth (email + password)
+- [x] Add a sign-up page
+- [x] Keep users logged in after a server restart
+- [x] Provide `getUserId(req)` and `supabaseFor(req)` (see "Shared interfaces" below)
 
 Data for each user:
-- [ ] Create tables for calendar items, sources and chats, each with a `user_id` column
-- [ ] Create a `canvas_connections` table for Gurkirat (see below)
-- [ ] Turn on Row Level Security so users only see their own rows
-- [ ] Rewrite the load/save functions in `schedule.js`, `materials.js` and `chats.js` to use Supabase instead of JSON files
-- [ ] Store uploaded PDFs in Supabase Storage
+- [x] Create tables for calendar items, sources and chats, each with a `user_id` column
+- [x] Create a `canvas_connections` table for Gurkirat (see below)
+- [x] Turn on Row Level Security so users only see their own rows
+- [x] Rewrite the load/save functions in `schedule.js`, `materials.js` and `chats.js` to use Supabase instead of JSON files
+- [x] Store uploaded PDFs in Supabase Storage
+
+Extras:
+- [x] "Forgot password?" with an email reset link
+- [x] Account circle on the dashboard: shows your email and Log out on hover, Tab or tap
+- [x] Asynchronous classes (no set time, days optional)
+- [x] Arrow buttons for collapsing sections
+
+Next:
+- [ ] Help Gurkirat with Canvas
+- [ ] Help with deployment: enter `SUPABASE_URL` and `SUPABASE_KEY` on the hosting site, and add the live site's `/reset-password` address in Supabase → Authentication → URL Configuration → Redirect URLs
 
 ### Gurkirat: Canvas integration
 
 **Files:** a new `canvas.js`, the `/api/canvas/...` routes in `server.js`
+
+The login and the `canvas_connections` table are ready, so this can use real users now.
 
 - [ ] Let a user connect Canvas with a **personal access token**. In Canvas, it's under Account → Settings → Approved Integrations → **+ New Access Token**. Full OAuth needs the school's Canvas admin to issue a developer key, so a token is the realistic choice for a hackathon.
 - [ ] Save the token and the school's Canvas URL in the `canvas_connections` table, linked to the user. Tokens stay on the server and never get sent to the browser.
@@ -45,11 +66,12 @@ Data for each user:
   - Send the token as the header `Authorization: Bearer <token>`. Canvas splits long lists into pages, so follow the `Link` header to get every page.
 - [ ] Sort assignments into **missing**, **completed** (submitted or graded) and **upcoming**
 - [ ] Add the routes listed under "Shared interfaces"
-- [ ] Until the login is ready, test with your own token in `.env` (`CANVAS_TOKEN=...`, `CANVAS_URL=...`)
 
 ### Adam: Frontend, night mode and demo
 
-**Files:** `public/`, `pages/`, except `pages/login.html` and the sign-up page, `ai.js`
+**Files:** `public/`, `pages/` (except the login, sign-up and password pages), `ai.js`
+
+The dashboard changed a lot (account circle, async classes, arrow buttons), so pull `main` before starting night mode.
 
 - [ ] Night mode (dark theme) with a toggle that the browser remembers
 - [ ] A "Connect Canvas" form (Canvas URL + token) and a homework panel showing missing and completed assignments
@@ -60,8 +82,6 @@ Data for each user:
 - [ ] Prepare the demo and pitch. Use a Canvas account with real assignments, or have a backup plan if the Wi-Fi fails.
 
 ## Shared interfaces
-
-Agree on these first, so everyone can build at the same time with placeholders.
 
 **Anthony → everyone**
 
@@ -78,9 +98,9 @@ const db = auth.supabaseFor(req);   // acts as the logged-in user, so Row Level 
 const { data, error } = await db.from("canvas_connections").select("*").maybeSingle();
 ```
 
-You never need to send `user_id` when inserting: the database fills it in with the logged-in user. The tables are created by `supabase/schema.sql`.
+You never need to send `user_id` when inserting: the database fills it in with the logged-in user. The tables are created by `supabase/schema.sql`, which has already been run in our Supabase project.
 
-**Anthony → Gurkirat:** the `canvas_connections` table
+**Anthony → Gurkirat:** the `canvas_connections` table (already created)
 
 | Column | Type |
 |---|---|
@@ -116,7 +136,7 @@ What `/api/canvas/assignments` returns:
 
 ## Working together
 
-- **Branches:** each person works on their own branch (`auth`, `canvas`, `ui`) and merges into `main` through a pull request.
-- **`server.js` is shared.** Keep edits there small and pull from `main` often. Gurkirat only adds `/api/canvas/...` routes, and Anthony only touches login/logout.
-- **Secrets:** Supabase, Canvas and Anthropic keys go in your own `.env` file, which is already in `.gitignore`. Never commit them, and don't use GitHub's drag-and-drop upload, because it ignores `.gitignore`.
+- **Branches:** `main` is the real project. Start each task on a new branch from `main` (e.g. `git checkout -b canvas`) and merge it back through a pull request. `backup-anthony` is a saved copy of `main` from Nov 7; don't work on it.
+- **`server.js` is shared.** Keep edits there small and pull from `main` often. Gurkirat only adds `/api/canvas/...` routes.
+- **Secrets:** Supabase, Canvas and Anthropic keys go in your own `.env` file (copy `.env.example`), which is already in `.gitignore`. Never commit them, and don't use GitHub's drag-and-drop upload, because it ignores `.gitignore`.
 - **Running it:** `npm install`, then `npm start`, then open http://localhost:3000. See `README.md` for details.
