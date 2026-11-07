@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.6.0"
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@supabase/supabase-js": "^2.119.0"
   }
 }

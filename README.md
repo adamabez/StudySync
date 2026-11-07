@@ -7,7 +7,7 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 ## Features
 
 **Login and loading screen**
-- A simple practice login, followed by a short loading screen, then the dashboard.
+- Sign up and log in with email and password (Supabase Auth), followed by a short loading screen, then the dashboard.
 
 **Weekly calendar (Monday–Sunday)**
 - Add **Classes** (with an optional room), **Tasks**, or **Other** items you name yourself (e.g. Work, Gym, Club).
@@ -38,11 +38,20 @@ cd StudySync
 npm install
 ```
 
-### 3. (Optional) Turn on AI answers
+### 3. Connect Supabase (needed to log in)
+1. Copy `.env.example` to a new file named **`.env`** in the project folder.
+2. Get the team's Supabase project URL and **publishable (or anon) key**: Supabase dashboard → Project Settings → API. Never use the secret / service-role key here.
+3. Put them in `.env`:
+   ```
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_KEY=your-publishable-or-anon-key
+   ```
+
+### 4. (Optional) Turn on AI answers
 The notebook works without AI: you can add and organize sources. To get answers:
 
 1. Create an API key at [console.anthropic.com](https://console.anthropic.com) (requires billing).
-2. Create a file named **`.env`** in the project folder:
+2. Add it to `.env`:
    ```
    ANTHROPIC_API_KEY=sk-ant-your-key-here
    ```
@@ -50,15 +59,13 @@ The notebook works without AI: you can add and organize sources. To get answers:
 
 > **Never commit `.env`.** It's already listed in `.gitignore`. Use git to upload the project. GitHub's drag-and-drop "Upload files" button ignores `.gitignore` and could upload your key.
 
-### 4. Run
+### 5. Run
 ```bash
 node server.js
 ```
-Then open **http://localhost:3000** and log in with:
+Then open **http://localhost:3000**, click **Create an account**, and sign up with your email and a password.
 
-| Username | Password |
-|---|---|
-| `admin` | `123` |
+If Supabase has **Confirm email** turned on (Authentication → Sign In / Providers → Email), you'll get a confirmation email first. Turning it off makes testing faster.
 
 **Other ways to run it:**
 - `node --watch server.js` restarts the server automatically whenever you save a server file.
@@ -73,12 +80,12 @@ Then open **http://localhost:3000** and log in with:
 ```
 StudySync/
 ├── server.js         Starts the server and decides what each URL does (routes)
-├── auth.js           Login check and who's logged in
+├── auth.js           Login with Supabase, who's logged in (getUserId, supabaseFor)
 ├── schedule.js       Saves/loads calendar items → schedule.json
 ├── materials.js      Saves/loads notebook sources → notebook-data/
 ├── chats.js          Saves/loads notebook chats → notebook-data/chats.json
 ├── ai.js             Sends sources + questions to Claude, formats citations
-├── pages/            HTML for each page (login, loading, dashboard, 404)
+├── pages/            HTML for each page (login, signup, loading, dashboard, 404)
 ├── public/           CSS and browser JavaScript
 │   ├── style.css       Shared look (card, buttons, inputs, spinner)
 │   ├── dashboard.css   Calendar and Add form
@@ -87,7 +94,8 @@ StudySync/
 │   ├── notebook.js     Sources, drop zone, chat and saved chats
 │   └── collapse.js     − / + collapsible sections
 ├── .vscode/launch.json  F5 run setup for VS Code
-├── .env              Your API key (you create this; never committed)
+├── .env              Your keys: Supabase, Anthropic (you create this; never committed)
+├── .env.example      Template for .env
 └── package.json      Dependencies (@anthropic-ai/sdk)
 ```
 
@@ -130,7 +138,7 @@ All `/api/` routes require being logged in.
 
 ## Good to know
 
-- **This is a learning project, not production-ready.** The login is hard-coded in `auth.js` (`admin` / `123`), everyone shares one calendar and notebook, and logins are kept in memory, so restarting the server logs you out.
+- **This is a learning project, not production-ready.** Everyone still shares one calendar and notebook; moving that data into Supabase for each user is in progress (see `TEAM_PLAN.md`).
 - **AI answers cost money.** They're billed to the API key's Anthropic account. A question about a ~20-page PDF costs roughly 10–15¢. Follow-ups on the same sources are cheaper thanks to caching. Consider setting a spending limit in the Anthropic Console.
 - **Limits:** PDFs up to 10 MB, pasted or text files up to 500,000 characters per source.
 
