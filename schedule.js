@@ -17,7 +17,7 @@ function fromRow(row) {
     name: row.name,
     location: row.location,
     days: row.days,
-    start: row.start_time,
+    start: row.start_time, // null for async classes
     end: row.end_time,
   };
 }
@@ -37,10 +37,14 @@ function validateClass(input) {
   const location = kind === "class" && typeof input.location === "string" ? input.location.trim() : "";
   const category = kind === "other" && typeof input.category === "string" ? input.category.trim() : "";
   const days = Array.isArray(input.days) ? DAY_KEYS.filter((d) => input.days.includes(d)) : [];
+  // Asynchronous classes have no set time, and days are optional
+  const isAsync = kind === "class" && input.async === true;
 
   if (!name || name.length > 60) return { error: "A name is required (60 characters max)." };
   if (kind === "other" && (!category || category.length > 30)) return { error: "Say what it is, e.g. Work (30 characters max)." };
   if (location.length > 60) return { error: "Room is 60 characters max." };
+  if (isAsync) return { value: { kind, category, name, location, days, start_time: null, end_time: null } };
+
   if (days.length === 0) return { error: "Pick at least one day." };
   if (!isTime(input.start) || !isTime(input.end)) return { error: "Enter a start and end time." };
   if (input.end <= input.start) return { error: "End time must be after the start time." };

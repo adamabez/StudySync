@@ -21,7 +21,8 @@ function getClient() {
 }
 
 function aiEnabled() {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  const key = process.env.ANTHROPIC_API_KEY || "";
+  return Boolean(key) && key !== "sk-ant-your-key-here"; // ignore the placeholder from .env.example
 }
 
 // Turn one saved source into a "document" block the AI can read and cite

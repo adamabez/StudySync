@@ -11,10 +11,22 @@
 <body>
   <div class="box wide">
     <div class="dash-header">
-      <h1>StudySync</h1>
-      <p>Welcome to your dashboard!</p>
-      <p id="logged-in-as" class="logged-in-as" hidden></p>
-      <a href="/logout">Log out</a>
+      <div class="brand">
+        <h1>StudySync</h1>
+        <p>Welcome to your dashboard!</p>
+      </div>
+      <div class="account" id="account">
+        <button type="button" class="avatar" id="account-button" aria-label="Account" aria-expanded="false" aria-controls="account-menu">
+          <span id="account-initial" aria-hidden="true">?</span>
+        </button>
+        <div class="account-menu" id="account-menu">
+          <div class="account-card">
+            <span class="account-label">Logged in as</span>
+            <span class="account-email" id="account-email">your account</span>
+            <a href="/logout" class="logout">Log out</a>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ========== Add a Class / Task / Other (collapsible) ========== -->
@@ -33,10 +45,10 @@
       <label class="name"><span id="name-label">Class name</span>
         <input id="name" maxlength="60" placeholder="e.g. Biology 101" required>
       </label>
-      <label>Starts
+      <label class="time-field">Starts
         <input id="start" type="time" required>
       </label>
-      <label>Ends
+      <label class="time-field">Ends
         <input id="end" type="time" required>
       </label>
       <!-- Only shows for classes -->
@@ -48,7 +60,7 @@
         <input id="category" maxlength="30" placeholder="e.g. Work, Gym, Club">
       </label>
       <div class="days">
-        <span>Days:</span>
+        <span id="days-label">Days:</span>
         <span class="day-chip"><input type="checkbox" id="day-mon" value="mon"><label for="day-mon">Mon</label></span>
         <span class="day-chip"><input type="checkbox" id="day-tue" value="tue"><label for="day-tue">Tue</label></span>
         <span class="day-chip"><input type="checkbox" id="day-wed" value="wed"><label for="day-wed">Wed</label></span>
@@ -56,6 +68,8 @@
         <span class="day-chip"><input type="checkbox" id="day-fri" value="fri"><label for="day-fri">Fri</label></span>
         <span class="day-chip"><input type="checkbox" id="day-sat" value="sat"><label for="day-sat">Sat</label></span>
         <span class="day-chip"><input type="checkbox" id="day-sun" value="sun"><label for="day-sun">Sun</label></span>
+        <!-- Only shows for classes -->
+        <label class="async-toggle" id="async-field"><input type="checkbox" id="async"> Asynchronous (no set time)</label>
       </div>
       <button type="submit" id="add-button">Add class</button>
       <p id="form-error" class="error"></p>
@@ -69,6 +83,11 @@
         <li><span class="swatch task"></span>Tasks</li>
         <li><span class="swatch other"></span>Other</li>
       </ul>
+    </div>
+    <!-- Async classes with no days picked show here, above the week -->
+    <div id="async-row" class="async-row" hidden>
+      <h3>Asynchronous classes</h3>
+      <div id="async-list" class="async-list"></div>
     </div>
     <div id="week" class="week"></div>
 
@@ -157,14 +176,44 @@
   <script src="/public/notebook.js"></script>
   <script src="/public/collapse.js"></script>
   <script>
-    // Show "Logged in as you@example.com" under the welcome line
+    // ---------- Account circle ----------
+    // Computers: hovering or tabbing to the circle opens the card (done in CSS).
+    // Phones: tapping the circle opens it; tapping elsewhere or pressing Escape closes it.
+    const account = document.getElementById("account");
+    const accountButton = document.getElementById("account-button");
+
+    function setAccountOpen(open) {
+      account.classList.toggle("open", open);
+      accountButton.setAttribute("aria-expanded", String(open));
+    }
+    accountButton.addEventListener("click", () => setAccountOpen(!account.classList.contains("open")));
+    document.addEventListener("click", (event) => {
+      if (!account.contains(event.target)) setAccountOpen(false);
+    });
+    // Escape closes it and puts focus back on the circle. "dismissed" keeps it closed
+    // until you tab away or move the mouse off, so it doesn't pop right back open.
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (!account.contains(document.activeElement) && !account.classList.contains("open")) return;
+      setAccountOpen(false);
+      account.classList.add("dismissed");
+      accountButton.focus();
+    });
+    account.addEventListener("focusout", (event) => {
+      if (!account.contains(event.relatedTarget)) account.classList.remove("dismissed");
+    });
+    account.addEventListener("mouseleave", () => account.classList.remove("dismissed"));
+    accountButton.addEventListener("click", () => account.classList.remove("dismissed"));
+
+    // Fill in the initial and email
     fetch("/api/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((me) => {
         if (!me || !me.email) return;
-        const line = document.getElementById("logged-in-as");
-        line.textContent = "Logged in as " + me.email;
-        line.hidden = false;
+        document.getElementById("account-initial").textContent = me.email[0].toUpperCase();
+        document.getElementById("account-email").textContent = me.email;
+        document.getElementById("account-email").title = me.email; // full address, in case it's cut off
+        accountButton.setAttribute("aria-label", "Account: " + me.email);
       })
       .catch(() => {});
   </script>
