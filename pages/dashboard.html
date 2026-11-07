@@ -13,6 +13,7 @@
     <div class="dash-header">
       <h1>StudySync</h1>
       <p>Welcome to your dashboard!</p>
+      <p id="logged-in-as" class="logged-in-as" hidden></p>
       <a href="/logout">Log out</a>
     </div>
 
@@ -155,5 +156,17 @@
   <script src="/public/dashboard.js"></script>
   <script src="/public/notebook.js"></script>
   <script src="/public/collapse.js"></script>
+  <script>
+    // Show "Logged in as you@example.com" under the welcome line
+    fetch("/api/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((me) => {
+        if (!me || !me.email) return;
+        const line = document.getElementById("logged-in-as");
+        line.textContent = "Logged in as " + me.email;
+        line.hidden = false;
+      })
+      .catch(() => {});
+  </script>
 </body>
 </html>
