@@ -1,5 +1,5 @@
 // StudySync - Virtual Notebook (runs in the browser).
-// Left side: add/organize course materials. Right side: ask Claude about them.
+// Left side: add/organize course materials. Right side: ask the AI about them.
 // Talks to the server's /api/sources and /api/notebook routes.
 
 const QUICK_PROMPTS = {
@@ -218,8 +218,8 @@ async function addSource(e) {
   }
 }
 
-// ---------- Turning Claude's answer into HTML ----------
-// Handles the simple formatting we ask Claude for: headings, lists, **bold**, *italics*,
+// ---------- Turning the AI's answer into HTML ----------
+// Handles the simple formatting we ask the AI for: headings, lists, **bold**, *italics*,
 // plus ⟦n⟧ citation markers. Everything is escaped first, so it's safe to insert.
 function renderAnswer(text, citations) {
   const byNumber = new Map(citations.map((c) => [String(c.n), c]));

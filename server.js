@@ -8,7 +8,7 @@
 //   schedule.js   → saving / loading calendar items (Supabase)
 //   materials.js  → saving / loading Virtual Notebook materials (Supabase)
 //   chats.js      → saved Virtual Notebook chats (Supabase)
-//   ai.js         → asking Claude about those materials
+//   ai.js         → asking the AI about those materials
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
 //   .env          → your secret keys: Supabase, Anthropic (never commit this!)
@@ -164,6 +164,37 @@ async function handleRequest(req, res) {
   }
 
   // Log out
+  // Forgot password: ask for the email, then Supabase emails a reset link
+  if (req.method === "GET" && url.pathname === "/forgot") {
+    return sendPage(res, "forgot.html");
+  }
+
+  if (req.method === "POST" && url.pathname === "/forgot") {
+    return readBody(req, res, 10_000, async (body) => {
+      const email = (new URLSearchParams(body).get("email") || "").trim();
+      // The link in the email comes back here. Supabase only allows addresses listed
+      // under Authentication → URL Configuration → Redirect URLs.
+      const result = await auth.sendPasswordReset(email, `http://${req.headers.host}/reset-password`);
+      redirect(res, result.error ? `/forgot?error=${result.error}` : "/forgot?sent=1");
+    });
+  }
+
+  // The reset link lands here. The page reads the login from the URL and sends it back with the new password.
+  if (req.method === "GET" && url.pathname === "/reset-password") {
+    return sendPage(res, "reset-password.html");
+  }
+
+  if (req.method === "POST" && url.pathname === "/reset-password") {
+    return readJson(req, res, 20_000, async (input) => {
+      const text = (value) => (typeof value === "string" ? value : "");
+      if (text(input.password).length < 6) return sendJson(res, { error: "weak" }, 400);
+      const result = await auth.resetPassword(text(input.accessToken), text(input.refreshToken), text(input.password));
+      if (result.error) return sendJson(res, { error: result.error }, 400);
+      res.setHeader("Set-Cookie", result.cookies);
+      sendJson(res, { ok: true });
+    });
+  }
+
   if (req.method === "GET" && url.pathname === "/logout") {
     return redirect(res, "/", { "Set-Cookie": await auth.logOut(req) });
   }
@@ -175,6 +206,11 @@ async function handleRequest(req, res) {
     // Every query below runs as the logged-in user, so they only see their own data
     const db = auth.supabaseFor(req);
     const userId = auth.getUserId(req);
+
+    // --- Who's logged in (for "Logged in as ..." on the dashboard) ---
+    if (req.method === "GET" && url.pathname === "/api/me") {
+      return sendJson(res, { email: req.user.email });
+    }
 
     // --- Class schedule ---
     if (req.method === "GET" && url.pathname === "/api/classes") {
@@ -229,7 +265,7 @@ async function handleRequest(req, res) {
       return sendJson(res, { ok: true });
     }
 
-    // --- Virtual Notebook: asking Claude ---
+    // --- Virtual Notebook: asking the AI ---
     if (req.method === "GET" && url.pathname === "/api/notebook/status") {
       return sendJson(res, { aiEnabled: ai.aiEnabled() });
     }

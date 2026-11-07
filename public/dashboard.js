@@ -28,8 +28,27 @@ function updateFormForKind() {
   document.getElementById("location-field").hidden = kind !== "class";
   document.getElementById("category-field").hidden = kind !== "other";
   document.getElementById("category").required = kind === "other";
+  document.getElementById("async-field").hidden = kind !== "class";
+  if (kind !== "class") document.getElementById("async").checked = false;
+  updateFormForAsync();
   document.getElementById("form-error").textContent = "";
 }
+
+// Async classes have no set time, and picking days is optional
+function isAsyncChosen() {
+  return document.getElementById("kind").value === "class" && document.getElementById("async").checked;
+}
+
+function updateFormForAsync() {
+  const isAsync = isAsyncChosen();
+  document.getElementById("add-form").classList.toggle("is-async", isAsync);
+  document.getElementById("start").required = !isAsync;
+  document.getElementById("end").required = !isAsync;
+  document.getElementById("days-label").textContent = isAsync ? "Days (optional):" : "Days:";
+}
+
+// Async classes have no start time
+const isAsyncItem = (item) => !item.start;
 
 // Turn "14:30" into "2:30 PM"
 function formatTime(t) {
@@ -93,7 +112,7 @@ function render() {
 
     const todays = classes
       .filter((c) => c.days.includes(key))
-      .sort((a, b) => a.start.localeCompare(b.start));
+      .sort((a, b) => (a.start || "").localeCompare(b.start || "")); // async (no time) first
 
     if (todays.length === 0) {
       const empty = document.createElement("p");
@@ -102,39 +121,49 @@ function render() {
       col.appendChild(empty);
     }
 
-    for (const c of todays) {
-      const card = document.createElement("div");
-      card.className = "class-card " + kindOf(c);
-      card.style.setProperty("--c", colorFor(c));
-
-      const name = document.createElement("strong");
-      name.textContent = c.name;
-
-      // Tasks and "other" items get a small tag so they stand out from classes
-      if (kindOf(c) !== "class") {
-        const tag = document.createElement("span");
-        tag.className = "kind-tag";
-        tag.textContent = kindOf(c) === "task" ? "Task" : c.category;
-        card.appendChild(tag);
-      }
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = formatTime(c.start) + " – " + formatTime(c.end) +
-        (c.location ? " · " + c.location : "");
-
-      const remove = document.createElement("button");
-      remove.className = "remove";
-      remove.type = "button";
-      remove.title = "Remove " + c.name;
-      remove.setAttribute("aria-label", "Remove " + c.name);
-      remove.textContent = "×";
-      remove.onclick = () => removeClass(c);
-
-      card.append(name, meta, remove);
-      col.appendChild(card);
-    }
+    for (const c of todays) col.appendChild(makeCard(c));
     week.appendChild(col);
   }
+
+  // Async classes with no days go in their own row above the week
+  const noDays = classes.filter((c) => c.days.length === 0);
+  const asyncList = document.getElementById("async-list");
+  asyncList.innerHTML = "";
+  for (const c of noDays) asyncList.appendChild(makeCard(c));
+  document.getElementById("async-row").hidden = noDays.length === 0;
+}
+
+// One item on the calendar
+function makeCard(c) {
+  const card = document.createElement("div");
+  card.className = "class-card " + kindOf(c);
+  card.style.setProperty("--c", colorFor(c));
+
+  const name = document.createElement("strong");
+  name.textContent = c.name;
+
+  // Tasks and "other" items get a small tag so they stand out from classes
+  if (kindOf(c) !== "class") {
+    const tag = document.createElement("span");
+    tag.className = "kind-tag";
+    tag.textContent = kindOf(c) === "task" ? "Task" : c.category;
+    card.appendChild(tag);
+  }
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  const when = isAsyncItem(c) ? "Asynchronous" : formatTime(c.start) + " – " + formatTime(c.end);
+  meta.textContent = when + (c.location ? " · " + c.location : "");
+
+  const remove = document.createElement("button");
+  remove.className = "remove";
+  remove.type = "button";
+  remove.title = "Remove " + c.name;
+  remove.setAttribute("aria-label", "Remove " + c.name);
+  remove.textContent = "×";
+  remove.onclick = () => removeClass(c);
+
+  card.append(name, meta, remove);
+  return card;
 }
 
 async function loadClasses() {
@@ -158,19 +187,21 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   error.textContent = "";
 
   const kind = document.getElementById("kind").value;
+  const isAsync = isAsyncChosen();
   const newClass = {
     kind,
+    async: isAsync,
     category: kind === "other" ? document.getElementById("category").value.trim() : "",
     name: document.getElementById("name").value.trim(),
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
+    start: isAsync ? null : document.getElementById("start").value,
+    end: isAsync ? null : document.getElementById("end").value,
     location: kind === "class" ? document.getElementById("location").value.trim() : "",
     days: DAYS.map(([key]) => key).filter((key) => document.getElementById("day-" + key).checked),
   };
 
   if (kind === "other" && !newClass.category) return (error.textContent = "Say what it is (e.g. Work).");
-  if (newClass.days.length === 0) return (error.textContent = "Pick at least one day.");
-  if (newClass.end <= newClass.start) return (error.textContent = "End time must be after the start time.");
+  if (!isAsync && newClass.days.length === 0) return (error.textContent = "Pick at least one day.");
+  if (!isAsync && newClass.end <= newClass.start) return (error.textContent = "End time must be after the start time.");
 
   const res = await fetch("/api/classes", {
     method: "POST",
@@ -184,10 +215,12 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   classes.push(data);
   render();
   e.target.reset();
+  updateFormForAsync(); // reset() unticks async, so bring the time fields back
   document.getElementById("name").focus();
 });
 
 document.getElementById("kind").addEventListener("change", updateFormForKind);
+document.getElementById("async").addEventListener("change", updateFormForAsync);
 updateFormForKind();
 paintColorKey();
 loadClasses();

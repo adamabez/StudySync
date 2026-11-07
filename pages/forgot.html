@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudySync – Forgot password</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <div class="box">
+    <h1>StudySync</h1>
+    <p>Forgot your password? We'll email you a link to pick a new one.</p>
+    <p id="forgot-notice" class="notice" hidden>If there's an account with that email, a reset link is on its way. Check your inbox (and spam).</p>
+    <form id="forgot-form" method="POST" action="/forgot">
+      <label>Email
+        <input name="email" type="email" autocomplete="email" required autofocus>
+      </label>
+      <p id="forgot-error" class="error" hidden></p>
+      <button type="submit">Send reset link</button>
+    </form>
+    <p class="switch"><a href="/">Back to log in</a></p>
+  </div>
+
+  <script>
+    // The server sends you back to /forgot?sent=1 or /forgot?error=<code>
+    const MESSAGES = {
+      rate: "Too many reset emails were sent recently. Wait a while and try again.",
+      email: "That email address doesn't look right.",
+      unreachable: "Couldn't reach the login service. Check your connection and try again.",
+      config: "Password reset isn't set up yet: SUPABASE_URL and SUPABASE_KEY are missing from .env.",
+    };
+    const params = new URLSearchParams(location.search);
+
+    if (params.has("sent")) {
+      document.getElementById("forgot-notice").hidden = false;
+      document.getElementById("forgot-form").hidden = true;
+    }
+    if (params.has("error")) {
+      const error = document.getElementById("forgot-error");
+      error.textContent = MESSAGES[params.get("error")] || "Something went wrong. Try again.";
+      error.hidden = false;
+    }
+  </script>
+</body>
+</html>

@@ -21,6 +21,7 @@
       <p id="login-error" class="error" hidden></p>
       <button type="submit">Log in</button>
     </form>
+    <p class="switch"><a href="/forgot">Forgot password?</a></p>
     <p class="switch">New here? <a href="/signup">Create an account</a></p>
   </div>
 
@@ -34,6 +35,11 @@
       config: "Login isn't set up yet: SUPABASE_URL and SUPABASE_KEY are missing from .env.",
       unknown: "Something went wrong. Try again.",
     };
+    // If Supabase sent a password reset link here instead of to /reset-password, pass it along
+    if (location.hash.includes("type=recovery") || location.hash.includes("error_description")) {
+      location.replace("/reset-password" + location.hash);
+    }
+
     const params = new URLSearchParams(location.search);
 
     if (params.has("error")) {

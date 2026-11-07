@@ -1,7 +1,90 @@
 /* StudySync - dashboard and weekly calendar */
 
-.dash-header { text-align: center; }
-.dash-header a { display: inline-block; margin-top: 4px; }
+/* ---------- Header: StudySync on the left, account circle on the right ---------- */
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dash-header .brand { min-width: 0; }
+.dash-header .brand p { margin: 0; }
+
+/* The account circle, and the card with your email + Log out that opens from it */
+.account { position: relative; flex: none; }
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: #2b4acb;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.avatar:hover { background: #2340b0; }
+.avatar:focus-visible { outline: 2px solid #2b4acb; outline-offset: 3px; }
+
+/* Starts closed. padding-top bridges the gap, so moving the mouse
+   from the circle down to the card doesn't close it on the way. */
+.account-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  padding-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+.account-card {
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 12px;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  text-align: left;
+}
+.account-label { display: block; font-size: 12px; color: #888; }
+.account-email {
+  display: block;
+  margin: 2px 0 10px;
+  font-size: 14px;
+  color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account .logout {
+  display: block;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #d5d9e6;
+  color: #2b4acb;
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+}
+.account .logout:hover { background: #eef1fb; }
+.account .logout:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+/* Open it: tapped open (phones), keyboard focus inside (Tab), or mouse hover (computers) */
+.account.open .account-menu,
+.account:not(.dismissed):has(:focus-visible) .account-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .account:not(.dismissed):hover .account-menu { opacity: 1; visibility: visible; transform: none; }
+}
 
 h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 
@@ -45,6 +128,40 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 .day-chip input:focus-visible + label { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
 #form-error { grid-column: 1 / -1; text-align: left; }
+
+/* "Asynchronous (no set time)" checkbox, at the end of the Days row */
+.async-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+}
+.async-toggle input { width: auto; height: auto; margin: 0; }
+.async-toggle[hidden] { display: none; }
+
+/* When async is ticked, the time fields go away and the name takes their space */
+.add-form.is-async .time-field { display: none; }
+@media (min-width: 901px) {
+  .add-form.is-async .name { grid-column: span 3; }
+}
+
+/* ---------- Async classes with no days, above the week ---------- */
+.async-row {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f7f8fc;
+  border-radius: 10px;
+}
+.async-row h3 { margin: 0 0 8px; font-size: 14px; color: #2b4acb; }
+.async-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+.async-list .class-card { margin-bottom: 0; }
 
 /* ---------- Week grid ---------- */
 .week {
@@ -164,17 +281,26 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   width: 30px;
   height: 30px;
   padding: 0;
-  font-size: 20px;
-  line-height: 1;
+  display: grid;
+  place-items: center;
   color: #2b4acb;
   background: white;
   border: 1px solid #ccd5f5;
   border-radius: 8px;
 }
 .collapse-toggle:hover { background: #eef1fc; }
+.collapse-toggle:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+/* The arrow points up when open; turns to point down when collapsed */
+.collapse-toggle svg { transition: transform 0.2s ease; }
+.collapse-toggle[aria-expanded="false"] svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .collapse-toggle svg { transition: none; }
+}
 
 /* Hidden sections stay hidden even if their own CSS sets display (like the notebook's grid) */
 .collapse-body[hidden] { display: none !important; }
 
 /* The notebook filter only matters when the notebook is open */
 .section-head.is-collapsed .nb-filter { display: none; }
+

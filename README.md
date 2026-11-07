@@ -2,7 +2,7 @@
 
 A study dashboard for students. Plan your week, then study your course materials with an AI notebook that answers from *your* notes, with citations.
 
-Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI answers use the [Claude API](https://platform.claude.com/docs).
+Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI answers use the [Anthropic API](https://docs.anthropic.com).
 
 ## Features
 
@@ -23,7 +23,7 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 - **Saved chats**: start a new chat any time, switch between chats from the dropdown, or delete them.
 
 **Less clutter**
-- The Add section and the Virtual Notebook collapse with **−** and expand with **+**. The page remembers your choice.
+- The Add section and the Virtual Notebook collapse and expand with the arrow button. The page remembers your choice.
 - The layout adapts to phone screens.
 
 ## Getting started
@@ -85,7 +85,7 @@ StudySync/
 ├── materials.js      Saves/loads notebook sources → Supabase "sources" table + Storage
 ├── chats.js          Saves/loads notebook chats → Supabase "chats" table
 ├── supabase/schema.sql  Creates the tables and security rules (run once in Supabase)
-├── ai.js             Sends sources + questions to Claude, formats citations
+├── ai.js             Sends sources + questions to the AI, formats citations
 ├── pages/            HTML for each page (login, signup, loading, dashboard, 404)
 ├── public/           CSS and browser JavaScript
 │   ├── style.css       Shared look (card, buttons, inputs, spinner)
@@ -93,7 +93,7 @@ StudySync/
 │   ├── dashboard.js    Calendar logic and colors (COLOR_FAMILIES)
 │   ├── notebook.css    Virtual Notebook
 │   ├── notebook.js     Sources, drop zone, chat and saved chats
-│   └── collapse.js     − / + collapsible sections
+│   └── collapse.js     Collapsible sections (arrow button)
 ├── .vscode/launch.json  F5 run setup for VS Code
 ├── .env              Your keys: Supabase, Anthropic (you create this; never committed)
 ├── .env.example      Template for .env
@@ -117,7 +117,7 @@ Which sections are collapsed and which chat was last open are stored in your bro
 
 - **Calendar colors:** edit `COLOR_FAMILIES` at the top of `public/dashboard.js`. It's the only place colors are set; the cards and the color key both read from it. Hues: 0 red · 60 yellow · 120 green · 200 blue · 270 purple · 330 pink.
 - **Loading screen time:** `LOADING_TIME_MS` in `pages/loading.html`.
-- **AI model and answer depth:** `MODEL` and `effort` in `ai.js`. It defaults to Claude Opus 5.5 at `medium` effort.
+- **AI model and answer depth:** `MODEL` and `effort` in `ai.js`. It defaults to the most capable model at `medium` effort.
 - **AI instructions:** `SYSTEM_PROMPT` in `ai.js`.
 - **Quick buttons (Summarize, Quiz me…):** `QUICK_PROMPTS` in `public/notebook.js`.
 - **Make another section collapsible:** see the comment at the top of `public/collapse.js`.
@@ -133,7 +133,7 @@ All `/api/` routes require being logged in.
 | GET / POST | `/api/sources` | List / add notebook sources |
 | DELETE | `/api/sources/:id` | Remove a source |
 | GET | `/api/notebook/status` | Whether AI answers are on |
-| POST | `/api/notebook/ask` | Ask Claude (starts or continues a chat) |
+| POST | `/api/notebook/ask` | Ask the AI (starts or continues a chat) |
 | GET | `/api/chats` | List saved chats |
 | GET / DELETE | `/api/chats/:id` | Open / delete a chat |
 

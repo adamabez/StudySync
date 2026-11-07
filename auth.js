@@ -106,6 +106,40 @@ async function signUp(email, password) {
   return { cookies: sessionCookies(data.session) };
 }
 
+// ---------- Forgot password ----------
+//
+// 1. sendPasswordReset() asks Supabase to email a reset link.
+// 2. The link brings the user back to /reset-password with a short-lived login
+//    in the URL (after the #, so only the browser sees it).
+// 3. The page sends that login + the new password to resetPassword(), which
+//    changes the password and logs the user in.
+
+// Returns {} when the email was sent (or the address has no account; we don't
+// say which, so nobody can use this to find out who has an account), or { error }.
+async function sendPasswordReset(email, redirectTo) {
+  if (!isConfigured()) return { error: "config" };
+  const { error } = await safely(() => newClient().auth.resetPasswordForEmail(email, { redirectTo }));
+  if (error) {
+    const code = errorCode(error);
+    if (code === "rate" || code === "email" || code === "unreachable") return { error: code };
+  }
+  return {};
+}
+
+// Returns { cookies } on success, or { error: "<code>" }
+async function resetPassword(accessToken, refreshToken, password) {
+  if (!isConfigured()) return { error: "config" };
+  const client = newClient();
+  const session = await safely(() => client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }));
+  if (session.error || !session.data.session) return { error: "expired" };
+
+  const { error } = await safely(() => client.auth.updateUser({ password }));
+  if (error) return { error: error.code === "same_password" ? "same" : errorCode(error) };
+
+  const { data } = await client.auth.getSession();
+  return { cookies: sessionCookies(data.session) };
+}
+
 // Returns cookies that clear the session. Also tells Supabase to end it.
 async function logOut(req) {
   const accessToken = readCookie(req, ACCESS_COOKIE);
@@ -199,4 +233,4 @@ function supabaseFor(req) {
   return newClient(req.accessToken);
 }
 
-module.exports = { isConfigured, logIn, signUp, logOut, loadUser, getUserId, isLoggedIn, supabaseFor };
+module.exports = { isConfigured, logIn, signUp, logOut, sendPasswordReset, resetPassword, loadUser, getUserId, isLoggedIn, supabaseFor };

@@ -4,7 +4,7 @@
 //
 // Each chat looks like:
 //   { id, title, createdAt, updatedAt, messages: [
-//       { role: "user", label, question },          ← label = what the bubble shows, question = what Claude got
+//       { role: "user", label, question },          ← label = what the bubble shows, question = what the AI got
 //       { role: "assistant", answer, citations },
 //   ] }
 //
@@ -12,7 +12,7 @@
 // for the logged-in user, from auth.supabaseFor(req). Row Level Security means
 // each user only ever sees and changes their own chats.
 
-const MAX_TURNS_SENT = 20; // how many earlier questions + answers Claude sees as context
+const MAX_TURNS_SENT = 20; // how many earlier questions + answers the AI sees as context
 
 function fromRow(row) {
   return { id: row.id, title: row.title, createdAt: row.created_at, updatedAt: row.updated_at, messages: row.messages };
@@ -35,7 +35,7 @@ async function getChat(db, id) {
   return data ? fromRow(data) : null;
 }
 
-// The conversation so far, in the shape Claude expects (most recent turns only)
+// The conversation so far, in the shape the AI expects (most recent turns only)
 function historyFor(chat) {
   return chat.messages.slice(-MAX_TURNS_SENT * 2).map((m) =>
     m.role === "user"

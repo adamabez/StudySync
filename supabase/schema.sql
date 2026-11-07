@@ -16,8 +16,8 @@ create table if not exists public.classes (
   name        text not null,
   location    text not null default '',          -- room, for classes
   days        text[] not null,                   -- e.g. {mon,wed,fri}
-  start_time  text not null,                     -- "09:00"
-  end_time    text not null,                     -- "10:15"
+  start_time  text,                              -- "09:00", or null for async classes
+  end_time    text,                              -- "10:15", or null for async classes
   created_at  timestamptz not null default now()
 );
 
@@ -52,6 +52,10 @@ create table if not exists public.canvas_connections (
   access_token  text not null,                   -- only ever read by the server
   created_at    timestamptz not null default now()
 );
+
+-- Async classes have no set time (for projects created before this was allowed)
+alter table public.classes alter column start_time drop not null;
+alter table public.classes alter column end_time drop not null;
 
 -- Speed up "my rows" lookups
 create index if not exists classes_user_id_idx on public.classes (user_id);
