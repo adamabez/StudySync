@@ -29,7 +29,7 @@ function updateForm() {
   const isClass = kind === "class";
   $("add-form").dataset.kind = kind;
   $("name-label").textContent = isClass ? "Class name" : "Name";
-  $("name").placeholder = isClass ? "e.g. Biology 101" : "e.g. Shift at the café";
+  $("name").placeholder = isClass ? "Search, e.g. CSC 20 or Biology" : "e.g. Shift at the café";
   $("add-button").textContent = isClass ? "Add class" : "Add";
   $("location-field").hidden = !isClass;
   $("category-field").hidden = isClass;
@@ -98,6 +98,9 @@ $("add-form").addEventListener("submit", async (event) => {
     async: isAsyncChosen(),
     days: [...document.querySelectorAll(".days .day-chip input:checked")].map((box) => box.value),
   };
+  // Picked a section from the class schedule? The server saves its real times (and any second time block)
+  const section = kind === "class" && window.coursePicker ? window.coursePicker.sectionFor(body.name) : "";
+  if (section) body.section = section;
   const res = await fetch("/api/classes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -108,7 +111,8 @@ $("add-form").addEventListener("submit", async (event) => {
     $("form-error").textContent = data.error || "Couldn't save that. Try again.";
     return;
   }
-  items.push(data);
+  const { extra = [], ...saved } = data; // extra: the section's other time blocks, also saved
+  items.push(saved, ...extra);
   renderList();
   // Clear the name (keep the days and times: the next class is often similar)
   $("name").value = "";

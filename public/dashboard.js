@@ -11,7 +11,7 @@ let editingId = null; // the item being edited in the form (pencil → Edit), or
 
 // What the "Add a…" dropdown changes for each choice
 const KINDS = {
-  class: { nameLabel: "Class name", placeholder: "e.g. Biology 101", button: "Add class" },
+  class: { nameLabel: "Class name", placeholder: "Search, e.g. CSC 20 or Biology", button: "Add class" },
   task: { nameLabel: "Task", placeholder: "e.g. Finish lab report", button: "Add task" },
   other: { nameLabel: "Name", placeholder: "e.g. Shift at the café", button: "Add" },
 };
@@ -387,6 +387,9 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
     location: kind === "class" ? document.getElementById("location").value.trim() : "",
     days: DAYS.map(([key]) => key).filter((key) => document.getElementById("day-" + key).checked),
   };
+  // Picked a section from the class schedule? The server saves its real times (and any second time block)
+  const section = !editingId && kind === "class" && window.coursePicker ? window.coursePicker.sectionFor(newClass.name) : "";
+  if (section) newClass.section = section;
 
   if (kind === "other" && !newClass.category) return (error.textContent = "Say what it is (e.g. Work).");
   if (!isAsync && newClass.days.length === 0) return (error.textContent = "Pick at least one day.");
@@ -410,7 +413,8 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
     return;
   }
 
-  classes.push(data);
+  const { extra = [], ...saved } = data; // extra: the section's other time blocks, also saved
+  classes.push(saved, ...extra);
   render();
   loadStudyTimes();
   e.target.reset();

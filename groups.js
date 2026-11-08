@@ -58,6 +58,14 @@ async function listMyGroups(db, userId) {
 }
 
 
+// Each of the student's classes and whether they're in a group for it yet:
+// [{ courseKey, label, hasGroup }]. The landing page lists the ones still waiting.
+async function listClassGroups(db) {
+  const { data, error } = await db.rpc("my_class_groups");
+  if (error) throw error;
+  return data.map((row) => ({ courseKey: row.course_key, label: row.label, hasGroup: row.has_group }));
+}
+
 // ---------- One group's page: details + shared notes ----------
 
 // The group with this ID, or null if it doesn't exist or the student isn't in it
@@ -117,6 +125,6 @@ async function removeNote(db, groupId, noteId) {
 }
 
 module.exports = {
-  match, matchQuietly, listMyGroups, getGroup, memberForBrowser,
+  match, matchQuietly, listMyGroups, listClassGroups, getGroup, memberForBrowser,
   listNotes, addNote, removeNote,
 };

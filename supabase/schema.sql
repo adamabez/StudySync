@@ -21,6 +21,26 @@ create table if not exists public.classes (
   created_at  timestamptz not null default now()
 );
 
+-- ---------- Course catalog (Sac State) ----------
+-- Every course at the school, so students pick their classes from a list and students in
+-- the same class always match. Filled by supabase/courses.sql (made by
+-- scripts/import-courses.js from the public catalog). Cross-listed courses (EEE 64 and
+-- CPE 64) share a match_key, so their students are grouped together.
+create table if not exists public.courses (
+  code       text primary key,                   -- "CSC 20"
+  subject    text not null,                      -- "CSC"
+  number     text not null,                      -- "20"
+  title      text not null,                      -- "Programming Concepts and Methodology II"
+  units      text not null default '',
+  match_key  text not null                       -- same for cross-listed courses
+);
+create index if not exists courses_match_key_idx on public.courses (match_key);
+
+-- Which catalog course a class is (null for classes not in the catalog, and for work etc.)
+alter table public.classes add column if not exists course_code text references public.courses (code) on update cascade on delete set null;
+-- Which section ("02"), when picked from Sac State's class schedule
+alter table public.classes add column if not exists section text check (char_length(section) <= 10);
+
 -- ---------- Virtual Notebook sources ----------
 -- Pasted text and .txt/.md files are stored in text_content.
 -- PDFs are stored in the "sources" Storage bucket at <user_id>/<source id>.pdf.
@@ -144,6 +164,14 @@ alter table public.profiles           enable row level security;
 alter table public.study_groups       enable row level security;
 alter table public.group_members      enable row level security;
 alter table public.group_notes        enable row level security;
+alter table public.courses            enable row level security;
+
+-- The catalog is public information: any logged-in student can read it, nobody can change it
+-- from the app (it's loaded with supabase/courses.sql in the SQL Editor).
+drop policy if exists "Everyone reads courses" on public.courses;
+create policy "Everyone reads courses" on public.courses
+  for select to authenticated
+  using (true);
 
 drop policy if exists "Own profile" on public.profiles;
 create policy "Own profile" on public.profiles
@@ -240,152 +268,262 @@ begin
 end;
 $$;
 
--- Put the logged-in student in a study group if they want one. Runs whenever they open
--- the landing page, finish setup, or change their schedule. Returns their group's ID,
--- or null if nobody's schedule fits yet (they'll be matched when someone's does).
+-- ---------- Which class is which ----------
+-- A class's "course key" decides who it's grouped with. Picked from the catalog → the
+-- course's match_key (so EEE 64 and CPE 64 match). Typed by hand → cleaned up and looked up
+-- in the catalog anyway: spacing, capitals and section numbers are ignored, so
+-- "csc20", "CSC 20-01" and "CSC 20" are all CSC 20. Not in the catalog at all → the cleaned
+-- name, so students who type the same thing still match.
+
+-- "csc20 - 01" → "CSC 20";  "EEE / CPE 64-02, 03" → "EEE 64";  "Biology 101" → "BIOLOGY 101"
+create or replace function public.normalize_course(p_name text)
+returns text
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  s text := upper(regexp_replace(btrim(coalesce(p_name, '')), '\s+', ' ', 'g'));
+  m text[];
+begin
+  m := regexp_match(s, '^([A-Z&]{1,8})(?: ?/ ?[A-Z&]{1,8})* ?([0-9]{1,3}[A-Z]{0,3})(?: ?-.*| SEC.*| \(.*)?$');
+  if m is not null then return m[1] || ' ' || m[2]; end if;
+  return s;
+end;
+$$;
+
+create or replace function public.course_key(p_course_code text, p_name text)
+returns text
+language sql stable set search_path = ''
+as $$
+  select coalesce(
+    (select match_key from public.courses where code = p_course_code),
+    (select match_key from public.courses where code = public.normalize_course(p_name)),
+    public.normalize_course(p_name)
+  );
+$$;
+
+-- How a course key is shown: "CSC 20", or "CPE 64 / EEE 64" for cross-listed courses
+create or replace function public.course_label(p_key text)
+returns text
+language sql stable set search_path = ''
+as $$
+  select coalesce(
+    (select string_agg(code, ' / ' order by code) from public.courses where match_key = p_key),
+    p_key
+  );
+$$;
+
+-- Do this student's study groups (other than p_except) leave this time free?
+-- Only used inside match_study_group.
+create or replace function public.user_groups_free(p_user uuid, p_days text[], p_start text, p_end text, p_except uuid)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select not exists (
+    select 1 from public.group_members m
+    join public.study_groups sg on sg.id = m.group_id
+    where m.user_id = p_user
+      and sg.id is distinct from p_except
+      and sg.days && p_days
+      and sg.start_time < p_end
+      and p_start < sg.end_time
+  );
+$$;
+
+-- Put the logged-in student in a study group for EACH of their classes, if they want groups.
+-- Runs whenever they open the landing page, finish setup, or change their schedule.
+-- Returns how many groups they're in afterwards.
 --
 -- How it decides:
---   0. Not looking for a group (prefers studying alone)? Leave any group, stop.
---   1. In a group that now clashes with your schedule? Leave it.
---   2. Already in a group with other people? Done. The only one left in your group
---      (everyone else left)? Move to another group that fits if there is one, so lone
---      one-person groups don't pile up; your notes come with you.
---   3. Join a group with room (fewer than 4) that meets when you're free. A group for
---      a class only takes students in that class. Your-class groups first, then the fullest.
---   4. Find another waiting student with a reasonable free 90-minute slot in common, and
---      start a group for the two of you. Reasonable = weekdays between 9 AM and 9 PM,
---      weekends between 10 AM and 6 PM. Students in the same class first; afternoons and
---      weekdays before mornings and weekends. At most 26 groups per class (Group A–Z):
---      after that, students join existing groups instead of starting new ones.
---   5. Nobody fits: wait. No group is made just to have one.
-create or replace function public.match_study_group()
-returns uuid
+--   0. Not looking for groups (prefers studying alone)? Leave every group, stop.
+--   1. Leave groups that clash with your schedule now, or for a class you dropped.
+--   Then for each of your classes:
+--   2. Already in a group for it with other people? Done. The only one left in it? Move
+--      to another group for that class if one fits (your notes come with you).
+--   3. Join a group for that class with room (fewer than 4) that meets when you're free
+--      and doesn't clash with your other groups. Fullest first.
+--   4. Find another student in that class who wants a group and isn't in one for it, with
+--      a reasonable free 90-minute slot in common (weekdays 9 AM – 9 PM, weekends
+--      10 AM – 6 PM) that clashes with neither student's classes nor other groups, and start
+--      a group for the two of you. Afternoons and weekdays first. At most 26 groups per
+--      class (Group A–Z): after that, students join existing groups instead.
+--   5. Nobody fits yet: wait. You'll be matched when someone's schedule fits.
+drop function if exists public.match_study_group();
+create function public.match_study_group()
+returns integer
 language plpgsql security definer set search_path = ''
 as $$
 declare
-  uid       uuid := auth.uid();
+  uid         uuid := auth.uid();
   max_size    constant int := 4;
   max_groups  constant int := 26;  -- per class: Group A to Group Z
+  wants       boolean;
   g           record;
+  k           record;
   gid         uuid;
-  alone_gid   uuid;                -- your group, if you're the only one left in it
+  alone_gid   uuid;                -- your group for this class, if you're the only one left in it
   partner     record;
+  in_groups   int := 0;
 begin
   if uid is null then raise exception 'Not logged in'; end if;
   -- One match at a time, so two students loading the page together don't both start a group
   perform pg_advisory_xact_lock(hashtext('studysync_group_matching'));
 
-  -- 0 + 1. Leave groups you no longer want or that clash with your schedule
+  wants := exists (select 1 from public.profiles where user_id = uid and study_preference = 'group');
+
+  -- 0 + 1. Leave groups you no longer want, that clash with your schedule, or whose class you dropped
   for g in
-    select sg.id, sg.days, sg.start_time, sg.end_time
+    select sg.id, sg.course, sg.days, sg.start_time, sg.end_time
     from public.study_groups sg join public.group_members m on m.group_id = sg.id
     where m.user_id = uid
   loop
-    if not exists (select 1 from public.profiles where user_id = uid and study_preference = 'group')
-       or not public.user_is_free(uid, g.days, g.start_time, g.end_time) then
+    if not wants
+       or not public.user_is_free(uid, g.days, g.start_time, g.end_time)
+       or (g.course <> '' and not exists (
+             select 1 from public.classes c
+             where c.user_id = uid and c.kind = 'class' and public.course_key(c.course_code, c.name) = g.course))
+    then
       delete from public.group_members where group_id = g.id and user_id = uid;
       delete from public.study_groups sg
       where sg.id = g.id and not exists (select 1 from public.group_members m where m.group_id = sg.id);
     end if;
   end loop;
 
-  if not exists (select 1 from public.profiles where user_id = uid and study_preference = 'group') then
-    return null;
-  end if;
+  if not wants then return 0; end if;
 
-  -- 2. Already in a group (with other people: done; on your own: try to move, below)
-  select m.group_id into gid from public.group_members m where m.user_id = uid limit 1;
-  if gid is not null then
-    if (select count(*) from public.group_members m where m.group_id = gid) > 1 then
-      return gid;
-    end if;
-    alone_gid := gid;
+  -- Groups from before one-group-per-class with no class ("General") still count, but no new ones are made
+  in_groups := (select count(*) from public.group_members m join public.study_groups sg on sg.id = m.group_id
+                where m.user_id = uid and sg.course = '');
+
+  for k in
+    select distinct public.course_key(c.course_code, c.name) as key
+    from public.classes c
+    where c.user_id = uid and c.kind = 'class' and btrim(c.name) <> ''
+  loop
     gid := null;
-  end if;
+    alone_gid := null;
 
-  -- 3. Join an existing group that fits (not the one you're alone in)
-  select sg.id into gid
-  from public.study_groups sg
-  cross join lateral (select count(*) as n from public.group_members m where m.group_id = sg.id) size
-  cross join lateral (
-    select exists (
-      select 1 from public.classes c
-      where c.user_id = uid and c.kind = 'class' and lower(btrim(c.name)) = lower(btrim(sg.course))
-    ) as mine
-  ) shares
-  where size.n < max_size
-    and sg.id is distinct from alone_gid
-    and (sg.course = '' or shares.mine)
-    and public.user_is_free(uid, sg.days, sg.start_time, sg.end_time)
-  order by shares.mine desc, size.n desc, sg.created_at
-  limit 1;
-
-  if gid is not null then
-    if alone_gid is not null then
-      -- Moving out of a group you were alone in: bring your notes, then remove the empty group
-      update public.group_notes set group_id = gid where group_id = alone_gid;
-      delete from public.group_members where group_id = alone_gid and user_id = uid;
-      delete from public.study_groups where id = alone_gid;
+    -- 2. Already in a group for this class?
+    select m.group_id into gid
+    from public.group_members m join public.study_groups sg on sg.id = m.group_id
+    where m.user_id = uid and sg.course = k.key
+    limit 1;
+    if gid is not null then
+      if (select count(*) from public.group_members m where m.group_id = gid) > 1 then
+        in_groups := in_groups + 1;
+        continue;
+      end if;
+      alone_gid := gid;
+      gid := null;
     end if;
-    insert into public.group_members (group_id, user_id) values (gid, uid);
-    return gid;
-  end if;
 
-  -- Alone in your group and nothing better fits: stay put (new students who fit will join you)
-  if alone_gid is not null then return alone_gid; end if;
+    -- 3. Join an existing group for this class that fits
+    select sg.id into gid
+    from public.study_groups sg
+    cross join lateral (select count(*) as n from public.group_members m where m.group_id = sg.id) size
+    where sg.course = k.key
+      and size.n < max_size
+      and sg.id is distinct from alone_gid
+      and public.user_is_free(uid, sg.days, sg.start_time, sg.end_time)
+      and public.user_groups_free(uid, sg.days, sg.start_time, sg.end_time, alone_gid)
+    order by size.n desc, sg.created_at
+    limit 1;
 
-  -- 4. Start a new group with another waiting student, at a reasonable time:
-  --    weekdays 9 AM – 9 PM, weekends 10 AM – 6 PM (90-minute sessions)
-  with slots as (
-    select d.day_key, d.ord,
-           to_char(t, 'HH24:MI') as start_t,
-           to_char(t + interval '90 minutes', 'HH24:MI') as end_t
-    from unnest(array['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']) with ordinality as d(day_key, ord)
-    cross join generate_series(timestamp '2000-01-01 09:00', timestamp '2000-01-01 19:30', interval '30 minutes') as t
-    where (d.ord <= 5) or (t >= timestamp '2000-01-01 10:00' and t <= timestamp '2000-01-01 16:30')
-  )
-  select p.user_id as other_id, s.day_key, s.start_t, s.end_t, shared.course
-  into partner
-  from public.profiles p
-  left join lateral (
-    select min(c1.name) as course
-    from public.classes c1
-    join public.classes c2 on lower(btrim(c1.name)) = lower(btrim(c2.name))
-    where c1.user_id = uid and c2.user_id = p.user_id and c1.kind = 'class' and c2.kind = 'class'
-  ) shared on true
-  cross join slots s
-  where p.user_id <> uid
-    and p.study_preference = 'group'
-    and p.onboarded_at is not null
-    and not exists (select 1 from public.group_members m where m.user_id = p.user_id)
-    -- this class (or "General") doesn't already have Group A–Z
-    and (select count(*) from public.study_groups sg
-         where lower(btrim(sg.course)) = lower(btrim(coalesce(shared.course, '')))) < max_groups
-    and public.user_is_free(uid, array[s.day_key], s.start_t, s.end_t)
-    and public.user_is_free(p.user_id, array[s.day_key], s.start_t, s.end_t)
-  order by (shared.course is not null) desc,
-           case when s.start_t between '15:00' and '19:00' then 0 when s.start_t >= '12:00' then 1 else 2 end,
-           s.ord > 5,
-           s.ord,
-           s.start_t,
-           p.onboarded_at
-  limit 1;
+    if gid is not null then
+      if alone_gid is not null then
+        -- Moving out of a group you were alone in: bring your notes, then remove the empty group
+        update public.group_notes set group_id = gid where group_id = alone_gid;
+        delete from public.group_members where group_id = alone_gid and user_id = uid;
+        delete from public.study_groups where id = alone_gid;
+      end if;
+      insert into public.group_members (group_id, user_id) values (gid, uid);
+      in_groups := in_groups + 1;
+      continue;
+    end if;
 
-  if not found then return null; end if; -- 5. nobody fits yet
+    -- Alone in your group and nothing better fits: stay put (new students who fit will join you)
+    if alone_gid is not null then
+      in_groups := in_groups + 1;
+      continue;
+    end if;
 
-  insert into public.study_groups (name, course, days, start_time, end_time, created_by)
-  values (
-    public.next_group_name(partner.course),
-    coalesce(btrim(partner.course), ''),
-    array[partner.day_key], partner.start_t, partner.end_t, uid
-  )
-  returning id into gid;
+    -- This class already has Group A–Z: only join existing groups
+    if (select count(*) from public.study_groups sg where sg.course = k.key) >= max_groups then
+      continue;
+    end if;
 
-  insert into public.group_members (group_id, user_id) values (gid, uid), (gid, partner.other_id);
+    -- 4. Start a new group with another student in this class, at a reasonable time
+    with slots as (
+      select d.day_key, d.ord,
+             to_char(t, 'HH24:MI') as start_t,
+             to_char(t + interval '90 minutes', 'HH24:MI') as end_t
+      from unnest(array['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']) with ordinality as d(day_key, ord)
+      cross join generate_series(timestamp '2000-01-01 09:00', timestamp '2000-01-01 19:30', interval '30 minutes') as t
+      where (d.ord <= 5) or (t >= timestamp '2000-01-01 10:00' and t <= timestamp '2000-01-01 16:30')
+    )
+    select p.user_id as other_id, s.day_key, s.start_t, s.end_t
+    into partner
+    from public.profiles p
+    cross join slots s
+    where p.user_id <> uid
+      and p.study_preference = 'group'
+      and p.onboarded_at is not null
+      and exists (
+        select 1 from public.classes c2
+        where c2.user_id = p.user_id and c2.kind = 'class' and public.course_key(c2.course_code, c2.name) = k.key)
+      and not exists (
+        select 1 from public.group_members m join public.study_groups sg on sg.id = m.group_id
+        where m.user_id = p.user_id and sg.course = k.key)
+      and public.user_is_free(uid, array[s.day_key], s.start_t, s.end_t)
+      and public.user_groups_free(uid, array[s.day_key], s.start_t, s.end_t, null)
+      and public.user_is_free(p.user_id, array[s.day_key], s.start_t, s.end_t)
+      and public.user_groups_free(p.user_id, array[s.day_key], s.start_t, s.end_t, null)
+    order by case when s.start_t between '15:00' and '19:00' then 0 when s.start_t >= '12:00' then 1 else 2 end,
+             s.ord > 5,
+             s.ord,
+             s.start_t,
+             p.onboarded_at
+    limit 1;
 
-  return gid;
+    if not found then continue; end if; -- 5. nobody fits yet for this class
+
+    insert into public.study_groups (name, course, days, start_time, end_time, created_by)
+    values (public.next_group_name(public.course_label(k.key)), k.key, array[partner.day_key], partner.start_t, partner.end_t, uid)
+    returning id into gid;
+
+    insert into public.group_members (group_id, user_id) values (gid, uid), (gid, partner.other_id);
+    in_groups := in_groups + 1;
+  end loop;
+
+  return in_groups;
 end;
 $$;
+
+-- For the landing page: each of your classes, and whether you're in a group for it yet
+-- (runs as you, so it only sees your classes and your groups)
+create or replace function public.my_class_groups()
+returns table (course_key text, label text, has_group boolean)
+language sql stable set search_path = ''
+as $$
+  select k.key, public.course_label(k.key),
+         exists (select 1 from public.study_groups sg where sg.course = k.key) -- RLS: only groups you're in
+  from (
+    select distinct public.course_key(c.course_code, c.name) as key
+    from public.classes c
+    where c.user_id = (select auth.uid()) and c.kind = 'class' and btrim(c.name) <> ''
+  ) k
+  order by 2;
+$$;
+
+-- Classes added before the catalog: link them to their catalog course, and use course keys
+-- for existing groups. (Run again after loading supabase/courses.sql; courses.sql does this too.)
+update public.classes c
+set course_code = co.code
+from public.courses co
+where c.kind = 'class' and c.course_code is null and co.code = public.normalize_course(c.name);
+
+update public.study_groups
+set course = public.course_key(null, course)
+where course <> '' and course is distinct from public.course_key(null, course);
 
 -- The names of a group's members, for members of that group only. Profiles are private
 -- (each student only reads their own), so this hands out just the name: the one set in
@@ -423,14 +561,24 @@ begin
 end;
 $$;
 
--- Students can call match_study_group (for themselves) and is_group_member (used by the policies).
--- user_is_free and next_group_name are internal only.
+-- Students can call match_study_group (for themselves), my_class_groups, is_group_member (used
+-- by the policies) and the course helpers. user_is_free, user_groups_free and next_group_name
+-- are internal only, so nobody can peek at other students' schedules or groups.
 revoke execute on function public.is_group_member(uuid) from public, anon;
 revoke execute on function public.user_is_free(uuid, text[], text, text) from public, anon, authenticated;
+revoke execute on function public.user_groups_free(uuid, text[], text, text, uuid) from public, anon, authenticated;
 revoke execute on function public.next_group_name(text) from public, anon, authenticated;
 revoke execute on function public.match_study_group() from public, anon;
+revoke execute on function public.my_class_groups() from public, anon;
+revoke execute on function public.normalize_course(text) from public, anon;
+revoke execute on function public.course_key(text, text) from public, anon;
+revoke execute on function public.course_label(text) from public, anon;
 grant execute on function public.is_group_member(uuid) to authenticated;
 grant execute on function public.match_study_group() to authenticated;
+grant execute on function public.my_class_groups() to authenticated;
+grant execute on function public.normalize_course(text) to authenticated;
+grant execute on function public.course_key(text, text) to authenticated;
+grant execute on function public.course_label(text) to authenticated;
 
 -- Insert only: no select/update/delete policy, so users can't read anyone's reports (even their own)
 drop policy if exists "Send feedback" on public.feedback;

@@ -5,6 +5,9 @@
 // from auth.supabaseFor(req). Row Level Security means each user only ever
 // sees and changes their own items.
 
+const courses = require("./courses");
+const sections = require("./sections");
+
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const KINDS = ["class", "task", "other"]; // what can go on the calendar
 const isTime = (t) => typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t); // "09:00"
@@ -16,6 +19,8 @@ function fromRow(row) {
     kind: row.kind,
     category: row.category,
     name: row.name,
+    courseCode: row.course_code || null, // the catalog course, e.g. "CSC 20" (classes only)
+    section: row.section || null,        // e.g. "02", when picked from the class schedule
     location: row.location,
     days: row.days,
     start: row.start_time, // null for async classes
@@ -52,20 +57,85 @@ function validateClass(input) {
   return { value: { kind, category, name, location, days, start_time: input.start, end_time: input.end } };
 }
 
+// A class that's in the Sac State catalog gets linked to it (course_code) and named by its
+// code, so "csc20" and "CSC 20-01" both become CSC 20 and match the same students.
+// Classes not in the catalog keep the typed name. Work, tasks etc. are left alone.
+async function linkCourse(db, row) {
+  let course;
+  try {
+    if (row.kind !== "class") return { ...row, course_code: null };
+    course = await courses.findCourse(db, row.name);
+  } catch (error) {
+    // Usually: the courses table isn't there yet (run supabase/schema.sql). Save it unlinked.
+    console.error("Couldn't look up the course catalog (run supabase/schema.sql?):", error.message || error);
+    return row;
+  }
+  return course ? { ...row, name: course.code, course_code: course.code } : { ...row, course_code: null };
+}
+
 // Validate and save a new item. Returns { value } on success or { error } if something's wrong.
+// A class with a `section` picked from the class schedule ("02") is saved with that section's
+// real days, times and room; a section that meets at two different times becomes two items,
+// returned as { value: first, extra: [the rest] }.
 async function addClass(db, input) {
+  const picked = await sectionBlocks(input);
+  if (picked) return addSectionBlocks(db, input, picked);
+
   const result = validateClass(input);
   if (result.error) return result;
-  const { data, error } = await db.from("classes").insert(result.value).select().single();
+  return { value: await insertRow(db, await linkCourse(db, result.value)) };
+}
+
+// The picked section's time blocks, or null (no section picked, or the schedule can't be reached:
+// then the times the student sees in the form are saved as usual)
+async function sectionBlocks(input) {
+  const id = typeof input.section === "string" ? input.section.trim() : "";
+  if (input.kind !== "class" || !/^[A-Za-z0-9]{1,10}$/.test(id)) return null;
+  try {
+    const code = courses.normalizeCourse(input.name);
+    const { sections: list } = await sections.getSections(code);
+    const section = list.find((s) => s.id === id);
+    return section ? { code, section } : null;
+  } catch (error) {
+    console.error("Class schedule lookup failed, saving the form's times instead:", error.message || error);
+    return null;
+  }
+}
+
+async function addSectionBlocks(db, input, { section }) {
+  const base = { ...input, kind: "class", category: "" };
+  // No set time at all (fully online): an asynchronous class
+  const blocks = section.blocks.length
+    ? section.blocks.map((b) => ({ ...base, async: false, days: b.days, start: b.start, end: b.end, location: b.where || base.location }))
+    : [{ ...base, async: true, days: [], start: null, end: null }];
+
+  const saved = [];
+  for (const block of blocks) {
+    const result = validateClass(block);
+    if (result.error) return saved.length ? { value: saved[0], extra: saved.slice(1) } : result;
+    saved.push(await insertRow(db, { ...(await linkCourse(db, result.value)), section: section.id }));
+  }
+  return { value: saved[0], extra: saved.slice(1) };
+}
+
+// Insert one row. If the database doesn't have the section column yet (schema.sql not re-run),
+// save it without the section rather than failing.
+async function insertRow(db, row) {
+  let { data, error } = await db.from("classes").insert(row).select().single();
+  if (error && "section" in row && /section/.test(error.message || "")) {
+    console.error("classes.section is missing (run supabase/schema.sql again); saving without it.");
+    const { section, ...withoutSection } = row;
+    ({ data, error } = await db.from("classes").insert(withoutSection).select().single());
+  }
   if (error) throw error;
-  return { value: fromRow(data) };
+  return fromRow(data);
 }
 
 // Validate and save changes to an existing item. Returns { value }, { error }, or { notFound: true }.
 async function updateClass(db, id, input) {
   const result = validateClass(input);
   if (result.error) return result;
-  const { data, error } = await db.from("classes").update(result.value).eq("id", id).select().maybeSingle();
+  const { data, error } = await db.from("classes").update(await linkCourse(db, result.value)).eq("id", id).select().maybeSingle();
   if (error) throw error;
   if (!data) return { notFound: true }; // deleted already, or not this user's
   return { value: fromRow(data) };

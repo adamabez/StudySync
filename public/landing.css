@@ -229,6 +229,9 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 .note-card .meta { color: #666; font-size: 13px; }
 .note-body { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #333; }
 
+/* "Still looking for study partners in ..." under the group cards */
+.still-looking { margin: 12px 0 0; padding: 10px 12px; background: #f3f5fd; border-radius: 8px; color: #444; font-size: 14px; }
+
 /* "You're one of the first..." */
 .waiting-box {
   padding: 16px 18px;
