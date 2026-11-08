@@ -101,49 +101,60 @@
     </form>
     </div>
 
-    <!-- ========== Virtual Notebook (collapsible) ========== -->
+    <!-- ========== Course materials + Virtual Notebook (collapsible) ========== -->
     <div class="section-head nb-heading">
-      <h2>Add Course Material ~ Virtual Notebook</h2>
-      <div class="section-tools">
-        <label class="nb-filter">Notebook
-          <select id="nb-course"><option value="">All courses</option></select>
-        </label>
-        <button type="button" class="collapse-toggle" data-target="notebook-body" data-name="Virtual Notebook"></button>
+      <div class="nb-title">
+        <h2>Course materials</h2>
+        <p class="nb-subtitle">Your notes, readings and PDFs, plus an AI that answers from them.</p>
       </div>
+      <button type="button" class="collapse-toggle" data-target="notebook-body" data-name="Course materials"></button>
     </div>
 
-    <div id="notebook-body" class="notebook collapse-body">
-      <!-- Left: sources -->
-      <section class="nb-panel nb-sources" aria-labelledby="sources-title">
-        <h3 id="sources-title">Sources</h3>
+    <div id="notebook-body" class="collapse-body">
+      <!-- Filled in by notebook.js: All courses / one chip per course -->
+      <div id="nb-courses" class="nb-courses" role="group" aria-label="Show materials for" hidden></div>
 
-        <form id="source-form" class="source-form">
+      <div class="notebook">
+      <!-- Left: materials -->
+      <section class="nb-panel nb-sources" aria-labelledby="sources-title">
+        <div class="nb-panel-head">
+          <h3 id="sources-title">Materials <span id="source-count" class="nb-count"></span></h3>
+          <button type="button" id="source-open" class="add-open">+ Add</button>
+        </div>
+
+        <form id="source-form" class="source-form" hidden>
           <div class="nb-tabs" role="tablist">
-            <button type="button" class="nb-tab active" data-mode="paste" role="tab" aria-selected="true">Paste text</button>
-            <button type="button" class="nb-tab" data-mode="file" role="tab" aria-selected="false">Upload file</button>
+            <button type="button" class="nb-tab active" data-mode="file" role="tab" aria-selected="true">Upload a file</button>
+            <button type="button" class="nb-tab" data-mode="paste" role="tab" aria-selected="false">Paste text</button>
           </div>
 
-          <label>Title
-            <input id="source-title" maxlength="120" placeholder="e.g. Chapter 3 – Cell Biology">
-          </label>
-          <label>Course
-            <select id="source-course"></select>
-          </label>
-
-          <label id="paste-field">Notes or text
-            <textarea id="source-text" rows="5" placeholder="Paste lecture notes, a reading, slides text…"></textarea>
-          </label>
-          <label id="file-field" class="drop-zone" hidden>
+          <label id="file-field" class="drop-zone">
             <input id="source-file" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown">
             <span class="drop-icon" aria-hidden="true">⬆</span>
             <span id="drop-text" class="drop-text"><strong>Drop a file here</strong> or click to choose one</span>
             <span class="drop-hint">PDF, .txt or .md · PDFs up to 10 MB</span>
           </label>
+          <label id="paste-field" hidden>Notes or text
+            <textarea id="source-text" rows="5" placeholder="Paste lecture notes, a reading, slides text…"></textarea>
+          </label>
 
-          <button type="submit" id="source-submit">Add source</button>
+          <div class="nb-form-row">
+            <label>Title
+              <input id="source-title" maxlength="120" placeholder="e.g. Chapter 3 – Cell Biology">
+            </label>
+            <label>Course
+              <select id="source-course"></select>
+            </label>
+          </div>
+
           <p id="source-error" class="error"></p>
+          <div class="nb-form-actions">
+            <button type="button" id="source-cancel" class="link-button">Cancel</button>
+            <button type="submit" id="source-submit">Add material</button>
+          </div>
         </form>
 
+        <p id="source-pick" class="nb-pick" hidden></p>
         <ul id="source-list" class="source-list"></ul>
       </section>
 
@@ -159,10 +170,13 @@
         </div>
 
         <div id="ai-off" class="ai-off" hidden>
-          <strong>AI answers are off.</strong>
-          <p>To turn them on, create a file named <code>.env</code> in your StudySync folder containing
-            <code>ANTHROPIC_API_KEY=your-key-here</code>, then restart the server.
-            You can still add and organize sources in the meantime.</p>
+          <strong>AI answers aren't turned on yet.</strong>
+          <p>You can still add and organize your materials, and they'll be ready to ask about once it's on.</p>
+          <details>
+            <summary>Setting up StudySync?</summary>
+            <p>Create a file named <code>.env</code> in your StudySync folder containing
+              <code>ANTHROPIC_API_KEY=your-key-here</code>, then restart the server.</p>
+          </details>
         </div>
 
         <div class="nb-actions">
@@ -179,6 +193,7 @@
           <button type="submit" id="ask-button">Ask</button>
         </form>
       </section>
+      </div>
     </div>
 
     <!-- ========== Footer: feedback / bug reports ========== -->

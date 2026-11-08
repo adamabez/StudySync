@@ -1,5 +1,6 @@
-// StudySync - Virtual Notebook (runs in the browser).
-// Left side: add/organize course materials. Right side: ask the AI about them.
+// StudySync - Course materials + Virtual Notebook (runs in the browser).
+// Left side: the student's materials (notes, readings, PDFs), with "+ Add" to add more.
+// Right side: ask the AI about the ticked materials. Course chips on top filter both.
 // Talks to the server's /api/sources and /api/notebook routes.
 
 const QUICK_PROMPTS = {
@@ -21,7 +22,8 @@ const nb = {
   chatId: null,         // the chat on screen (null = a new chat that isn't saved yet)
   aiEnabled: false,
   busy: false,
-  mode: "paste",        // "paste" or "file"
+  mode: "file",         // "file" or "paste"
+  justAdded: null,      // id of the material just added, to highlight it once
 };
 
 const $ = (id) => document.getElementById(id);
@@ -30,6 +32,11 @@ const $ = (id) => document.getElementById(id);
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (ch) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+}
+
+function formatDate(iso) {
+  const date = new Date(iso);
+  return isNaN(date) ? "" : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function formatSize(source) {
@@ -62,67 +69,148 @@ function selectedSources() {
   return visibleSources().filter((s) => !nb.unchecked.has(s.id));
 }
 
-// ---------- Course dropdowns ----------
+// ---------- Courses: filter chips + the picker in the Add form ----------
+function courseNames() {
+  return [...new Set([...nb.courses, ...nb.sources.map((s) => s.course).filter(Boolean)])].sort();
+}
+
 function renderCourseOptions() {
-  const names = [...new Set([...nb.courses, ...nb.sources.map((s) => s.course).filter(Boolean)])].sort();
+  const names = courseNames();
+  if (nb.course && !names.includes(nb.course)) nb.course = ""; // that course is gone
+  if (names.length < 2) nb.course = "";                       // nothing to filter between
 
-  const filter = $("nb-course");
-  filter.innerHTML = '<option value="">All courses</option>' +
-    names.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
-  filter.value = nb.course;
-  if (filter.value !== nb.course) nb.course = filter.value = ""; // that notebook no longer exists
+  // Chips: "All courses 5", "Biology 2", ... (only worth showing with 2+ courses)
+  const row = $("nb-courses");
+  row.innerHTML = "";
+  row.hidden = names.length < 2;
+  for (const value of ["", ...names]) {
+    const count = value ? nb.sources.filter((s) => s.course === value).length : nb.sources.length;
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "nb-course-chip";
+    chip.setAttribute("aria-pressed", String(value === nb.course));
+    chip.innerHTML = `${escapeHtml(value || "All courses")}<span class="chip-count">${count}</span>`;
+    chip.onclick = () => {
+      nb.course = value;
+      renderCourseOptions(); // new materials default to the course you're viewing
+      renderSources();
+    };
+    row.appendChild(chip);
+  }
 
-  // Course picker for new sources: only real courses (no "General")
+  // Course picker for new materials
   const picker = $("source-course");
   const keep = picker.value;
-  picker.innerHTML = names.length
-    ? names.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("")
-    : '<option value="" disabled selected>Add a class to the calendar first</option>';
+  picker.innerHTML = names.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
   if (names.length) picker.value = names.includes(nb.course) ? nb.course : names.includes(keep) ? keep : names[0];
 }
 
-// ---------- Source list ----------
+// ---------- Materials list ----------
 function renderSources() {
   const list = $("source-list");
   const shown = visibleSources();
   list.innerHTML = "";
+  $("source-count").textContent = shown.length || "";
 
-  if (shown.length === 0) {
-    list.innerHTML = '<li class="nb-empty">No sources here yet. Add notes or a PDF above.</li>';
+  if (shown.length === 0) list.appendChild(emptyState());
+
+  // Under "All courses", group by course (newest first inside each course)
+  const grouped = nb.course === "" && new Set(shown.map((s) => s.course)).size > 1;
+  const ordered = [...shown].sort((a, b) =>
+    (grouped ? (a.course || "").localeCompare(b.course || "") : 0) || String(b.addedAt).localeCompare(String(a.addedAt)));
+
+  let lastCourse = null;
+  for (const s of ordered) {
+    if (grouped && s.course !== lastCourse) {
+      lastCourse = s.course;
+      const heading = document.createElement("li");
+      heading.className = "source-group";
+      heading.textContent = s.course || "General";
+      list.appendChild(heading);
+    }
+    list.appendChild(sourceItem(s));
   }
-
-  for (const s of shown) {
-    const li = document.createElement("li");
-    li.className = "source-item";
-
-    const box = document.createElement("input");
-    box.type = "checkbox";
-    box.checked = !nb.unchecked.has(s.id);
-    box.id = "src-" + s.id;
-    box.onchange = () => {
-      box.checked ? nb.unchecked.delete(s.id) : nb.unchecked.add(s.id);
-      updateAskState();
-    };
-
-    const label = document.createElement("label");
-    label.htmlFor = box.id;
-    label.innerHTML =
-      `<span class="file-badge ${s.type}">${s.type === "pdf" ? "PDF" : "TXT"}</span>` +
-      `<span class="source-text"><strong>${escapeHtml(s.title)}</strong>` +
-      `<small>${escapeHtml(s.course || "General")} · ${formatSize(s)}</small></span>`;
-
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "remove";
-    remove.textContent = "×";
-    remove.title = "Remove " + s.title;
-    remove.setAttribute("aria-label", "Remove " + s.title);
-    remove.onclick = () => removeSource(s);
-
-    li.append(box, label, remove);
-    list.appendChild(li);
-  }
+  nb.justAdded = null;
   updateAskState();
+}
+
+function sourceItem(s) {
+  const li = document.createElement("li");
+  li.className = "source-item" + (s.id === nb.justAdded ? " just-added" : "");
+
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = !nb.unchecked.has(s.id);
+  box.id = "src-" + s.id;
+  box.onchange = () => {
+    box.checked ? nb.unchecked.delete(s.id) : nb.unchecked.add(s.id);
+    li.classList.toggle("unticked", !box.checked);
+    updateAskState();
+  };
+  li.classList.toggle("unticked", !box.checked);
+
+  const details = [formatSize(s), s.addedAt ? "added " + formatDate(s.addedAt) : ""].filter(Boolean).join(" · ");
+  const label = document.createElement("label");
+  label.htmlFor = box.id;
+  label.innerHTML =
+    `<span class="file-badge ${s.type}">${s.type === "pdf" ? "PDF" : "TXT"}</span>` +
+    `<span class="source-text"><strong title="${escapeHtml(s.title)}">${escapeHtml(s.title)}</strong>` +
+    `<small>${escapeHtml(details)}</small></span>`;
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "remove";
+  remove.textContent = "×";
+  remove.title = "Remove " + s.title;
+  remove.setAttribute("aria-label", "Remove " + s.title);
+  remove.onclick = () => removeSource(s);
+
+  li.append(box, label, remove);
+  return li;
+}
+
+// What shows when there's nothing in the list yet
+function emptyState() {
+  const li = document.createElement("li");
+  li.className = "nb-empty-state";
+  const hasCourses = courseNames().length > 0;
+  const title = !hasCourses ? "Start with a class"
+    : nb.course ? `No materials for ${nb.course} yet` : "No materials yet";
+  const text = hasCourses
+    ? "Add lecture notes, a reading or a PDF, then ask the AI about it."
+    : "Add a class to your week first, then add its notes and readings here.";
+  li.innerHTML = `<span class="nb-empty-icon" aria-hidden="true">📚</span>` +
+    `<strong>${escapeHtml(title)}</strong><span>${text}</span>`;
+  if ($("source-form").hidden) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = hasCourses ? "+ Add material" : "+ Add a class";
+    button.onclick = openSourceForm;
+    li.appendChild(button);
+  }
+  return li;
+}
+
+// "Using 3 of 4 · Use all" above the list
+function updatePickLine() {
+  const line = $("source-pick");
+  const shown = visibleSources();
+  const using = selectedSources().length;
+  line.hidden = shown.length < 2;
+  if (using === shown.length) {
+    line.textContent = "The AI answers from the ticked materials. Untick any to leave them out.";
+    return;
+  }
+  line.textContent = `Using ${using} of ${shown.length} in answers · `;
+  const all = document.createElement("button");
+  all.type = "button";
+  all.className = "link-button";
+  all.textContent = "Use all";
+  all.onclick = () => {
+    shown.forEach((s) => nb.unchecked.delete(s.id));
+    renderSources();
+  };
+  line.appendChild(all);
 }
 
 async function removeSource(s) {
@@ -138,7 +226,27 @@ async function removeSource(s) {
   }
 }
 
-// ---------- Adding a source ----------
+// ---------- Adding a material ----------
+function openSourceForm() {
+  if (courseNames().length === 0) {
+    // Materials belong to a course, so send them to "Add to your week" first
+    document.getElementById("add-open")?.click();
+    return;
+  }
+  $("source-form").hidden = false;
+  $("source-open").hidden = true;
+  renderSources(); // drops the button from the empty message
+  document.querySelector(".nb-tab.active").focus();
+}
+
+function closeSourceForm() {
+  $("source-form").reset();
+  $("source-form").hidden = true;
+  $("source-open").hidden = false;
+  $("source-error").textContent = "";
+  renderSources();
+}
+
 function setMode(mode) {
   nb.mode = mode;
   document.querySelectorAll(".nb-tab").forEach((tab) => {
@@ -168,7 +276,7 @@ async function addSource(e) {
 
   let title = $("source-title").value.trim();
   const body = { course: $("source-course").value };
-  if (!body.course) return (error.textContent = "Pick a course. If the list is empty, add a class to the calendar first.");
+  if (!body.course) return (error.textContent = "Pick a course for it.");
 
   try {
     if (nb.mode === "paste") {
@@ -206,15 +314,15 @@ async function addSource(e) {
     });
 
     nb.sources.push(saved);
-    e.target.reset();
+    nb.justAdded = saved.id;
+    if (nb.course && nb.course !== saved.course) nb.course = saved.course; // show where it went
     renderCourseOptions();
-    $("source-course").value = saved.course;
-    renderSources();
+    closeSourceForm();
   } catch (err) {
     error.textContent = err.message;
   } finally {
     button.disabled = false;
-    button.textContent = "Add source";
+    button.textContent = "Add material";
   }
 }
 
@@ -303,8 +411,9 @@ function newChat() {
   nb.chatId = null;
   rememberChat(null);
   $("chat-log").innerHTML =
-    '<p class="nb-empty">Tick the sources you want to use, then ask a question or tap a button above. ' +
-    "Every chat is saved, so you can switch back to it from the menu above.</p>";
+    '<p class="nb-empty"><span class="nb-empty-icon" aria-hidden="true">💬</span>' +
+    "Ask anything about your ticked materials, or tap a button above to get started.<br>" +
+    "Chats are saved, so you can come back to them from the menu.</p>";
   renderChatPicker();
 }
 
@@ -339,14 +448,15 @@ async function deleteCurrentChat() {
 }
 
 function updateAskState() {
+  updatePickLine();
   const ready = nb.aiEnabled && !nb.busy && selectedSources().length > 0;
   $("ask-button").disabled = !ready;
   document.querySelectorAll(".chip-button").forEach((b) => (b.disabled = !ready));
   $("question").placeholder = !nb.aiEnabled
     ? "AI answers are off — see the note above."
     : selectedSources().length === 0
-      ? "Add or tick a source to start asking…"
-      : `Ask about ${selectedSources().length} source${selectedSources().length === 1 ? "" : "s"}…`;
+      ? "Add or tick a material to start asking…"
+      : `Ask about ${selectedSources().length} material${selectedSources().length === 1 ? "" : "s"}…`;
 }
 
 // label = what shows in the chat bubble (quick buttons show their name, not the full prompt)
@@ -360,7 +470,7 @@ async function ask(question, label = question) {
   updateAskState();
   $("chat-picker").disabled = $("new-chat").disabled = $("delete-chat").disabled = true; // don't switch mid-answer
   addBubble("user", `<p>${escapeHtml(label.trim())}</p>`);
-  const pending = addBubble("assistant", '<p class="thinking"><span class="dot-spinner"></span>Reading your sources…</p>');
+  const pending = addBubble("assistant", '<p class="thinking"><span class="dot-spinner"></span>Reading your materials…</p>');
 
   try {
     const result = await api("/api/notebook/ask", {
@@ -440,9 +550,11 @@ dropZone.addEventListener("drop", (e) => {
   showChosenFile();
 });
 
-// Dragging a file onto the Sources panel while on "Paste text" switches to "Upload file"
+// Dragging a file onto the Materials panel opens the Add form on "Upload a file"
 document.querySelector(".nb-sources").addEventListener("dragenter", (e) => {
-  if (nb.mode !== "file" && e.dataTransfer.types.includes("Files")) setMode("file");
+  if (!e.dataTransfer.types.includes("Files") || courseNames().length === 0) return;
+  if ($("source-form").hidden) openSourceForm();
+  if (nb.mode !== "file") setMode("file");
 });
 
 // Stop the browser from opening a file that misses the drop zone (which would leave the app)
@@ -453,12 +565,9 @@ document.querySelector(".nb-sources").addEventListener("dragenter", (e) => {
 // ---------- Wiring it all up ----------
 document.querySelectorAll(".nb-tab").forEach((tab) => (tab.onclick = () => setMode(tab.dataset.mode)));
 $("source-form").addEventListener("submit", addSource);
-
-$("nb-course").addEventListener("change", (e) => {
-  nb.course = e.target.value;
-  renderCourseOptions(); // new sources default to the notebook you're viewing
-  renderSources();
-});
+$("source-open").onclick = openSourceForm;
+$("source-cancel").onclick = closeSourceForm;
+$("source-form").addEventListener("keydown", (e) => { if (e.key === "Escape") closeSourceForm(); });
 
 $("ask-form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -484,6 +593,7 @@ $("chat-picker").addEventListener("change", (e) => (e.target.value ? openChat(e.
 document.addEventListener("classes-changed", (e) => {
   nb.courses = e.detail.map((c) => c.name);
   renderCourseOptions();
+  renderSources(); // e.g. "Start with a class" changes once there's a class
 });
 
 async function startNotebook() {
