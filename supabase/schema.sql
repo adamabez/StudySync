@@ -482,3 +482,23 @@ drop policy if exists "Own source files: delete" on storage.objects;
 create policy "Own source files: delete" on storage.objects
   for delete to authenticated
   using (bucket_id = 'sources' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- ---------- Canvas Calendar Feed (for schools like Sac State that block student access tokens) ----------
+-- A student can connect with their Canvas Calendar Feed link instead of a token. The feed has
+-- due dates but not submissions, so students tick off finished work (homework_done).
+alter table public.canvas_connections add column if not exists feed_url text;   -- server-only, like the token
+alter table public.canvas_connections alter column access_token drop not null;  -- null when using the feed
+
+create table if not exists public.homework_done (
+  user_id        uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  assignment_id  text not null,                    -- Canvas assignment ID from the feed
+  done_at        timestamptz not null default now(),
+  primary key (user_id, assignment_id)
+);
+alter table public.homework_done enable row level security;
+
+drop policy if exists "Own homework check-offs" on public.homework_done;
+create policy "Own homework check-offs" on public.homework_done
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));

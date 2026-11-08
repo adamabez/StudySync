@@ -22,6 +22,11 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 - One-tap **Summarize**, **Study guide**, **Quiz me** and **Key terms**.
 - **Saved chats**: start a new chat any time, switch between chats from the dropdown, or delete them.
 
+**Homework from Canvas**
+- Link your Canvas account with your school's Canvas address and a personal access token (Canvas → Account → Settings → Approved Integrations → **+ New Access Token**).
+- See your **Missing**, **Upcoming** and **Completed** homework, with scores, in three columns. Each one links to the assignment in Canvas. Work due within 2 days is highlighted.
+- The token stays on the server and is never sent back to the browser. **Unlink** removes it.
+
 **Less clutter**
 - The Add section and the Virtual Notebook collapse and expand with the arrow button. The page remembers your choice.
 - The layout adapts to phone screens.
@@ -94,6 +99,8 @@ StudySync/
 │   ├── dashboard.js    Calendar logic and colors (COLOR_FAMILIES)
 │   ├── notebook.css    Virtual Notebook
 │   ├── notebook.js     Sources, drop zone, chat and saved chats
+│   ├── canvas.css      Homework section (Canvas)
+│   ├── canvas.js       Connect Canvas form, missing / upcoming / completed homework
 │   └── collapse.js     Collapsible sections (arrow button)
 ├── .vscode/launch.json  F5 run setup for VS Code
 ├── .env              Your keys: Supabase, Anthropic (you create this; never committed)
@@ -137,9 +144,10 @@ All `/api/` routes require being logged in.
 | POST | `/api/notebook/ask` | Ask the AI (starts or continues a chat) |
 | GET | `/api/chats` | List saved chats |
 | GET / DELETE | `/api/chats/:id` | Open / delete a chat |
-| POST / DELETE | `/api/canvas/connect` | Link Canvas (`{ canvasUrl, token }`, checked with Canvas first) / unlink it |
-| GET | `/api/canvas/status` | `{ connected, canvasUrl }` (never the token) |
+| POST / DELETE | `/api/canvas/connect` | Link Canvas with `{ feedUrl }` (Calendar Feed) or `{ canvasUrl, token }`, checked with Canvas first / unlink it |
+| GET | `/api/canvas/status` | `{ connected, canvasUrl, mode }`, mode is `feed` or `token` (never the link or token) |
 | GET | `/api/canvas/assignments` | Homework sorted into `missing`, `completed` and `upcoming` |
+| POST | `/api/canvas/done` | Calendar Feed only: tick an assignment off, `{ id, done }` |
 
 ## Good to know
 

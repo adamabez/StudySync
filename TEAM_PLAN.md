@@ -7,7 +7,7 @@ How we're splitting the work. Each person owns different files, so we shouldn't 
 | Person | Area | Status |
 |---|---|---|
 | Anthony | Supabase, login, per-student data | ✅ Done and merged into `main` |
-| Gurkirat | Canvas integration | ✅ Done on the `canvas` branch: `canvas.js` + the `/api/canvas/...` routes. Adam can switch the homework panel from fake data to the real routes |
+| Gurkirat | Canvas integration | ✅ Done and merged into `main`: `canvas.js`, the `/api/canvas/...` routes, and the Homework section on the dashboard |
 | Adam | Frontend, night mode, deploy, demo | ⏳ Not on `main` yet |
 
 ## Where things stand
@@ -66,6 +66,10 @@ The login and the `canvas_connections` table are ready, so this can use real use
   - Send the token as the header `Authorization: Bearer <token>`. Canvas splits long lists into pages, so follow the `Link` header to get every page.
 - [x] Sort assignments into **missing**, **completed** (submitted or graded) and **upcoming**
 - [x] Add the routes listed under "Shared interfaces"
+- [x] Homework section on the dashboard (`public/canvas.js`, `public/canvas.css`): Connect Canvas form, then Missing / Upcoming / Completed columns with Refresh and Unlink. Built by Gurkirat so Adam doesn't need to.
+- [x] **Sac State doesn't let students make access tokens**, so students can connect with their Canvas **Calendar Feed** link instead (Canvas → Calendar → Calendar Feed). The feed has every assignment and due date but not submissions, so students tick off finished work: past due and not ticked = Missing. Needs the new `feed_url` column and `homework_done` table at the end of `supabase/schema.sql`.
+- [ ] Run the new end of `supabase/schema.sql` in the Supabase SQL Editor
+- [ ] Test with a real Canvas Calendar Feed before the demo
 
 Notes for Adam:
 - If the saved token stops working, `/api/canvas/assignments` answers **409** with `{ error, reconnect: true }` (not 401, which means "not logged in"). Show the Connect Canvas form again.
@@ -79,8 +83,7 @@ Notes for Adam:
 The dashboard changed a lot (account circle, async classes, arrow buttons), so pull `main` before starting night mode.
 
 - [ ] Night mode (dark theme) with a toggle that the browser remembers
-- [ ] A "Connect Canvas" form (Canvas URL + token) and a homework panel showing missing and completed assignments
-- [ ] Until Gurkirat's routes are ready, build the panel from fake data shaped like the example under "Shared interfaces"
+- [x] A "Connect Canvas" form (Canvas URL + token) and a homework panel showing missing and completed assignments (Gurkirat built it: the Homework section in `pages/dashboard.html`. Restyle it freely for night mode.)
 - [ ] Polish the UI and check it on phone screens
 - [ ] Switch `MODEL` in `ai.js` to a cheaper model to cut costs, and set a spend limit on the team's Anthropic API key
 - [ ] Deploy the app so judges can open a link (Render or Railway both run a plain Node server)
