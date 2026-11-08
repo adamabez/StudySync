@@ -107,6 +107,10 @@
 .setup-actions button { padding: 12px 32px; }
 .setup-actions button:disabled { opacity: 0.6; cursor: default; }
 
+/* "Skip for now" next to Finish on the setup screen (first time only) */
+.setup-actions .skip-button { background: #fff; color: #2b4acb; border: 1px solid #c9d1ef; }
+.setup-actions .skip-button:hover { background: #eef1fb; }
+
 /* Weekly study goal options (reuse the day-chip pill look) */
 .hours-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .hours-custom { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
