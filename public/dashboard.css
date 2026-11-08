@@ -8,6 +8,18 @@
   gap: 16px;
 }
 .dash-header .brand { min-width: 0; }
+/* "← Home" back to the landing page, next to the account circle */
+.home-link {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.home-link:hover { background: #eef1fb; }
+.home-link:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 .dash-header .brand p { margin: 0; }
 
 /* The account circle, and the card with your email + Log out that opens from it */
@@ -203,7 +215,18 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   text-align: center;
 }
 .day-col.today h3::after { content: " · Today"; font-weight: normal; color: #666; }
-.empty { color: #999; font-size: 13px; text-align: center; margin: 20px 0 0; }
+/* Empty day: a soft, friendly note instead of a gray "nothing" */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 16px 0 0;
+  color: #8a93b0;
+  font-size: 13px;
+  text-align: center;
+}
+.empty-icon { font-size: 20px; opacity: 0.85; }
 
 /* One class on the calendar */
 .class-card {
@@ -320,8 +343,11 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 }
 
 /* ---------- Color key next to "Your week" ---------- */
-.week-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
-.legend { display: flex; gap: 14px; list-style: none; margin: 0 0 12px; padding: 0; font-size: 13px; color: #555; }
+.week-title { display: flex; align-items: center; gap: 12px; }
+.week-title h2 { margin: 0; }
+.add-open { padding: 6px 14px; font-size: 14px; border-radius: 999px; }
+.week-heading { margin: 24px 0 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; list-style: none; margin: 0; padding: 0; font-size: 13px; color: #555; }
 .legend li { display: flex; align-items: center; gap: 6px; }
 .swatch { width: 18px; height: 10px; border-radius: 3px; }
 /* Swatch colors are filled in by dashboard.js from COLOR_FAMILIES */
@@ -402,3 +428,46 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 .feedback-thanks { text-align: center; }
 .feedback-thanks p { margin: 8px 0 20px; }
 .feedback-thanks button { padding: 11px 24px; }
+
+/* ---------- Study times on the calendar (planned for you, read-only) ---------- */
+/* A warm gradient card with a sparkle badge, so it's obvious StudySync planned it */
+.class-card.study-time {
+  --c: #f0a020;
+  padding-right: 28px;
+  background: linear-gradient(135deg, #fff7e6 0%, #fff1f6 100%);
+  border: 1px solid #f6d48f;
+  border-left: 4px solid var(--c);
+  box-shadow: 0 2px 8px rgba(240, 160, 32, 0.25);
+}
+.class-card.study-time .kind-tag { color: #8a5a00; background: #fde3a7; }
+.study-sparkle {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 16px;
+  line-height: 1;
+  color: #f0a020;
+  text-shadow: 0 0 6px rgba(240, 160, 32, 0.6);
+  animation: sparkle 2.4s ease-in-out infinite;
+}
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.25) rotate(20deg); opacity: 0.8; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .study-sparkle { animation: none; }
+}
+
+/* Color key entry */
+.legend-study { font-weight: 600; color: #8a5a00; }
+.study-sparkle-inline { color: #f0a020; font-size: 14px; text-shadow: 0 0 6px rgba(240, 160, 32, 0.6); }
+
+/* Text only screen readers hear */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

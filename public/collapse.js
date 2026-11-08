@@ -4,27 +4,32 @@
 //   <button type="button" class="collapse-toggle" data-target="ID-OF-SECTION-BODY" data-name="My section"></button>
 // and give the part you want to hide that id plus class="collapse-body".
 //
-// Your choice is remembered in this browser, so collapsed sections stay collapsed after a refresh.
+// Add data-default="collapsed" to the button for a section that should start collapsed.
+//
+// Your choice is remembered in this browser, so sections stay the way you left them after a refresh.
 
-const COLLAPSE_STORAGE_KEY = "studysync-collapsed";
+const COLLAPSE_STORAGE_KEY = "studysync-collapsed"; // sections you collapsed (that start open)
+const EXPAND_STORAGE_KEY = "studysync-expanded";    // sections you opened (that start collapsed)
 
-function loadCollapsed() {
+function loadSet(key) {
   try {
-    return new Set(JSON.parse(localStorage.getItem(COLLAPSE_STORAGE_KEY)) || []);
+    return new Set(JSON.parse(localStorage.getItem(key)) || []);
   } catch {
-    return new Set(); // storage blocked or empty → everything starts open
+    return new Set(); // storage blocked or empty → every section starts its default way
   }
 }
 
-function saveCollapsed(collapsed) {
+function saveSet(key, set) {
   try {
-    localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify([...collapsed]));
+    localStorage.setItem(key, JSON.stringify([...set]));
   } catch {
     // storage blocked (e.g. private window) → it just won't be remembered
   }
 }
 
-const collapsedSections = loadCollapsed();
+const collapsedSections = loadSet(COLLAPSE_STORAGE_KEY);
+const expandedSections = loadSet(EXPAND_STORAGE_KEY);
+const startsCollapsed = (button) => button.dataset.default === "collapsed";
 
 // The arrow inside each button. It points up; CSS turns it to point down when collapsed.
 const ARROW_SVG =
@@ -43,13 +48,20 @@ function setCollapsed(button, collapsed) {
   button.title = collapsed ? "Expand" : "Collapse";
   button.closest(".section-head")?.classList.toggle("is-collapsed", collapsed);
 
-  collapsed ? collapsedSections.add(body.id) : collapsedSections.delete(body.id);
-  saveCollapsed(collapsedSections);
+  // Remember only the difference from the section's default
+  if (startsCollapsed(button)) {
+    collapsed ? expandedSections.delete(body.id) : expandedSections.add(body.id);
+    saveSet(EXPAND_STORAGE_KEY, expandedSections);
+  } else {
+    collapsed ? collapsedSections.add(body.id) : collapsedSections.delete(body.id);
+    saveSet(COLLAPSE_STORAGE_KEY, collapsedSections);
+  }
 }
 
 document.querySelectorAll(".collapse-toggle").forEach((button) => {
   button.innerHTML = ARROW_SVG;
-  setCollapsed(button, collapsedSections.has(button.dataset.target));
+  const id = button.dataset.target;
+  setCollapsed(button, startsCollapsed(button) ? !expandedSections.has(id) : collapsedSections.has(id));
   button.addEventListener("click", () => {
     setCollapsed(button, button.getAttribute("aria-expanded") === "true");
   });

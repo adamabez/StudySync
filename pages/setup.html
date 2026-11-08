@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudySync – Set up your week</title>
+  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/dashboard.css">
+  <link rel="stylesheet" href="/public/landing.css">
+</head>
+<body>
+  <div class="box wide">
+    <header class="page-head">
+      <div>
+        <h1>Welcome to StudySync!</h1>
+        <p>Two quick steps and we'll plan your study time around your week.</p>
+      </div>
+      <a href="/logout" class="head-link">Log out</a>
+    </header>
+
+    <!-- ========== Step 1: schedule ========== -->
+    <section class="step">
+      <h2><span class="step-number">1</span> Add your schedule</h2>
+      <p class="hint">Add your classes, plus work, practice or anything else that fills your week. You can change these any time.</p>
+
+      <div class="segmented" role="radiogroup" aria-label="What are you adding?">
+        <label><input type="radio" name="kind" value="class" checked> Class</label>
+        <label><input type="radio" name="kind" value="other"> Work, club or other</label>
+      </div>
+
+      <form id="add-form" class="add-form" data-kind="class">
+        <label class="name"><span id="name-label">Class name</span>
+          <input id="name" maxlength="60" placeholder="e.g. Biology 101" required>
+        </label>
+        <label class="time-field">Starts
+          <input id="start" type="time" required>
+        </label>
+        <label class="time-field">Ends
+          <input id="end" type="time" required>
+        </label>
+        <label class="location" id="location-field">Room (optional)
+          <input id="location" maxlength="60" placeholder="e.g. Science Hall 204">
+        </label>
+        <label class="category" id="category-field" hidden>What is it?
+          <input id="category" maxlength="30" placeholder="e.g. Work, Gym, Club">
+        </label>
+        <div class="days">
+          <span id="days-label">Days:</span>
+          <span class="day-chip"><input type="checkbox" id="day-mon" value="mon"><label for="day-mon">Mon</label></span>
+          <span class="day-chip"><input type="checkbox" id="day-tue" value="tue"><label for="day-tue">Tue</label></span>
+          <span class="day-chip"><input type="checkbox" id="day-wed" value="wed"><label for="day-wed">Wed</label></span>
+          <span class="day-chip"><input type="checkbox" id="day-thu" value="thu"><label for="day-thu">Thu</label></span>
+          <span class="day-chip"><input type="checkbox" id="day-fri" value="fri"><label for="day-fri">Fri</label></span>
+          <span class="day-chip"><input type="checkbox" id="day-sat" value="sat"><label for="day-sat">Sat</label></span>
+          <span class="day-chip"><input type="checkbox" id="day-sun" value="sun"><label for="day-sun">Sun</label></span>
+          <label class="async-toggle" id="async-field"><input type="checkbox" id="async"> Asynchronous (no set time)</label>
+        </div>
+        <button type="submit" id="add-button">Add class</button>
+        <p id="form-error" class="error"></p>
+      </form>
+
+      <ul id="added-list" class="added-list" aria-label="Your schedule"></ul>
+    </section>
+
+    <!-- ========== Step 2: study alone or in a group? ========== -->
+    <section class="step">
+      <h2><span class="step-number">2</span> How do you like to study?</h2>
+      <div class="choice-cards" role="radiogroup" aria-label="How do you like to study?">
+        <label class="choice-card">
+          <input type="radio" name="preference" value="alone">
+          <strong>On my own</strong>
+          <span>We'll find the free times in your week to set aside for studying.</span>
+        </label>
+        <label class="choice-card">
+          <input type="radio" name="preference" value="group">
+          <strong>With a group</strong>
+          <span>We'll automatically put you in a study group with students who are free when you are.</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- ========== Step 3: weekly study goal ========== -->
+    <section class="step">
+      <h2><span class="step-number">3</span> How much do you want to study each week?</h2>
+      <p class="hint">We'll find that much time in your week, starting with calm afternoons.</p>
+      <div class="hours-options" role="radiogroup" aria-label="Hours a week">
+        <span class="day-chip"><input type="radio" name="hours" id="hours-2" value="2"><label for="hours-2">2 hours</label></span>
+        <span class="day-chip"><input type="radio" name="hours" id="hours-4" value="4"><label for="hours-4">4 hours</label></span>
+        <span class="day-chip"><input type="radio" name="hours" id="hours-6" value="6" checked><label for="hours-6">6 hours</label></span>
+        <span class="day-chip"><input type="radio" name="hours" id="hours-8" value="8"><label for="hours-8">8 hours</label></span>
+        <span class="day-chip"><input type="radio" name="hours" id="hours-10" value="10"><label for="hours-10">10 hours</label></span>
+        <span class="day-chip"><input type="radio" name="hours" id="hours-15" value="15"><label for="hours-15">15 hours</label></span>
+        <span class="day-chip"><input type="radio" name="hours" id="hours-other" value="other"><label for="hours-other">Other</label></span>
+        <label class="hours-custom" id="hours-custom" hidden>
+          <input id="weekly-hours" type="number" min="1" max="40" step="1" inputmode="numeric" aria-label="Hours a week"> hours a week
+        </label>
+      </div>
+      <!-- Only shown when AI planning is on (there's an Anthropic API key) -->
+      <label class="notes-field" id="notes-field" hidden>Anything we should know about when you like to study? (optional)
+        <textarea id="study-notes" rows="2" maxlength="300"
+          placeholder="e.g. I'm a night owl. Keep Fridays free. I focus best right after class."></textarea>
+      </label>
+    </section>
+
+    <div class="setup-actions">
+      <p id="finish-error" class="error"></p>
+      <button type="button" id="finish">Finish</button>
+    </div>
+  </div>
+
+  <script src="/public/setup.js"></script>
+</body>
+</html>

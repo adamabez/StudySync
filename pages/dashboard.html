@@ -15,6 +15,7 @@
         <h1>StudySync</h1>
         <p>Welcome to your dashboard!</p>
       </div>
+      <a href="/landing" class="home-link"><span aria-hidden="true">✦</span> Study plan &amp; groups</a>
       <div class="account" id="account">
         <button type="button" class="avatar" id="account-button" aria-label="Account" aria-expanded="false" aria-controls="account-menu">
           <span id="account-initial" aria-hidden="true">?</span>
@@ -29,7 +30,26 @@
       </div>
     </div>
 
-    <!-- ========== Add a Class / Task / Other (collapsible) ========== -->
+    <div class="week-heading">
+      <div class="week-title">
+        <h2>Your week</h2>
+        <button type="button" id="add-open" class="add-open">+ Add</button>
+      </div>
+      <ul class="legend" aria-label="Color key">
+        <li><span class="swatch class"></span>Classes</li>
+        <li><span class="swatch task"></span>Tasks</li>
+        <li><span class="swatch other"></span>Other</li>
+        <li class="legend-study"><span class="study-sparkle-inline" aria-hidden="true">✦</span>Study time, planned by StudySync</li>
+      </ul>
+    </div>
+    <!-- Async classes with no days picked show here, above the week -->
+    <div id="async-row" class="async-row" hidden>
+      <h3>Asynchronous classes</h3>
+      <div id="async-list" class="async-list"></div>
+    </div>
+    <div id="week" class="week"></div>
+
+    <!-- ========== Add a Class / Task / Other (collapsible, starts collapsed: opens from "+ Add", a day's "+", or Edit) ========== -->
     <div class="section-head">
       <h2 class="add-heading">
         <select id="kind" class="kind-select" aria-label="What do you want to add?">
@@ -38,7 +58,7 @@
           <option value="other">Add Other</option>
         </select>
       </h2>
-      <button type="button" class="collapse-toggle" data-target="add-body" data-name="Add section"></button>
+      <button type="button" class="collapse-toggle" data-target="add-body" data-name="Add section" data-default="collapsed"></button>
     </div>
     <div id="add-body" class="collapse-body">
     <!-- Only shows while editing an item from the calendar (pencil → Edit) -->
@@ -80,21 +100,6 @@
       <p id="form-error" class="error"></p>
     </form>
     </div>
-
-    <div class="week-heading">
-      <h2>Your week</h2>
-      <ul class="legend" aria-label="Color key">
-        <li><span class="swatch class"></span>Classes</li>
-        <li><span class="swatch task"></span>Tasks</li>
-        <li><span class="swatch other"></span>Other</li>
-      </ul>
-    </div>
-    <!-- Async classes with no days picked show here, above the week -->
-    <div id="async-row" class="async-row" hidden>
-      <h3>Asynchronous classes</h3>
-      <div id="async-list" class="async-list"></div>
-    </div>
-    <div id="week" class="week"></div>
 
     <!-- ========== Virtual Notebook (collapsible) ========== -->
     <div class="section-head nb-heading">

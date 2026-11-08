@@ -6,6 +6,7 @@ const DAYS = [
   ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"],
 ];
 let classes = []; // everything on the calendar: classes, tasks and "other" items
+let studyTimes = []; // planned study sessions or study group meetings (from /api/study-times, read-only)
 let editingId = null; // the item being edited in the form (pencil → Edit), or null when adding
 
 // What the "Add a…" dropdown changes for each choice
@@ -111,18 +112,18 @@ function render() {
     title.textContent = label;
     col.appendChild(title);
 
-    const todays = classes
+    const todays = [...classes, ...studyTimes]
       .filter((c) => c.days.includes(key))
       .sort((a, b) => (a.start || "").localeCompare(b.start || "")); // async (no time) first
 
     if (todays.length === 0) {
       const empty = document.createElement("p");
       empty.className = "empty";
-      empty.textContent = "Nothing planned";
+      empty.innerHTML = '<span class="empty-icon" aria-hidden="true">☀️</span>Nothing yet!';
       col.appendChild(empty);
     }
 
-    for (const c of todays) col.appendChild(makeCard(c));
+    for (const c of todays) col.appendChild(c.type ? makeStudyCard(c) : makeCard(c));
     col.appendChild(makeDayAdd(key, label));
     week.appendChild(col);
   }
@@ -173,6 +174,38 @@ function makeCard(c) {
   };
 
   card.append(name, meta, pencil);
+  return card;
+}
+
+// A study session or study group meeting. Read-only: it's planned for you, so no pencil.
+function makeStudyCard(s) {
+  const card = document.createElement("div");
+  card.className = "class-card study-time";
+  card.title = "Planned for you by StudySync";
+
+  // Sparkle badge in the corner: this came from StudySync, not the student's own schedule
+  const sparkle = document.createElement("span");
+  sparkle.className = "study-sparkle";
+  sparkle.setAttribute("aria-hidden", "true");
+  sparkle.textContent = "✦";
+
+  const tag = document.createElement("span");
+  tag.className = "kind-tag";
+  tag.textContent = s.type === "group" ? "Study group" : "Study";
+
+  // Screen readers get the "planned by StudySync" part in words
+  const hidden = document.createElement("span");
+  hidden.className = "visually-hidden";
+  hidden.textContent = "Planned by StudySync: ";
+
+  const name = document.createElement("strong");
+  name.textContent = s.name;
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.textContent = formatTime(s.start) + " – " + formatTime(s.end) + (s.note ? " · " + s.note : "");
+
+  card.append(sparkle, hidden, tag, name, meta);
   return card;
 }
 
@@ -311,6 +344,20 @@ async function loadClasses() {
   if (res.status === 401) return (window.location.href = "/");
   classes = await res.json();
   render();
+  loadStudyTimes();
+}
+
+// Study times depend on the schedule, so reload them after every change.
+// If they can't load (e.g. the database setup is out of date), the calendar just goes without.
+async function loadStudyTimes() {
+  try {
+    const res = await fetch("/api/study-times");
+    if (!res.ok) return;
+    studyTimes = await res.json();
+    render();
+  } catch {
+    // offline or server restarting: keep what's shown
+  }
 }
 
 async function removeClass(c) {
@@ -320,6 +367,7 @@ async function removeClass(c) {
   classes = classes.filter((x) => x.id !== c.id);
   if (editingId === c.id) stopEditing(); // deleted the item being edited
   render();
+  loadStudyTimes();
 }
 
 document.getElementById("add-form").addEventListener("submit", async (e) => {
@@ -357,17 +405,26 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   if (editingId) {
     classes = classes.map((x) => (x.id === editingId ? data : x));
     stopEditing();
+    render();
+    loadStudyTimes();
     return;
   }
 
   classes.push(data);
   render();
+  loadStudyTimes();
   e.target.reset();
   updateFormForAsync(); // reset() unticks async, so bring the time fields back
   document.getElementById("name").focus();
 });
 
 document.getElementById("edit-cancel").addEventListener("click", stopEditing);
+
+// "+ Add" next to "Your week" → open the Add form
+document.getElementById("add-open").addEventListener("click", () => {
+  if (editingId) stopEditing();
+  showAddForm();
+});
 
 document.getElementById("kind").addEventListener("change", updateFormForKind);
 document.getElementById("async").addEventListener("change", updateFormForAsync);
