@@ -615,6 +615,10 @@ async function startNotebook() {
     nb.courses = classes.filter((c) => (c.kind || "class") === "class").map((c) => c.name);
     nb.aiEnabled = status.aiEnabled;
     $("ai-off").hidden = nb.aiEnabled;
+    $("ai-disclaimer").hidden = !status.freeTier;
+    if (status.freeTier && window.addNoticeControls) {
+      window.addNoticeControls($("ai-disclaimer"), { minimizeKey: "studysync-ai-disclaimer-minimized" });
+    }
     renderCourseOptions();
     renderSources();
   } catch (e) {

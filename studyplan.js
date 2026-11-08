@@ -1,6 +1,6 @@
 // StudySync - the weekly study plan on the landing page ("On my own").
 //
-// With an Anthropic API key in .env: the AI picks study times from the student's free
+// With an AI key in .env (Gemini or Anthropic, see ai.js): the AI picks study times from the student's free
 // windows, following their notes ("I'm a night owl"). Every AI plan is checked against
 // the real schedule, and saved so the AI only runs again when the schedule, goal or
 // notes change.

@@ -68,6 +68,54 @@ button:hover { background: #2240b0; }
 .notice { color: #2e7d32; font-size: 14px; }
 .switch { font-size: 14px; margin: 20px 0 0; }
 
+/* "Early access" note on login and sign-up (Gemini free tier, see public/ai-notice.js) */
+.ai-notice {
+  position: relative;
+  max-width: 320px;
+  margin: 24px 0 0;
+  padding: 10px 60px 10px 12px; /* room on the right for – and × */
+  background: #fff8e6;
+  border: 1px solid #f3dfa6;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #5c4a12;
+  text-align: left;
+}
+
+/* Top-right buttons on the early-access notices: – minimize / + expand, × dismiss */
+.notice-controls { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; }
+.notice-btn {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #7a6216;
+  font-size: 18px;
+  line-height: 24px;
+  cursor: pointer;
+}
+.notice-btn:hover { background: rgba(0, 0, 0, 0.06); }
+.notice-btn:focus-visible { outline: 2px solid #2b4acb; outline-offset: 1px; }
+/* Minimized: just the title */
+.minimized .notice-body { display: none; }
+.ai-notice-never {
+  display: block;
+  margin: 6px 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #7a6216;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ai-notice-never:hover { background: none; color: #5c4a12; }
+.ai-notice-never:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; border-radius: 2px; }
+
 /* Loading spinner */
 .spinner {
   width: 48px;

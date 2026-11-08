@@ -135,6 +135,19 @@ textarea {
 .ai-off p { margin: 4px 0 0; color: inherit; }
 .ai-off code { background: rgba(0, 0, 0, 0.06); padding: 1px 4px; border-radius: 4px; overflow-wrap: anywhere; }
 
+/* "Demo AI" note under the question box (Gemini free tier) */
+.ai-disclaimer {
+  position: relative; /* for the – button in the top right */
+  margin: 8px 0 0;
+  padding: 8px 34px 8px 10px;
+  background: #fff8e6;
+  border: 1px solid #f3dfa6;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #5c4a12;
+}
+
 .nb-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chip-button {
   padding: 6px 12px;

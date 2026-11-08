@@ -259,7 +259,8 @@
           <details>
             <summary>Setting up StudySync?</summary>
             <p>Create a file named <code>.env</code> in your StudySync folder containing
-              <code>ANTHROPIC_API_KEY=your-key-here</code>, then restart the server.</p>
+              <code>AI_PROVIDER=gemini</code> and <code>GEMINI_API_KEY=your-key-here</code>
+              (free key from aistudio.google.com/apikey), then restart the server.</p>
           </details>
         </div>
 
@@ -276,6 +277,15 @@
           <textarea id="question" rows="2" maxlength="5000" placeholder="Ask a question about your sources…" aria-label="Question"></textarea>
           <button type="submit" id="ask-button">Ask</button>
         </form>
+
+        <!-- Shown while the AI runs on Gemini's free tier (see ai.js) -->
+        <p id="ai-disclaimer" class="ai-disclaimer" hidden>
+          <strong>Early access.</strong> Answers can take a little while, and the AI may be busy or
+          error out when lots of people use it. If so, wait a minute and try again. It runs on Google
+          Gemini's free tier, so don't use private or sensitive material: Google may use what you send
+          to improve its products. The AI can make mistakes, so check important answers against your
+          sources.
+        </p>
       </section>
       </div>
     </div>
@@ -316,6 +326,7 @@
   </dialog>
 
   <script src="/public/dashboard.js"></script>
+  <script src="/public/ai-notice.js"></script>
   <script src="/public/notebook.js"></script>
   <script src="/public/canvas.js"></script>
   <script src="/public/collapse.js"></script>
