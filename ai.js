@@ -1,4 +1,5 @@
-// StudySync - the Virtual Notebook's AI: sends course materials + a question to the AI.
+// StudySync - the AI: answers Virtual Notebook questions about course materials,
+// and picks study times for the weekly study plan.
 //
 // Needs an Anthropic API key in a file named .env in this folder:
 //   ANTHROPIC_API_KEY=sk-ant-...
@@ -104,6 +105,81 @@ async function askNotebook({ sources, history, question }) {
   return { answer: answer.trim(), citations };
 }
 
+// ---------- Study planner: the AI picks study sessions from the student's free time ----------
+// studyplan.js gives it the free windows (worked out by public/planner.js) and checks
+// whatever comes back, so the AI can't double-book a class. If anything goes wrong,
+// studyplan.js falls back to the planner's own algorithm.
+
+const PLAN_SYSTEM_PROMPT = `You plan a student's weekly study sessions in StudySync, a study app.
+
+You get the student's weekly study goal in minutes, the free windows in their week, their classes and other commitments (for context only), and optional notes in their own words about how they like to study.
+
+Choose study sessions that add up to the goal:
+- Every session must fit completely inside one free window. Never go outside the windows.
+- Each session is 60 to 120 minutes (it can be shorter only if less than 60 minutes of the goal is left). Start sessions on the hour or half hour.
+- Leave at least 30 minutes between two sessions on the same day, and put at most 3 sessions on one day.
+- Total within 30 minutes of the goal. If the free windows can't fit the whole goal, plan as much as fits.
+- Unless the student's notes say otherwise, prefer calm times: afternoons (1-5 PM) first, then evenings and mornings, and avoid lunchtime and the very start or end of the day. Spread sessions across the week instead of piling them onto a few days.
+- Follow the student's notes whenever the windows allow it. They matter more than the default preferences above.
+
+For each session, write a short, friendly reason (under 15 words) addressed to the student, e.g. "Right after Biology, while the lecture is fresh."`;
+
+const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const PLAN_SCHEMA = {
+  type: "object",
+  properties: {
+    sessions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          day: { type: "string", enum: DAY_KEYS },
+          start: { type: "string", description: '24-hour time, "HH:MM"' },
+          end: { type: "string", description: '24-hour time, "HH:MM"' },
+          reason: { type: "string" },
+        },
+        required: ["day", "start", "end", "reason"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["sessions"],
+  additionalProperties: false,
+};
+
+// Returns [{ day, start, end, reason }] as the AI suggested them (not yet checked),
+// or throws if the AI couldn't answer.
+async function planStudyWeek({ goalMinutes, windows, calendar, notes }) {
+  const details = {
+    weekly_goal_minutes: goalMinutes,
+    free_windows: windows,
+    schedule: calendar
+      .filter((item) => item.start)
+      .map((item) => ({ name: item.name, kind: item.kind, days: item.days, start: item.start, end: item.end })),
+    student_notes: notes || "(none)",
+  };
+
+  const message = await getClient().beta.messages.create(
+    {
+      model: MODEL,
+      max_tokens: 16000,
+      system: PLAN_SYSTEM_PROMPT,
+      // Planning a week is a small job, so keep thinking short and the answer fast
+      output_config: { effort: "low", format: { type: "json_schema", schema: PLAN_SCHEMA } },
+      // If the model declines, the API retries on a recommended fallback model
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      messages: [{ role: "user", content: "Plan my study sessions for the week.\n\n" + JSON.stringify(details, null, 2) }],
+    },
+    { timeout: 45_000, maxRetries: 1 }, // the page falls back to the algorithm rather than wait forever
+  );
+
+  if (message.stop_reason === "refusal") throw new Error("The AI declined to plan this week.");
+  if (message.stop_reason === "max_tokens") throw new Error("The AI's plan was cut off.");
+  const text = message.content.filter((block) => block.type === "text").map((block) => block.text).join("");
+  return JSON.parse(text).sessions;
+}
+
 // Turn an API error into a message a student can act on
 function explainError(error) {
   if (error instanceof Anthropic.AuthenticationError) return "The Anthropic API key in .env isn't valid. Check it and restart the server.";
@@ -115,4 +191,4 @@ function explainError(error) {
   return "Something went wrong asking the AI.";
 }
 
-module.exports = { aiEnabled, askNotebook, explainError };
+module.exports = { aiEnabled, askNotebook, planStudyWeek, explainError };

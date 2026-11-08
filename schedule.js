@@ -7,6 +7,7 @@
 
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const KINDS = ["class", "task", "other"]; // what can go on the calendar
+const isTime = (t) => typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t); // "09:00"
 
 // Database row → the shape the browser expects
 function fromRow(row) {
@@ -30,7 +31,6 @@ async function loadClasses(db) {
 
 // Check what the browser sent before saving it
 function validateClass(input) {
-  const isTime = (t) => typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
   const name = typeof input.name === "string" ? input.name.trim() : "";
   const kind = KINDS.includes(input.kind) ? input.kind : "class";
   // Room only applies to classes; the "What is it?" label only applies to Other
@@ -76,4 +76,4 @@ async function removeClass(db, id) {
   if (error) throw error;
 }
 
-module.exports = { loadClasses, addClass, updateClass, removeClass };
+module.exports = { DAY_KEYS, isTime, loadClasses, addClass, updateClass, removeClass };

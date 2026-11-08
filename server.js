@@ -11,6 +11,9 @@
 //   ai.js         → asking the AI about those materials
 //   feedback.js   → feedback / bug reports from the dashboard (Supabase)
 //   canvas.js     → linking Canvas and loading homework (missing / completed / upcoming)
+//   onboarding.js → first-login schedule screen, "study alone or in a group?", weekly study goal
+//   groups.js     → study groups (students are matched automatically by schedule)
+//   studyplan.js  → weekly study times: picked by the AI if there's a key, else by public/planner.js
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
 //   .env          → your secret keys: Supabase, Anthropic (never commit this!)
@@ -33,6 +36,9 @@ const chats = require("./chats");
 const ai = require("./ai");
 const feedback = require("./feedback");
 const canvas = require("./canvas");
+const onboarding = require("./onboarding");
+const groups = require("./groups");
+const studyplan = require("./studyplan");
 
 const PORT = 3000;
 
@@ -162,6 +168,30 @@ async function handleRequest(req, res) {
     return sendPage(res, "loading.html");
   }
 
+  // After the loading screen: first login → the schedule screen, otherwise → the dashboard.
+  // (Finishing the schedule screen shows the landing page once: study plan + groups.)
+  if (req.method === "GET" && url.pathname === "/start") {
+    if (!loggedIn) return redirect(res, "/");
+    try {
+      const profile = await onboarding.getProfile(auth.supabaseFor(req), auth.getUserId(req));
+      return redirect(res, profile.onboarded ? "/dashboard" : "/setup");
+    } catch (error) {
+      // Usually means the profiles table doesn't exist yet: run supabase/schema.sql again
+      console.error("Couldn't check first-login setup (run supabase/schema.sql again?):", error.message || error);
+      return redirect(res, "/dashboard");
+    }
+  }
+
+  if (req.method === "GET" && url.pathname === "/setup") {
+    if (!loggedIn) return redirect(res, "/");
+    return sendPage(res, "setup.html");
+  }
+
+  if (req.method === "GET" && url.pathname === "/landing") {
+    if (!loggedIn) return redirect(res, "/");
+    return sendPage(res, "landing.html");
+  }
+
   if (req.method === "GET" && url.pathname === "/dashboard") {
     if (!loggedIn) return redirect(res, "/");
     return sendPage(res, "dashboard.html");
@@ -216,6 +246,64 @@ async function handleRequest(req, res) {
       return sendJson(res, { email: req.user.email });
     }
 
+    // --- First-login setup and study preference (onboarding.js) ---
+    // aiScheduling: whether study times are planned by the AI (needs ANTHROPIC_API_KEY)
+    if (req.method === "GET" && url.pathname === "/api/profile") {
+      return sendJson(res, { ...(await onboarding.getProfile(db, userId)), aiScheduling: ai.aiEnabled() });
+    }
+
+    // --- Weekly study plan (studyplan.js) ---
+    if (req.method === "GET" && url.pathname === "/api/study-plan") {
+      const [calendar, profile] = await Promise.all([schedule.loadClasses(db), onboarding.getProfile(db, userId)]);
+      return sendJson(res, await studyplan.getStudyPlan(db, userId, calendar, profile));
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/profile") {
+      return readJson(req, res, 10_000, async (input) => {
+        const result = await onboarding.updateProfile(db, userId, input);
+        if (result.error) return sendJson(res, { error: result.error }, 400);
+        await groups.matchQuietly(db); // wants a group now → find one; prefers alone → leave theirs
+        sendJson(res, result.value);
+      });
+    }
+
+    // --- Study times for the dashboard calendar ---
+    // In a study group → its weekly meeting. Otherwise (alone, or still waiting for a
+    // group) → the weekly study plan, same as the landing page shows.
+    if (req.method === "GET" && url.pathname === "/api/study-times") {
+      const [calendar, profile, myGroups] = await Promise.all([
+        schedule.loadClasses(db),
+        onboarding.getProfile(db, userId),
+        groups.listMyGroups(db, userId),
+      ]);
+      if (profile.preference === "group" && myGroups.length) {
+        return sendJson(res, myGroups.map((g) => ({
+          type: "group",
+          name: g.name,
+          days: g.days,
+          start: g.start,
+          end: g.end,
+          note: g.members.length + (g.members.length === 1 ? " member" : " members"),
+        })));
+      }
+      const plan = await studyplan.getStudyPlan(db, userId, calendar, profile);
+      return sendJson(res, plan.sessions.map((s) => ({
+        type: "study",
+        name: "Study time",
+        days: [s.day],
+        start: s.start,
+        end: s.end,
+        note: s.reason || s.label,
+      })));
+    }
+
+    // --- Study groups (groups.js): matched automatically, students never pick one ---
+    // Opening the landing page tries to match the student, then shows their group
+    if (req.method === "POST" && url.pathname === "/api/groups/match") {
+      await groups.match(db);
+      return sendJson(res, await groups.listMyGroups(db, userId));
+    }
+
     // --- Feedback / bug reports ---
     if (req.method === "POST" && url.pathname === "/api/feedback") {
       return readJson(req, res, 20_000, async (input) => {
@@ -234,6 +322,7 @@ async function handleRequest(req, res) {
       return readJson(req, res, 10_000, async (input) => {
         const result = await schedule.addClass(db, input);
         if (result.error) return sendJson(res, { error: result.error }, 400);
+        await groups.matchQuietly(db); // a new class might clash with their study group
         sendJson(res, result.value, 201);
       });
     }
@@ -244,12 +333,14 @@ async function handleRequest(req, res) {
         const result = await schedule.updateClass(db, classMatch[1], input);
         if (result.notFound) return sendJson(res, { error: "That item was already removed. Refresh the page." }, 404);
         if (result.error) return sendJson(res, { error: result.error }, 400);
+        await groups.matchQuietly(db); // the new time might clash with their study group
         sendJson(res, result.value);
       });
     }
 
     if (req.method === "DELETE" && classMatch) {
       await schedule.removeClass(db, classMatch[1]);
+      await groups.matchQuietly(db); // more free time might mean a group fits now
       return sendJson(res, { ok: true });
     }
 

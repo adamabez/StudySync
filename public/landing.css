@@ -1,0 +1,219 @@
+/* StudySync - first-login setup screen and landing page.
+   Loaded after style.css and dashboard.css (reuses the add-form and day-chip styles). */
+
+/* ---------- Page header ---------- */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.page-head p { margin: 0; }
+.head-links { display: flex; flex-wrap: wrap; gap: 4px; }
+.head-link {
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.head-link:hover { background: #eef1fb; }
+
+.hint { margin: -4px 0 12px; font-size: 14px; }
+
+.link-button { background: none; color: #2b4acb; padding: 4px 6px; font-size: 13px; }
+.link-button:hover { background: #e8ebf6; }
+.link-button.danger { color: #c62828; }
+.link-button.danger:hover { background: #fdecec; }
+
+/* ---------- Two-option switch (Class / Other, Alone / Group) ---------- */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  background: #eef0f6;
+  border-radius: 10px;
+}
+.segmented label {
+  position: relative;
+  padding: 6px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  user-select: none;
+}
+.segmented input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.segmented label:has(input:checked) { background: white; color: #2b4acb; font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.segmented label:has(input:focus-visible) { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.segmented.big { margin-top: 24px; }
+.segmented.big label { padding: 10px 18px; font-size: 15px; }
+
+/* ---------- Setup steps ---------- */
+.step { margin-top: 8px; }
+.step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #2b4acb;
+  color: white;
+  font-size: 14px;
+}
+
+.added-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.added-empty { color: #999; font-size: 14px; }
+.added-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-left: 4px solid hsl(160, 60%, 40%);
+  border-radius: 8px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.added-item.other { border-left-color: hsl(270, 60%, 50%); }
+.added-item strong { display: block; color: #222; }
+.added-item span { color: #666; font-size: 13px; }
+
+.choice-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.choice-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 2px solid #e3e6f0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.choice-card input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.choice-card strong { font-size: 16px; color: #222; }
+.choice-card span { color: #666; }
+.choice-card:hover { border-color: #b9c3ea; }
+.choice-card:has(input:checked) { border-color: #2b4acb; background: #f3f5fd; }
+.choice-card:has(input:focus-visible) { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+.setup-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.setup-actions button { padding: 12px 32px; }
+.setup-actions button:disabled { opacity: 0.6; cursor: default; }
+
+/* Weekly study goal options (reuse the day-chip pill look) */
+.hours-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.hours-custom { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+.hours-custom[hidden] { display: none; }
+.hours-custom input { width: 80px; margin: 0; }
+
+.notes-field { display: block; margin-top: 16px; }
+.notes-field[hidden] { display: none; }
+.notes-field textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 10px;
+  border: 1px solid #ccd;
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+/* ---------- Landing: notices ---------- */
+.notice-box {
+  padding: 12px 14px;
+  background: #fff8e6;
+  border: 1px solid #f3dfa6;
+  border-radius: 8px;
+  color: #6b5200;
+  font-size: 14px;
+}
+
+/* ---------- Landing: study times (on my own) ---------- */
+.alone-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 28px 0 12px; }
+.alone-head h2 { margin: 0; }
+.goal-picker { display: inline-flex; align-items: center; gap: 8px; }
+.goal-picker select { font: inherit; padding: 6px 8px; border: 1px solid #ccd; border-radius: 8px; background: white; }
+.study-total { margin: 0 0 12px; color: #2b4acb; font-weight: 600; }
+.study-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.study-day { background: #f7f8fc; border-radius: 8px; padding: 10px 8px; min-height: 120px; }
+.study-day.today { outline: 2px solid #2b4acb; }
+.study-day h3 { margin: 0 0 8px; font-size: 14px; color: #2b4acb; text-align: center; }
+.study-day.today h3::after { content: " · Today"; font-weight: normal; color: #666; }
+.study-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: white;
+  border-left: 4px solid #f0a020;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+}
+.study-block {
+  position: relative;
+  padding-right: 26px;
+  background: linear-gradient(135deg, #fff7e6 0%, #fff1f6 100%);
+  box-shadow: 0 2px 8px rgba(240, 160, 32, 0.25);
+}
+.study-block .study-sparkle {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 16px;
+  line-height: 1;
+  color: #f0a020;
+  text-shadow: 0 0 6px rgba(240, 160, 32, 0.6);
+  animation: sparkle 2.4s ease-in-out infinite;
+}
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.25) rotate(20deg); opacity: 0.8; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .study-block .study-sparkle { animation: none; }
+}
+.study-block strong { color: #222; }
+.study-block .study-reason { margin-top: 2px; color: #444; font-style: italic; }
+.study-block span { color: #666; }
+
+/* ---------- Landing: study groups ---------- */
+.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.group-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 10px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.group-card { border-left: 4px solid #2b4acb; }
+.group-name { font-size: 16px; color: #222; }
+.group-card .meta { color: #666; }
+.group-card .hint { margin: 4px 0 0; font-size: 13px; }
+.member-list { margin: 6px 0 0; padding-left: 18px; color: #444; font-size: 13px; }
+
+/* "You're one of the first..." */
+.waiting-box {
+  padding: 16px 18px;
+  background: #f3f5fd;
+  border: 1px solid #d5dcf5;
+  border-radius: 10px;
+}
+.waiting-box strong { color: #2b4acb; font-size: 16px; }
+.waiting-box p { margin: 6px 0 0; color: #444; }
+
+@media (max-width: 900px) {
+  .study-week { grid-template-columns: 1fr; }
+  .study-day { min-height: 0; }
+}
