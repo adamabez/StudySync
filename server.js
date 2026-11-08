@@ -65,6 +65,7 @@ function redirect(res, location, extraHeaders = {}) {
 const FILE_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".png": "image/png",
 };
 
 function sendPublicFile(res, urlPath) {

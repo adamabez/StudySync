@@ -37,6 +37,7 @@ body {
 }
 
 h1 { margin: 0 0 8px; color: #2b4acb; }
+h1 .logo { display: inline-block; height: 48px; width: auto; max-width: 100%; vertical-align: middle; }
 p  { color: #666; }
 a  { color: #2b4acb; font-size: 14px; }
 
