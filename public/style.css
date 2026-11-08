@@ -73,6 +73,30 @@ button:hover { background: #2240b0; }
 .notice { color: #2e7d32; font-size: 14px; }
 .switch { font-size: 14px; margin: 20px 0 0; }
 
+/* Class picker: the line under the class name box (public/course-picker.js) */
+.course-hint { display: block; margin: 4px 0 0; font-size: 12.5px; line-height: 1.35; color: #555; text-align: left; }
+.course-hint[hidden] { display: none; }
+/* Wide screens: the name box shares a row with Starts / Ends, so the hint hangs below it
+   without making the row taller (course-picker.js adds room under the row for it) */
+@media (min-width: 901px) {
+  .add-form .name { position: relative; }
+  .add-form .course-hint { position: absolute; top: 100%; left: 0; right: 0; }
+}
+
+/* Section dropdown (course-picker.js): its own full-width row under the name / times row,
+   pushing the day buttons down a row. On phones it just follows the class name. */
+.add-form .section-field { grid-column: 1 / -1; grid-row: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.add-form .section-field[hidden] { display: none; }
+.add-form.has-sections .days { grid-row: 3; }
+.add-form .section-field select { width: 100%; height: 42px; padding: 0 10px; border: 1px solid #ccc; border-radius: 8px; background: white; font-size: 14px; }
+.section-note { font-size: 12.5px; color: #2e7d32; }
+.section-note:empty { display: none; }
+@media (max-width: 900px) {
+  .add-form .section-field, .add-form.has-sections .days { grid-row: auto; }
+}
+.course-hint.ok { color: #2e7d32; }
+.course-hint.warn { color: #8a5a00; }
+
 /* "Early access" note on login and sign-up (Gemini free tier, see public/ai-notice.js) */
 .ai-notice {
   position: relative;

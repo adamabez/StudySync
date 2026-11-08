@@ -44,14 +44,19 @@
 
     <!-- ========== With a group: matched automatically ========== -->
     <section id="group-view" hidden>
-      <h2>Your study group</h2>
+      <h2>Your study groups</h2>
+      <p class="hint">One group for each of your classes, meeting at a time everyone in it is free.</p>
       <div id="my-groups" class="group-grid"></div>
+
+      <!-- Classes that don't have a group yet (when they have at least one group) -->
+      <p id="still-looking" class="still-looking" hidden></p>
 
       <!-- Nobody's schedule fits yet -->
       <div id="group-waiting" class="waiting-box" hidden>
         <strong>You're one of the first StudySync students looking for a group! 🎉</strong>
-        <p>As soon as someone joins whose schedule fits yours, we'll add you both to a study group
-          automatically. You don't need to do anything. Check back soon!</p>
+        <p>As soon as a classmate joins whose schedule fits yours, we'll add you both to a study group
+          for that class automatically. You don't need to do anything. Check back soon!</p>
+        <p id="waiting-classes" hidden></p>
       </div>
     </section>
 

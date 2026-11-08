@@ -178,6 +178,31 @@ async function loadGroups() {
   box.innerHTML = "";
   for (const group of groups) box.appendChild(groupCard(group));
   updateViews();
+  await showWaitingClasses();
+}
+
+// Classes that don't have a group yet: "Still looking for study partners in PHYS 11A"
+async function showWaitingClasses() {
+  let classes = [];
+  try {
+    const res = await fetch("/api/groups/classes");
+    if (res.ok) classes = await res.json();
+  } catch {
+    // leave it out
+  }
+  const waiting = classes.filter((c) => !c.hasGroup).map((c) => c.label);
+  const text = waiting.length
+    ? "Still looking for study partners in " + joinList(waiting) + ". We'll add you as soon as a classmate's schedule fits."
+    : "";
+  $("still-looking").textContent = text;
+  $("still-looking").hidden = !text || groups.length === 0;
+  $("waiting-classes").textContent = waiting.length ? "Your classes: " + joinList(classes.map((c) => c.label)) + "." : "";
+  $("waiting-classes").hidden = !waiting.length;
+}
+
+// ["A", "B", "C"] → "A, B and C"
+function joinList(items) {
+  return items.length < 2 ? items.join("") : items.slice(0, -1).join(", ") + " and " + items[items.length - 1];
 }
 
 // ---------- Switching between alone and group ----------

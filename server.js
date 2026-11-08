@@ -12,7 +12,9 @@
 //   feedback.js   → feedback / bug reports from the dashboard (Supabase)
 //   canvas.js     → linking Canvas and loading homework (missing / completed / upcoming)
 //   onboarding.js → first-login schedule screen, "study alone or in a group?", weekly study goal
-//   groups.js     → study groups (students are matched automatically by schedule)
+//   groups.js     → study groups (students are matched automatically by schedule, one group per class)
+//   courses.js    → the Sac State course catalog students pick their classes from
+//   sections.js   → each class's sections (days, times, room) from Sac State's class schedule
 //   studyplan.js  → weekly study times: picked by the AI if there's a key, else by public/planner.js
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
@@ -38,6 +40,8 @@ const feedback = require("./feedback");
 const canvas = require("./canvas");
 const onboarding = require("./onboarding");
 const groups = require("./groups");
+const courses = require("./courses");
+const sections = require("./sections");
 const studyplan = require("./studyplan");
 
 const PORT = 3000;
@@ -316,6 +320,27 @@ async function handleRequest(req, res) {
       return sendJson(res, await groups.listMyGroups(db, userId));
     }
 
+    // Each of your classes and whether you're in a group for it yet (landing page "still looking")
+    if (req.method === "GET" && url.pathname === "/api/groups/classes") {
+      return sendJson(res, await groups.listClassGroups(db));
+    }
+
+    // --- Course catalog (courses.js): the class picker's suggestions ---
+    if (req.method === "GET" && url.pathname === "/api/courses") {
+      return sendJson(res, await courses.searchCourses(db, url.searchParams.get("q")));
+    }
+
+    // Sections of one course this term, from Sac State's class schedule (sections.js)
+    if (req.method === "GET" && url.pathname === "/api/courses/sections") {
+      const code = courses.normalizeCourse(url.searchParams.get("code"));
+      try {
+        return sendJson(res, await sections.getSections(code));
+      } catch (error) {
+        console.error("Class schedule lookup failed:", error.message || error);
+        return sendJson(res, { error: "Couldn't reach Sac State's class schedule. Enter the days and times yourself." }, 502);
+      }
+    }
+
     // One group + its shared notes (only members can see it)
     const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
     const groupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})(?:/notes(?:/(${UUID}))?)?$`));
@@ -365,7 +390,8 @@ async function handleRequest(req, res) {
         const result = await schedule.addClass(db, input);
         if (result.error) return sendJson(res, { error: result.error }, 400);
         await groups.matchQuietly(db); // a new class might clash with their study group
-        sendJson(res, result.value, 201);
+        // extra: more time blocks of the same section (e.g. MWF 10:00 + Tue 10:30), already saved
+        sendJson(res, { ...result.value, extra: result.extra || [] }, 201);
       });
     }
 

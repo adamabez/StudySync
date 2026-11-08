@@ -99,7 +99,11 @@ StudySync/
 ├── materials.js      Saves/loads notebook sources → Supabase "sources" table + Storage
 ├── chats.js          Saves/loads notebook chats → Supabase "chats" table
 ├── canvas.js         Links a Canvas account → "canvas_connections" table, loads homework from Canvas
-├── supabase/schema.sql  Creates the tables and security rules (run once in Supabase)
+├── courses.js        The Sac State course catalog students pick their classes from
+├── groups.js         Study groups: one per class, matched by shared free time
+├── supabase/schema.sql  Creates the tables, security rules and group matching (run in Supabase)
+├── supabase/courses.sql Every Sac State course, for the class picker (run after schema.sql)
+├── scripts/import-courses.js  Rebuilds courses.sql from catalog.csus.edu (run each semester or two)
 ├── ai.js             Sends sources + questions to the AI, formats citations
 ├── pages/            HTML for each page (login, signup, loading, dashboard, 404)
 ├── public/           CSS and browser JavaScript
@@ -126,7 +130,14 @@ Everything is saved in Supabase, separately for each student:
 | Notebook sources | `sources` table (pasted text) + `sources` Storage bucket (PDFs, in a folder per user) |
 | Notebook chats | `chats` table |
 
-Row Level Security makes sure each student can only see and change their own rows and files. To set it up in a new Supabase project, run `supabase/schema.sql` once in the Supabase SQL Editor.
+Row Level Security makes sure each student can only see and change their own rows and files. To set it up in a new Supabase project, run `supabase/schema.sql` in the Supabase SQL Editor, then `supabase/courses.sql` (the class list). Both are safe to run again, and `schema.sql` needs re-running whenever it changes.
+
+### Classes and study groups
+Students pick their classes from the Sac State catalog (`courses` table), so everyone in the same class matches, whatever section they're in. Cross-listed courses (e.g. EEE 64 and CPE 64) count as one class. A class that isn't in the catalog can still be typed in; it matches students who type the same name.
+
+Each student who wants groups gets one group per class (up to 4 people), meeting weekly in a 90-minute slot when every member is free: weekdays 9 AM – 9 PM, weekends 10 AM – 6 PM. A student's groups never clash with each other or with their schedule. Matching runs in the database (`match_study_group()` in `schema.sql`) whenever a student opens their study plan or changes their schedule.
+
+To refresh the class list (new semester): `node scripts/import-courses.js`, then run the new `supabase/courses.sql`.
 
 Which sections are collapsed and which chat was last open are stored in your browser only.
 
