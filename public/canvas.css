@@ -106,3 +106,16 @@ a.hw-name:hover { color: #2b4acb; text-decoration: underline; }
 }
 .hw-completed .hw-name { color: #555; }
 .hw-done-note { font-size: 13px; color: #2e7d32; }
+
+/* The shared styles give forms and these rows display: flex, which would beat the
+   hidden attribute. Make sure anything hidden in this section really is hidden. */
+#homework-body [hidden],
+.hw-tools[hidden] { display: none !important; }
+
+/* Phones: the "Linked to … · Refresh · Unlink" row moves under the heading */
+@media (max-width: 600px) {
+  .hw-head { flex-wrap: wrap; }
+  .hw-head .hw-title { flex: 1; min-width: 0; }
+  .hw-head .hw-tools { order: 3; width: 100%; margin-left: 0; flex-wrap: wrap; gap: 4px 12px; }
+  .hw-linked { flex-basis: 100%; overflow-wrap: anywhere; }
+}
