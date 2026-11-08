@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/public/style.css">
   <link rel="stylesheet" href="/public/dashboard.css">
   <link rel="stylesheet" href="/public/notebook.css">
+  <link rel="stylesheet" href="/public/canvas.css">
 </head>
 <body>
   <div class="box wide">
@@ -99,6 +100,64 @@
       <button type="submit" id="add-button">Add class</button>
       <p id="form-error" class="error"></p>
     </form>
+    </div>
+
+    <!-- ========== Homework from Canvas (collapsible, filled in by canvas.js) ========== -->
+    <div class="section-head">
+      <div class="hw-title">
+        <h2>Homework</h2>
+        <p>Missing, upcoming and finished work from Canvas.</p>
+      </div>
+      <div id="canvas-tools" class="hw-tools" hidden>
+        <span class="hw-linked">Linked to <strong id="canvas-linked-to">Canvas</strong></span>
+        <button type="button" id="canvas-refresh" class="link-button">Refresh</button>
+        <button type="button" id="canvas-unlink" class="link-button danger">Unlink</button>
+      </div>
+      <button type="button" class="collapse-toggle" data-target="homework-body" data-name="Homework"></button>
+    </div>
+
+    <div id="homework-body" class="collapse-body">
+      <!-- Shown until Canvas is linked -->
+      <form id="canvas-connect" class="hw-connect" hidden>
+        <p id="canvas-reconnect-note" class="hw-note" hidden></p>
+        <p>Link your Canvas account to see your homework here.</p>
+        <label>Your school's Canvas address
+          <input id="canvas-url" placeholder="e.g. csus.instructure.com" autocomplete="url" required>
+        </label>
+        <label>Canvas access token
+          <input id="canvas-token" type="password" placeholder="Paste your token" autocomplete="off" spellcheck="false" required>
+        </label>
+        <details class="hw-help">
+          <summary>How do I get a token?</summary>
+          <ol>
+            <li>Log in to Canvas and click <strong>Account</strong>, then <strong>Settings</strong>.</li>
+            <li>Under <strong>Approved Integrations</strong>, click <strong>+ New Access Token</strong>.</li>
+            <li>Type "StudySync" as the purpose, then click <strong>Generate Token</strong>.</li>
+            <li>Copy the token and paste it here. Canvas only shows it once.</li>
+          </ol>
+        </details>
+        <p id="canvas-connect-error" class="error"></p>
+        <button type="submit" id="canvas-connect-button">Connect Canvas</button>
+      </form>
+
+      <!-- Shown once Canvas is linked -->
+      <div id="canvas-homework" hidden>
+        <p id="canvas-status" class="hw-status" role="status" hidden></p>
+        <div class="hw-columns">
+          <section class="hw-column hw-col-missing" aria-labelledby="hw-missing-title">
+            <h3 id="hw-missing-title">Missing <span id="canvas-missing-count" class="hw-count"></span></h3>
+            <ul id="canvas-missing" class="hw-list"></ul>
+          </section>
+          <section class="hw-column hw-col-upcoming" aria-labelledby="hw-upcoming-title">
+            <h3 id="hw-upcoming-title">Upcoming <span id="canvas-upcoming-count" class="hw-count"></span></h3>
+            <ul id="canvas-upcoming" class="hw-list"></ul>
+          </section>
+          <section class="hw-column hw-col-completed" aria-labelledby="hw-completed-title">
+            <h3 id="hw-completed-title">Completed <span id="canvas-completed-count" class="hw-count"></span></h3>
+            <ul id="canvas-completed" class="hw-list"></ul>
+          </section>
+        </div>
+      </div>
     </div>
 
     <!-- ========== Course materials + Virtual Notebook (collapsible) ========== -->
@@ -233,6 +292,7 @@
 
   <script src="/public/dashboard.js"></script>
   <script src="/public/notebook.js"></script>
+  <script src="/public/canvas.js"></script>
   <script src="/public/collapse.js"></script>
   <script src="/public/feedback.js"></script>
   <script>

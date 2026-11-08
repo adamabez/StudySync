@@ -1,0 +1,88 @@
+/* StudySync - Homework from Canvas (dashboard section, see public/canvas.js) */
+
+.hw-title p { margin: 2px 0 0; font-size: 14px; color: #777; }
+.hw-tools { display: flex; align-items: center; gap: 12px; margin-left: auto; font-size: 14px; }
+.hw-linked { color: #777; }
+
+/* ---------- Connect form ---------- */
+.hw-connect {
+  margin-top: 0;
+  padding: 16px;
+  background: #f7f8fc;
+  border-radius: 10px;
+  max-width: 560px;
+}
+.hw-connect p { margin: 0; font-size: 14px; }
+.hw-connect button[type="submit"] { align-self: flex-start; padding: 10px 18px; }
+.hw-help { font-size: 14px; color: #444; }
+.hw-help summary { cursor: pointer; color: #2b4acb; }
+.hw-help ol { margin: 8px 0 0; padding-left: 20px; line-height: 1.6; }
+.hw-note {
+  padding: 10px 12px;
+  background: #fff8e6;
+  border: 1px solid #f3dfa6;
+  border-radius: 8px;
+  color: #5c4a12;
+}
+.hw-connect .error { text-align: left; }
+
+/* ---------- Status line (loading / errors) ---------- */
+.hw-status { margin: 0 0 12px; font-size: 14px; color: #666; }
+.hw-status.error { text-align: left; }
+
+/* ---------- Three columns ---------- */
+.hw-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 800px) {
+  .hw-columns { grid-template-columns: minmax(0, 1fr); }
+}
+
+.hw-column {
+  background: #f7f8fc;
+  border-radius: 10px;
+  padding: 14px;
+  min-width: 0;
+  border-top: 4px solid var(--hw-accent);
+}
+.hw-column h3 { margin: 0 0 10px; font-size: 15px; color: #222; display: flex; align-items: center; gap: 6px; }
+.hw-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  background: var(--hw-accent);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.hw-count:empty { display: none; }
+
+.hw-col-missing { --hw-accent: #c62828; }
+.hw-col-upcoming { --hw-accent: #2b4acb; }
+.hw-col-completed { --hw-accent: #2e7d32; }
+
+.hw-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.hw-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 8px;
+  border-left: 3px solid var(--hw-accent);
+}
+.hw-missing { --hw-accent: #c62828; }
+.hw-upcoming { --hw-accent: #2b4acb; }
+.hw-completed { --hw-accent: #2e7d32; }
+.hw-upcoming.hw-soon { --hw-accent: #e65100; background: #fff6ee; }
+
+.hw-name { font-size: 14px; font-weight: 600; color: #222; text-decoration: none; overflow-wrap: anywhere; }
+a.hw-name:hover { color: #2b4acb; text-decoration: underline; }
+.hw-meta { font-size: 13px; color: #666; overflow-wrap: anywhere; }
+.hw-score { font-size: 13px; font-weight: 600; color: #2e7d32; }
+.hw-score.hw-ungraded { font-weight: 400; color: #777; }
+
+.hw-empty { font-size: 14px; color: #777; padding: 4px 2px; }
+.hw-more { font-size: 13px; padding: 4px 0; }
