@@ -334,6 +334,6 @@ async function handleRequest(req, res) {
 // ---------- Start the server ----------
 server.listen(PORT, () => {
   console.log(`StudySync is running at http://localhost:${PORT}`);
-  if (!auth.isConfigured()) console.log("Login: add SUPABASE_URL and SUPABASE_KEY to .env, then restart (see .env.example).");
+  if (!auth.isConfigured()) console.log("Login: put the real SUPABASE_URL and SUPABASE_KEY in .env (not the example values), then restart.");
   if (!ai.aiEnabled()) console.log("Virtual Notebook: AI answers are off (no ANTHROPIC_API_KEY in .env).");
 });
