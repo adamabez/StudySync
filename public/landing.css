@@ -229,6 +229,24 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 .note-card .meta { color: #666; font-size: 13px; }
 .note-body { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #333; }
 
+/* Account settings page (pages/account.html) */
+.account-page { max-width: 720px; }
+.settings-card { margin-top: 18px; padding: 16px 18px; background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; }
+.settings-card h2 { margin: 0 0 6px; font-size: 17px; }
+.settings-card .hint { margin: 0 0 4px; }
+.settings-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end; margin-top: 10px; }
+.settings-form label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; min-width: 0; }
+.settings-form .form-message, .settings-form button { grid-column: 1 / -1; }
+.settings-form button { justify-self: start; padding: 10px 18px; }
+.form-message { margin: 0; font-size: 14px; text-align: left; }
+.form-message.ok { color: #2e7d32; }
+.form-message.error { color: #c62828; }
+.theme-choice { margin-top: 8px; }
+.danger-zone { border-color: #f1c4c4; }
+.danger-zone h2 { color: #c62828; }
+.danger-button { background: #c62828; }
+.danger-button:hover { background: #a91f1f; }
+
 /* "Still looking for study partners in ..." under the group cards */
 .still-looking { margin: 12px 0 0; padding: 10px 12px; background: #f3f5fd; border-radius: 8px; color: #444; font-size: 14px; }
 

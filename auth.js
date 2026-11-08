@@ -144,6 +144,58 @@ async function resetPassword(accessToken, refreshToken, password) {
   return { cookies: sessionCookies(data.session) };
 }
 
+// ---------- Account settings: change password / email, delete account ----------
+// Each one asks for the current password first, so someone at an unlocked computer can't
+// take over or delete the account. Checking the password also gives us a client with a
+// real session, which Supabase needs for changing a user.
+
+// Returns { client } logged in as this user, or { error: "<code>" }
+async function verifyPassword(req, password) {
+  if (!req.user || !req.user.email) return { error: "invalid" };
+  const client = newClient();
+  const { data, error } = await safely(() => client.auth.signInWithPassword({ email: req.user.email, password: String(password || "") }));
+  if (error || !data.session) return { error: error ? errorCode(error) : "invalid" };
+  return { client, session: data.session };
+}
+
+// Returns { cookies } on success, or { error: "<code>" }
+async function changePassword(req, currentPassword, newPassword) {
+  if (String(newPassword || "").length < 6) return { error: "weak" };
+  const check = await verifyPassword(req, currentPassword);
+  if (check.error) return check;
+  const { error } = await safely(() => check.client.auth.updateUser({ password: newPassword }));
+  if (error) return { error: error.code === "same_password" ? "same" : errorCode(error) };
+  const { data } = await check.client.auth.getSession();
+  return { cookies: sessionCookies(data.session || check.session) };
+}
+
+// Returns { email, pending } on success, or { error: "<code>" }. pending: Supabase sent a
+// confirmation link and the change only happens once it's clicked ("Confirm email" on).
+async function changeEmail(req, password, newEmail) {
+  const email = String(newEmail || "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) return { error: "email" };
+  if (req.user && email === String(req.user.email || "").toLowerCase()) return { error: "sameemail" };
+  const check = await verifyPassword(req, password);
+  if (check.error) return check;
+  const { data, error } = await safely(() => check.client.auth.updateUser({ email }));
+  if (error) return { error: errorCode(error) };
+  checkedTokens.clear(); // the cached user still has the old email
+  const changed = (data.user && data.user.email || "").toLowerCase() === email;
+  return { email: changed ? email : req.user.email, pending: !changed };
+}
+
+// Checks the password, then runs `removeData` (the caller deletes files etc.) and the
+// delete_my_account() database function. Returns { cookies } that log out, or { error }.
+async function deleteAccount(req, password, removeData) {
+  const check = await verifyPassword(req, password);
+  if (check.error) return check;
+  await removeData();
+  const { error } = await check.client.rpc("delete_my_account");
+  if (error) throw error;
+  checkedTokens.clear();
+  return { cookies: clearedCookies() };
+}
+
 // Returns cookies that clear the session. Also tells Supabase to end it.
 async function logOut(req) {
   const accessToken = readCookie(req, ACCESS_COOKIE);
@@ -237,4 +289,7 @@ function supabaseFor(req) {
   return newClient(req.accessToken);
 }
 
-module.exports = { isConfigured, logIn, signUp, logOut, sendPasswordReset, resetPassword, loadUser, getUserId, isLoggedIn, supabaseFor };
+module.exports = {
+  isConfigured, logIn, signUp, logOut, sendPasswordReset, resetPassword, loadUser, getUserId, isLoggedIn, supabaseFor,
+  changePassword, changeEmail, deleteAccount,
+};

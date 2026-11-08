@@ -1,0 +1,728 @@
+/* StudySync dark mode. MADE BY scripts/build-dark-css.js: don't edit by hand, re-run the script.
+   Active when <html data-theme="dark"> (set by public/theme.js). */
+
+/* ---------- from style.css ---------- */
+html[data-theme="dark"] body {
+  background: #1b212f;
+}
+html[data-theme="dark"] .box {
+  background: #23262e;
+}
+html[data-theme="dark"] h1 {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] h1 .logo-link:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] p {
+  color: #999999;
+}
+html[data-theme="dark"] a {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] label {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] input {
+  border: 1px solid #3f3f4d;
+}
+html[data-theme="dark"] .error {
+  color: #e78787;
+}
+html[data-theme="dark"] .notice {
+  color: #88d38c;
+}
+html[data-theme="dark"] .theme-toggle {
+  border: 1px solid #404453;
+  background: #23262e;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .theme-toggle:hover {
+  background: #161c31;
+}
+html[data-theme="dark"] .theme-toggle:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .course-hint {
+  color: #aaaaaa;
+}
+html[data-theme="dark"] .add-form .section-field select {
+  border: 1px solid #3b3e4a;
+  background: #23262e;
+}
+html[data-theme="dark"] .section-note {
+  color: #88d38c;
+}
+html[data-theme="dark"] .course-hint.ok {
+  color: #88d38c;
+}
+html[data-theme="dark"] .course-hint.warn {
+  color: #ffc65c;
+}
+html[data-theme="dark"] .ai-notice {
+  background: #372c0e;
+  border: 1px solid #5c4f29;
+  color: #e4ca77;
+}
+html[data-theme="dark"] .notice-btn {
+  color: #e6cb75;
+}
+html[data-theme="dark"] .notice-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+html[data-theme="dark"] .notice-btn:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .ai-notice-never {
+  color: #e6cb75;
+}
+html[data-theme="dark"] .ai-notice-never:hover {
+  color: #e4ca77;
+}
+html[data-theme="dark"] .ai-notice-never:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .spinner {
+  border: 5px solid #3a4363;
+  border-top-color: #5871dc;
+}
+
+/* ---------- from dashboard.css ---------- */
+html[data-theme="dark"] .home-link:hover {
+  background: #161c31;
+}
+html[data-theme="dark"] .home-link:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .avatar:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .account-card {
+  background: #23262e;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .account-label {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .account-email {
+  color: #dddddd;
+}
+html[data-theme="dark"] .account .logout {
+  border: 1px solid #404453;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .account .logout:hover {
+  background: #161c31;
+}
+html[data-theme="dark"] .account .logout:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] h2 {
+  color: #dddddd;
+}
+html[data-theme="dark"] .add-form {
+  background: #1c2030;
+}
+html[data-theme="dark"] .days span {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .day-chip label {
+  border: 1px solid #3f3f4d;
+  background: #23262e;
+}
+html[data-theme="dark"] .day-chip input:checked + label {
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .day-chip input:focus-visible + label {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .async-toggle {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .async-row {
+  background: #1c2030;
+}
+html[data-theme="dark"] .async-row h3 {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .day-col {
+  background: #1c2030;
+}
+html[data-theme="dark"] .day-add-button {
+  color: #808099;
+}
+html[data-theme="dark"] .day-col:hover .day-add-button {
+  border-color: #3f3f4d;
+}
+html[data-theme="dark"] .day-add-button:hover, html[data-theme="dark"] .day-add-button[aria-expanded="true"] {
+  background: #1c1f29;
+  color: #8ea0e7;
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .day-col.today {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .day-col h3 {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .day-col.today h3::after {
+  color: #999999;
+}
+html[data-theme="dark"] .empty {
+  color: #7681a2;
+}
+html[data-theme="dark"] .class-card {
+  background: #23262e;
+}
+html[data-theme="dark"] .class-card strong {
+  color: #dddddd;
+}
+html[data-theme="dark"] .class-card .meta {
+  color: #999999;
+}
+html[data-theme="dark"] .class-card .card-menu-button {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .class-card .card-menu-button:hover, html[data-theme="dark"] .class-card .card-menu-button[aria-expanded="true"] {
+  background: #1c1f29;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .card-menu {
+  background: #23262e;
+}
+html[data-theme="dark"] .card-menu button {
+  color: #dddddd;
+}
+html[data-theme="dark"] .card-menu button:hover, html[data-theme="dark"] .card-menu button:focus-visible {
+  background: #1c1f29;
+}
+html[data-theme="dark"] .card-menu .danger {
+  color: #e78787;
+}
+html[data-theme="dark"] .card-menu .danger:hover, html[data-theme="dark"] .card-menu .danger:focus-visible {
+  background: #351212;
+}
+html[data-theme="dark"] .edit-banner {
+  background: #181c29;
+  color: #cccccc;
+}
+html[data-theme="dark"] .kind-select {
+  color: #dddddd;
+}
+html[data-theme="dark"] .kind-select:hover, html[data-theme="dark"] .kind-select:focus-visible {
+  border-color: #3f3f4d;
+  background-color: #23262e;
+}
+html[data-theme="dark"] .kind-tag {
+  color: #aaaaaa;
+  background: #1c1f29;
+}
+html[data-theme="dark"] .legend {
+  color: #aaaaaa;
+}
+html[data-theme="dark"] .collapse-toggle {
+  color: #8ea0e7;
+  background: #23262e;
+  border: 1px solid #313c64;
+}
+html[data-theme="dark"] .collapse-toggle:hover {
+  background: #151b33;
+}
+html[data-theme="dark"] .collapse-toggle:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .dash-footer {
+  border-top: 1px solid #42485a;
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .feedback-dialog h2 {
+  color: #dddddd;
+}
+html[data-theme="dark"] .feedback-note {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .class-card.study-time {
+  background: linear-gradient(135deg, #372a0e 0%, #3c0f1f 100%);
+  border: 1px solid #594824;
+  box-shadow: 0 2px 8px rgba(24, 15, 2, 0.25);
+}
+html[data-theme="dark"] .class-card.study-time .kind-tag {
+  color: #ffc65c;
+  background: #1d1608;
+}
+html[data-theme="dark"] .study-sparkle {
+  color: #f8d397;
+  text-shadow: 0 0 6px rgba(24, 15, 2, 0.6);
+}
+html[data-theme="dark"] .legend-study {
+  color: #ffc65c;
+}
+html[data-theme="dark"] .study-sparkle-inline {
+  color: #f8d397;
+  text-shadow: 0 0 6px rgba(24, 15, 2, 0.6);
+}
+
+/* ---------- from landing.css ---------- */
+html[data-theme="dark"] .head-link:hover {
+  background: #161c31;
+}
+html[data-theme="dark"] .head-link:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .link-button {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .link-button:hover {
+  background: #181c29;
+}
+html[data-theme="dark"] .link-button.danger {
+  color: #e78787;
+}
+html[data-theme="dark"] .link-button.danger:hover {
+  background: #351212;
+}
+html[data-theme="dark"] .segmented {
+  background: #1c1f29;
+}
+html[data-theme="dark"] .segmented label:has(input:checked) {
+  background: #23262e;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .segmented label:has(input:focus-visible) {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .added-empty {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .added-item {
+  background: #23262e;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .added-item strong {
+  color: #dddddd;
+}
+html[data-theme="dark"] .added-item span {
+  color: #999999;
+}
+html[data-theme="dark"] .choice-card {
+  border: 2px solid #42485a;
+}
+html[data-theme="dark"] .choice-card strong {
+  color: #dddddd;
+}
+html[data-theme="dark"] .choice-card span {
+  color: #999999;
+}
+html[data-theme="dark"] .choice-card:hover {
+  border-color: #323a57;
+}
+html[data-theme="dark"] .choice-card:has(input:checked) {
+  border-color: #5871dc;
+  background: #151c35;
+}
+html[data-theme="dark"] .choice-card:has(input:focus-visible) {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .notes-field textarea {
+  border: 1px solid #3f3f4d;
+}
+html[data-theme="dark"] .notice-box {
+  background: #372c0e;
+  border: 1px solid #5c4f29;
+  color: #ffd95c;
+}
+html[data-theme="dark"] .goal-picker select {
+  border: 1px solid #3f3f4d;
+  background: #23262e;
+}
+html[data-theme="dark"] .study-total {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .study-day {
+  background: #1c2030;
+}
+html[data-theme="dark"] .study-day.today {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .study-day h3 {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .study-day.today h3::after {
+  color: #999999;
+}
+html[data-theme="dark"] .study-block {
+  background: #23262e;
+  border-left: 4px solid #f4b859;
+}
+html[data-theme="dark"] .study-block {
+  background: linear-gradient(135deg, #372a0e 0%, #3c0f1f 100%);
+  box-shadow: 0 2px 8px rgba(24, 15, 2, 0.25);
+}
+html[data-theme="dark"] .study-block .study-sparkle {
+  color: #f8d397;
+  text-shadow: 0 0 6px rgba(24, 15, 2, 0.6);
+}
+html[data-theme="dark"] .study-block strong {
+  color: #dddddd;
+}
+html[data-theme="dark"] .study-block .study-reason {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .study-block span {
+  color: #999999;
+}
+html[data-theme="dark"] .group-card {
+  background: #23262e;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .group-card {
+  border-left: 4px solid #5871dc;
+}
+html[data-theme="dark"] .group-name {
+  color: #dddddd;
+}
+html[data-theme="dark"] .group-card .meta {
+  color: #999999;
+}
+html[data-theme="dark"] .member-list {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] a.group-card:hover {
+  border-color: #323a57;
+}
+html[data-theme="dark"] a.group-card:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .group-open {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .note-card {
+  background: #23262e;
+  border: 1px solid #42485a;
+  border-left: 4px solid #5871dc;
+}
+html[data-theme="dark"] .note-card .meta {
+  color: #999999;
+}
+html[data-theme="dark"] .note-body {
+  color: #cccccc;
+}
+html[data-theme="dark"] .settings-card {
+  background: #23262e;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .form-message.ok {
+  color: #88d38c;
+}
+html[data-theme="dark"] .form-message.error {
+  color: #e78787;
+}
+html[data-theme="dark"] .danger-zone {
+  border-color: #5e3232;
+}
+html[data-theme="dark"] .danger-zone h2 {
+  color: #e78787;
+}
+html[data-theme="dark"] .still-looking {
+  background: #151c35;
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .waiting-box {
+  background: #151c35;
+  border: 1px solid #353f64;
+}
+html[data-theme="dark"] .waiting-box strong {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .waiting-box p {
+  color: #bbbbbb;
+}
+
+/* ---------- from notebook.css ---------- */
+html[data-theme="dark"] .nb-subtitle {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] select, html[data-theme="dark"] textarea {
+  border: 1px solid #3f3f4d;
+  background: #23262e;
+}
+html[data-theme="dark"] select:hover {
+  border-color: #2a3455;
+}
+html[data-theme="dark"] select:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .nb-panel {
+  background: #1c2030;
+}
+html[data-theme="dark"] .nb-panel h3 {
+  color: #dddddd;
+}
+html[data-theme="dark"] .nb-tabs {
+  background: #181c29;
+}
+html[data-theme="dark"] .nb-tab {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .nb-tab:hover {
+  background: rgba(35, 38, 46, 0.6);
+}
+html[data-theme="dark"] .nb-tab.active {
+  background: #23262e;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .source-item {
+  background: #23262e;
+}
+html[data-theme="dark"] .source-item input[type="checkbox"] {
+  accent-color: #8ea0e7;
+}
+html[data-theme="dark"] .source-text strong {
+  color: #dddddd;
+}
+html[data-theme="dark"] .source-text small {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .file-badge {
+  background: #121830;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .file-badge.pdf {
+  background: #351212;
+  color: #e78787;
+}
+html[data-theme="dark"] .source-item .remove {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .source-item .remove:hover {
+  background: #351212;
+  color: #e78787;
+}
+html[data-theme="dark"] .nb-empty {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .link-button {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .link-button:hover {
+  background: #181c29;
+}
+html[data-theme="dark"] .ai-off {
+  background: #372c0e;
+  border: 1px solid #5c4f29;
+  color: #e4ca77;
+}
+html[data-theme="dark"] .ai-off code {
+  background: rgba(255, 255, 255, 0.06);
+}
+html[data-theme="dark"] .ai-disclaimer {
+  background: #372c0e;
+  border: 1px solid #5c4f29;
+  color: #e4ca77;
+}
+html[data-theme="dark"] .chip-button {
+  background: #23262e;
+  color: #8ea0e7;
+  border: 1px solid #313c64;
+}
+html[data-theme="dark"] .chip-button:hover:not(:disabled) {
+  background: #151b33;
+}
+html[data-theme="dark"] .bubble p {
+  color: #cccccc;
+}
+html[data-theme="dark"] .bubble h4 {
+  color: #dddddd;
+}
+html[data-theme="dark"] .bubble.assistant {
+  background: #23262e;
+}
+html[data-theme="dark"] .bubble.failed {
+  background: #351212;
+}
+html[data-theme="dark"] .bubble.failed p {
+  color: #e78787;
+}
+html[data-theme="dark"] .thinking {
+  color: #999999 !important;
+}
+html[data-theme="dark"] .dot-spinner {
+  border: 2px solid #3a4363;
+  border-top-color: #5871dc;
+}
+html[data-theme="dark"] .cite {
+  background: #121830;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .cited {
+  border-top: 1px solid #474b59;
+}
+html[data-theme="dark"] .cited summary {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .cited li.flash {
+  background: #29230a;
+}
+html[data-theme="dark"] .cited blockquote {
+  border-left: 3px solid #313c64;
+  color: #aaaaaa;
+}
+html[data-theme="dark"] .drop-zone {
+  background: #23262e;
+  border: 2px dashed #313c64;
+}
+html[data-theme="dark"] .drop-zone:hover {
+  border-color: #5871dc;
+  background: #10163e;
+}
+html[data-theme="dark"] .drop-zone.dragging {
+  border-color: #5871dc;
+  background: #151b33;
+}
+html[data-theme="dark"] .drop-zone.has-file {
+  border-color: #2a3455;
+}
+html[data-theme="dark"] .drop-zone:focus-within {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .drop-icon {
+  background: #151b33;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .drop-text {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .drop-text strong {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .drop-hint {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .link-button.danger {
+  color: #e78787;
+}
+html[data-theme="dark"] .link-button.danger:hover {
+  background: #351212;
+}
+html[data-theme="dark"] .nb-course-chip {
+  background: #23262e;
+  color: #bbbbbb;
+  border: 1px solid #3c445f;
+}
+html[data-theme="dark"] .nb-course-chip:hover {
+  background: #151b33;
+}
+html[data-theme="dark"] .nb-course-chip[aria-pressed="true"] {
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .chip-count {
+  background: #151b33;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .nb-course-chip[aria-pressed="true"] .chip-count {
+  background: rgba(35, 38, 46, 0.25);
+}
+html[data-theme="dark"] .nb-count {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .source-form {
+  background: #23262e;
+  border: 1px solid #3c445f;
+}
+html[data-theme="dark"] .nb-pick {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .source-group {
+  color: #6e7baa;
+}
+html[data-theme="dark"] .nb-empty-state {
+  color: #8c8c8c;
+  background: #23262e;
+  border: 1px dashed #3a425c;
+}
+html[data-theme="dark"] .nb-empty-state strong {
+  color: #cccccc;
+}
+html[data-theme="dark"] .ai-off summary {
+  color: #e6cb75;
+}
+
+/* ---------- from canvas.css ---------- */
+html[data-theme="dark"] .hw-title p {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .hw-linked {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .hw-connect {
+  background: #1c2030;
+}
+html[data-theme="dark"] .hw-help {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .hw-help summary {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .hw-note {
+  background: #372c0e;
+  border: 1px solid #5c4f29;
+  color: #e4ca77;
+}
+html[data-theme="dark"] .hw-status {
+  color: #999999;
+}
+html[data-theme="dark"] .hw-column {
+  background: #1c2030;
+}
+html[data-theme="dark"] .hw-column h3 {
+  color: #dddddd;
+}
+html[data-theme="dark"] .hw-item {
+  background: #23262e;
+}
+html[data-theme="dark"] .hw-upcoming.hw-soon {
+  background: #3a230f;
+}
+html[data-theme="dark"] .hw-name {
+  color: #dddddd;
+}
+html[data-theme="dark"] a.hw-name:hover {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .hw-meta {
+  color: #999999;
+}
+html[data-theme="dark"] .hw-score {
+  color: #88d38c;
+}
+html[data-theme="dark"] .hw-score.hw-ungraded {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .hw-empty {
+  color: #8c8c8c;
+}
+html[data-theme="dark"] .hw-small {
+  color: #999999;
+}
+html[data-theme="dark"] .hw-check {
+  accent-color: #88d38c;
+}
+html[data-theme="dark"] .hw-completed .hw-name {
+  color: #aaaaaa;
+}
+html[data-theme="dark"] .hw-done-note {
+  color: #88d38c;
+}
+
+/* ---------- Hand-written (scripts/build-dark-css.js, EXTRA) ---------- */
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="dark"] body { background: #0f1220; color: #dfe3f0; }
+html[data-theme="dark"] p, html[data-theme="dark"] label { color: #b9bfd3; }
+html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3, html[data-theme="dark"] h4, html[data-theme="dark"] strong { color: #e8ebf6; }
+html[data-theme="dark"] a { color: #8ea2f5; }
+html[data-theme="dark"] input, html[data-theme="dark"] select, html[data-theme="dark"] textarea { background: #1a1f33; color: #e8ebf6; border-color: #343b57; }
+html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: #7d849c; }
+html[data-theme="dark"] button { color: #fff; }
+/* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
+   theme.js swaps the image too, for browsers that ignore content on images. */
+html[data-theme="dark"] img.logo { content: url("/public/logo-dark.png"); }
