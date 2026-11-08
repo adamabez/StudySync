@@ -61,9 +61,19 @@ async function addClass(db, input) {
   return { value: fromRow(data) };
 }
 
+// Validate and save changes to an existing item. Returns { value }, { error }, or { notFound: true }.
+async function updateClass(db, id, input) {
+  const result = validateClass(input);
+  if (result.error) return result;
+  const { data, error } = await db.from("classes").update(result.value).eq("id", id).select().maybeSingle();
+  if (error) throw error;
+  if (!data) return { notFound: true }; // deleted already, or not this user's
+  return { value: fromRow(data) };
+}
+
 async function removeClass(db, id) {
   const { error } = await db.from("classes").delete().eq("id", id);
   if (error) throw error;
 }
 
-module.exports = { loadClasses, addClass, removeClass };
+module.exports = { loadClasses, addClass, updateClass, removeClass };

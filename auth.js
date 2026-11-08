@@ -19,8 +19,12 @@ const ACCESS_COOKIE = "sb_access";
 const REFRESH_COOKIE = "sb_refresh";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days, then the user logs in again
 
+// False if the keys are missing, or still the placeholders copied from .env.example
 function isConfigured() {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_KEY);
+  const url = process.env.SUPABASE_URL || "";
+  const key = process.env.SUPABASE_KEY || "";
+  if (!url || !key) return false;
+  return !url.includes("your-project") && !key.startsWith("your-");
 }
 
 // A fresh Supabase client. We make a new one for each job instead of sharing one,
