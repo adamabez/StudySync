@@ -107,7 +107,19 @@
 .setup-actions button { padding: 12px 32px; }
 .setup-actions button:disabled { opacity: 0.6; cursor: default; }
 
-/* "Skip for now" next to Finish on the setup screen (first time only) */
+/* "Skip for now" on the setup screen (first time only): beside Log out at the top, and next
+   to Finish at the bottom, as a quiet alternative to Finish */
+.page-head .skip-link {
+  margin-left: auto;          /* sits with Log out on the right */
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #2b4acb;
+  font-size: 14px;
+  cursor: pointer;
+}
+.page-head .skip-link:hover { background: #eef1fb; }
 .setup-actions .skip-button { background: #fff; color: #2b4acb; border: 1px solid #c9d1ef; }
 .setup-actions .skip-button:hover { background: #eef1fb; }
 

@@ -323,6 +323,12 @@ html[data-theme="dark"] .choice-card:has(input:checked) {
 html[data-theme="dark"] .choice-card:has(input:focus-visible) {
   outline: 2px solid #5871dc;
 }
+html[data-theme="dark"] .page-head .skip-link {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .page-head .skip-link:hover {
+  background: #161c31;
+}
 html[data-theme="dark"] .setup-actions .skip-button {
   background: #23262e;
   color: #8ea0e7;

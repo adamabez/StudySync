@@ -168,6 +168,7 @@ async function skipSetup(event) {
   }
   window.location.href = "/dashboard";
 }
+$("skip-top").addEventListener("click", skipSetup);
 $("skip-bottom").addEventListener("click", skipSetup);
 
 // ---------- Weekly study goal: preset options, or "Other" with a number ----------
@@ -215,6 +216,7 @@ async function load() {
     $("study-notes").value = profile.studyNotes || "";
     if (profile.onboarded) $("finish").textContent = "Save";
     // Skipping only makes sense the first time through
+    $("skip-top").hidden = profile.onboarded;
     $("skip-bottom").hidden = profile.onboarded;
   }
 }
