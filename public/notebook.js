@@ -329,7 +329,9 @@ async function addSource(e) {
 // ---------- Turning the AI's answer into HTML ----------
 // Handles the simple formatting we ask the AI for: headings, lists, **bold**, *italics*,
 // plus ⟦n⟧ citation markers. Everything is escaped first, so it's safe to insert.
+// LaTeX math ($x_0$, \frac{1}{2}) becomes plain text first (public/mathtext.js).
 function renderAnswer(text, citations) {
+  if (window.mathToText) text = window.mathToText(text);
   const byNumber = new Map(citations.map((c) => [String(c.n), c]));
   const inline = (s) => s
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
