@@ -436,6 +436,15 @@ async function handleRequest(req, res) {
       return sendJson(res, await canvas.status(db));
     }
 
+    // Calendar Feed only: tick an assignment off as done (body { id, done: true/false })
+    if (req.method === "POST" && url.pathname === "/api/canvas/done") {
+      return readJson(req, res, 2_000, async (input) => {
+        const result = await canvas.setDone(db, userId, input);
+        if (result.error) return sendJson(res, { error: result.error }, result.status);
+        sendJson(res, result.value);
+      });
+    }
+
     if (req.method === "GET" && url.pathname === "/api/canvas/assignments") {
       const result = await canvas.getAssignments(db);
       if (result.error) return sendJson(res, { error: result.error, reconnect: Boolean(result.reconnect) }, result.status);

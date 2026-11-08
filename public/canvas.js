@@ -5,6 +5,10 @@
 //   POST   /api/canvas/connect      → link Canvas with { canvasUrl, token }
 //   DELETE /api/canvas/connect      → unlink
 //   GET    /api/canvas/assignments  → { missing, completed, upcoming }
+//   POST   /api/canvas/done         → tick a Calendar Feed assignment off (or untick it)
+//
+// Two ways to connect: a Calendar Feed link (works at every school, but students tick off
+// finished work themselves) or an access token (if the school allows it).
 //
 // Canvas text (assignment and course names) is always added with textContent,
 // never innerHTML, so nothing from Canvas can run as code on this page.
@@ -12,9 +16,15 @@
 (function () {
   const SHOW_AT_FIRST = 6; // items per column before "Show more"
   const SOON_MS = 48 * 60 * 60 * 1000; // upcoming work due within 2 days gets highlighted
+  let connectMode = "feed";   // which tab of the connect form is showing
+  let homework = null;        // { missing, upcoming, completed } as last drawn
 
   const els = {
     connectForm: document.getElementById("canvas-connect"),
+    feed: document.getElementById("canvas-feed"),
+    feedFields: document.getElementById("canvas-feed-fields"),
+    tokenFields: document.getElementById("canvas-token-fields"),
+    tabs: document.querySelectorAll("[data-canvas-mode]"),
     url: document.getElementById("canvas-url"),
     token: document.getElementById("canvas-token"),
     connectButton: document.getElementById("canvas-connect-button"),
@@ -125,6 +135,28 @@
     meta.className = "hw-meta";
     meta.textContent = [item.course, dueText(item.dueAt, kind)].filter(Boolean).join(" · ");
 
+    if (item.checkable) {
+      // Calendar Feed: the student ticks off finished work
+      li.classList.add("hw-checkable");
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.className = "hw-check";
+      box.checked = Boolean(item.done);
+      box.setAttribute("aria-label", `${item.done ? "Mark as not done" : "Mark as done"}: ${item.name || "assignment"}`);
+      box.addEventListener("change", () => setDone(item, box.checked, box));
+      const text = document.createElement("span");
+      text.className = "hw-text";
+      text.append(name, meta);
+      if (kind === "completed") {
+        const note = document.createElement("span");
+        note.className = "hw-done-note";
+        note.textContent = "Ticked off";
+        text.append(note);
+      }
+      li.append(box, text);
+      return li;
+    }
+
     li.append(name, meta);
 
     if (kind === "completed") {
@@ -170,6 +202,33 @@
     }
   }
 
+  function drawAll() {
+    drawColumn("missing", homework.missing);
+    drawColumn("upcoming", homework.upcoming);
+    drawColumn("completed", homework.completed);
+  }
+
+  const byDue = (a, b) => (!a.dueAt ? 1 : !b.dueAt ? -1 : a.dueAt.localeCompare(b.dueAt));
+
+  // Tick a Calendar Feed assignment off (or untick it): move it right away, then save
+  async function setDone(item, done, box) {
+    const before = JSON.parse(JSON.stringify(homework));
+    for (const kind of Object.keys(homework)) homework[kind] = homework[kind].filter((i) => i.id !== item.id);
+    const moved = { ...item, done };
+    if (done) homework.completed = [moved, ...homework.completed].sort((a, b) => byDue(b, a));
+    else if (item.dueAt && new Date(item.dueAt) < Date.now()) homework.missing = [...homework.missing, moved].sort(byDue);
+    else homework.upcoming = [...homework.upcoming, moved].sort(byDue);
+    drawAll();
+
+    try {
+      await api("POST", "/api/canvas/done", { id: item.id, done });
+    } catch (error) {
+      homework = before; // put it back where it was
+      drawAll();
+      setStatus(error.message, true);
+    }
+  }
+
   // ---------- Loading ----------
 
   async function loadHomework() {
@@ -177,12 +236,11 @@
     els.refresh.disabled = true;
     try {
       const data = await api("GET", "/api/canvas/assignments");
-      drawColumn("missing", data.missing || []);
-      drawColumn("upcoming", data.upcoming || []);
-      drawColumn("completed", data.completed || []);
+      homework = { missing: data.missing || [], upcoming: data.upcoming || [], completed: data.completed || [] };
+      drawAll();
       setStatus("");
     } catch (error) {
-      if (error.reconnect) return showConnectForm("Canvas stopped accepting your token. Make a new one and connect again.");
+      if (error.reconnect) return showConnectForm(`${error.message} Connect again to keep seeing your homework.`);
       setStatus(error.message, true);
     } finally {
       els.refresh.disabled = false;
@@ -203,14 +261,34 @@
 
   // ---------- Connect, refresh, unlink ----------
 
+  function setConnectMode(mode) {
+    connectMode = mode;
+    els.tabs.forEach((tab) => {
+      const active = tab.dataset.canvasMode === mode;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+    els.feedFields.hidden = mode !== "feed";
+    els.tokenFields.hidden = mode !== "token";
+    els.connectError.textContent = "";
+  }
+  els.tabs.forEach((tab) => tab.addEventListener("click", () => setConnectMode(tab.dataset.canvasMode)));
+
   els.connectForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     els.connectError.textContent = "";
+    const body = connectMode === "feed"
+      ? { feedUrl: els.feed.value.trim() }
+      : { canvasUrl: els.url.value.trim(), token: els.token.value.trim() };
+    if (connectMode === "feed" && !body.feedUrl) return (els.connectError.textContent = "Paste your Calendar Feed link.");
+    if (connectMode === "token" && (!body.canvasUrl || !body.token)) return (els.connectError.textContent = "Enter your school's Canvas address and your token.");
+
     els.connectButton.disabled = true;
     els.connectButton.textContent = "Checking with Canvas…";
     try {
-      const result = await api("POST", "/api/canvas/connect", { canvasUrl: els.url.value, token: els.token.value });
-      els.token.value = ""; // don't leave the token sitting in the page
+      const result = await api("POST", "/api/canvas/connect", body);
+      els.token.value = ""; // don't leave secrets sitting in the page
+      els.feed.value = "";
       showHomework(result.canvasUrl);
       loadHomework();
     } catch (error) {
@@ -228,6 +306,7 @@
     try {
       await api("DELETE", "/api/canvas/connect");
       Object.keys(COLUMNS).forEach((kind) => COLUMNS[kind].list.replaceChildren());
+      homework = null;
       setStatus("");
       showConnectForm();
     } catch (error) {

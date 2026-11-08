@@ -86,3 +86,23 @@ a.hw-name:hover { color: #2b4acb; text-decoration: underline; }
 
 .hw-empty { font-size: 14px; color: #777; padding: 4px 2px; }
 .hw-more { font-size: 13px; padding: 4px 0; }
+
+/* ---------- Calendar Feed: connect tabs and tick-off ---------- */
+.hw-connect .nb-tabs { max-width: 360px; }
+.hw-fields { display: flex; flex-direction: column; gap: 12px; }
+.hw-fields[hidden] { display: none; }
+.hw-small { margin: 8px 0 0; font-size: 13px; color: #666; }
+
+.hw-item.hw-checkable { flex-direction: row; align-items: flex-start; gap: 10px; }
+.hw-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hw-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  padding: 0;
+  accent-color: #2e7d32;
+  cursor: pointer;
+}
+.hw-completed .hw-name { color: #555; }
+.hw-done-note { font-size: 13px; color: #2e7d32; }

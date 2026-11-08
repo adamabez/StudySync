@@ -121,21 +121,46 @@
       <form id="canvas-connect" class="hw-connect" hidden>
         <p id="canvas-reconnect-note" class="hw-note" hidden></p>
         <p>Link your Canvas account to see your homework here.</p>
-        <label>Your school's Canvas address
-          <input id="canvas-url" placeholder="e.g. csus.instructure.com" autocomplete="url" required>
-        </label>
-        <label>Canvas access token
-          <input id="canvas-token" type="password" placeholder="Paste your token" autocomplete="off" spellcheck="false" required>
-        </label>
-        <details class="hw-help">
-          <summary>How do I get a token?</summary>
-          <ol>
-            <li>Log in to Canvas and click <strong>Account</strong>, then <strong>Settings</strong>.</li>
-            <li>Under <strong>Approved Integrations</strong>, click <strong>+ New Access Token</strong>.</li>
-            <li>Type "StudySync" as the purpose, then click <strong>Generate Token</strong>.</li>
-            <li>Copy the token and paste it here. Canvas only shows it once.</li>
-          </ol>
-        </details>
+        <div class="nb-tabs" role="tablist" aria-label="How to connect">
+          <button type="button" class="nb-tab active" data-canvas-mode="feed" role="tab" aria-selected="true">Calendar Feed link</button>
+          <button type="button" class="nb-tab" data-canvas-mode="token" role="tab" aria-selected="false">Access token</button>
+        </div>
+
+        <!-- Calendar Feed: works at every school, including Sac State -->
+        <div id="canvas-feed-fields" class="hw-fields">
+          <label>Canvas Calendar Feed link
+            <input id="canvas-feed" placeholder="https://csus.instructure.com/feeds/calendars/user_….ics" autocomplete="off" spellcheck="false">
+          </label>
+          <details class="hw-help" open>
+            <summary>Where do I find it?</summary>
+            <ol>
+              <li>Log in to Canvas and click <strong>Calendar</strong> in the left menu.</li>
+              <li>At the bottom right, click <strong>Calendar Feed</strong>.</li>
+              <li>Copy the link it shows and paste it here.</li>
+            </ol>
+            <p class="hw-small">The feed has due dates but not what you've turned in, so tick off homework when you finish it. Keep the link private: anyone with it can see your calendar.</p>
+          </details>
+        </div>
+
+        <!-- Access token: only if the school lets students make tokens -->
+        <div id="canvas-token-fields" class="hw-fields" hidden>
+          <label>Your school's Canvas address
+            <input id="canvas-url" placeholder="e.g. csus.instructure.com" autocomplete="url">
+          </label>
+          <label>Canvas access token
+            <input id="canvas-token" type="password" placeholder="Paste your token" autocomplete="off" spellcheck="false">
+          </label>
+          <details class="hw-help">
+            <summary>How do I get a token?</summary>
+            <ol>
+              <li>Log in to Canvas and click <strong>Account</strong>, then <strong>Settings</strong>.</li>
+              <li>Under <strong>Approved Integrations</strong>, click <strong>+ New Access Token</strong>. (Some schools, like Sac State, turn this off. Use the Calendar Feed link instead.)</li>
+              <li>Type "StudySync" as the purpose, then click <strong>Generate Token</strong>.</li>
+              <li>Copy the token and paste it here. Canvas only shows it once.</li>
+            </ol>
+            <p class="hw-small">With a token, StudySync can see what you turned in and your scores.</p>
+          </details>
+        </div>
         <p id="canvas-connect-error" class="error"></p>
         <button type="submit" id="canvas-connect-button">Connect Canvas</button>
       </form>

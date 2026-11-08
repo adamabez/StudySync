@@ -144,9 +144,10 @@ All `/api/` routes require being logged in.
 | POST | `/api/notebook/ask` | Ask the AI (starts or continues a chat) |
 | GET | `/api/chats` | List saved chats |
 | GET / DELETE | `/api/chats/:id` | Open / delete a chat |
-| POST / DELETE | `/api/canvas/connect` | Link Canvas (`{ canvasUrl, token }`, checked with Canvas first) / unlink it |
-| GET | `/api/canvas/status` | `{ connected, canvasUrl }` (never the token) |
+| POST / DELETE | `/api/canvas/connect` | Link Canvas with `{ feedUrl }` (Calendar Feed) or `{ canvasUrl, token }`, checked with Canvas first / unlink it |
+| GET | `/api/canvas/status` | `{ connected, canvasUrl, mode }`, mode is `feed` or `token` (never the link or token) |
 | GET | `/api/canvas/assignments` | Homework sorted into `missing`, `completed` and `upcoming` |
+| POST | `/api/canvas/done` | Calendar Feed only: tick an assignment off, `{ id, done }` |
 
 ## Good to know
 
