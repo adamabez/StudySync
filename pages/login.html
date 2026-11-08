@@ -23,7 +23,15 @@
     </form>
     <p class="switch"><a href="/forgot">Forgot password?</a></p>
     <p class="switch">New here? <a href="/signup">Create an account</a></p>
+    <p id="ai-notice" class="ai-notice" hidden>
+      <strong>Early access.</strong> StudySync is still being built, so expect some rough edges.
+      AI answers can take a little while, and sometimes the AI is busy or errors out. If that
+      happens, wait a minute and try again. The AI runs on Google Gemini's free tier, so don't
+      upload private or sensitive material: Google may use what's sent to the AI to improve its
+      products. AI answers can also be wrong, so check them against your materials.
+    </p>
   </div>
+  <script src="/public/ai-notice.js"></script>
 
   <script>
     // The server sends you back to /?error=<code> when logging in fails

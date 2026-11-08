@@ -55,12 +55,21 @@ npm install
 ### 4. (Optional) Turn on AI answers
 The notebook works without AI: you can add and organize sources. To get answers:
 
-1. Create an API key at [console.anthropic.com](https://console.anthropic.com) (requires billing).
-2. Add it to `.env`:
-   ```
-   ANTHROPIC_API_KEY=sk-ant-your-key-here
-   ```
-3. Start (or restart) the server.
+Pick one provider:
+
+- **Free (Gemini, good for demos):** get a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey), then add to `.env`:
+  ```
+  AI_PROVIDER=gemini
+  GEMINI_API_KEY=your-key
+  ```
+  The free tier has low rate limits (fine for a demo, not for lots of users at once), and Google can use free-tier prompts to improve its products, so use test materials.
+- **Paid (Claude):** create a key at [console.anthropic.com](https://console.anthropic.com) (requires billing), then add to `.env`:
+  ```
+  AI_PROVIDER=anthropic
+  ANTHROPIC_API_KEY=sk-ant-your-key-here
+  ```
+
+Then start (or restart) the server. Switching later is just changing `AI_PROVIDER` and restarting.
 
 > **Never commit `.env`.** It's already listed in `.gitignore`. Use git to upload the project. GitHub's drag-and-drop "Upload files" button ignores `.gitignore` and could upload your key.
 
@@ -152,7 +161,8 @@ All `/api/` routes require being logged in.
 ## Good to know
 
 - **This is a learning project, not production-ready.** Canvas tokens are stored as plain text in Supabase, readable only by the server.
-- **AI answers cost money.** They're billed to the API key's Anthropic account. A question about a ~20-page PDF costs roughly 10–15¢. Follow-ups on the same sources are cheaper thanks to caching. Consider setting a spending limit in the Anthropic Console.
+- **AI answers with Gemini's free tier cost nothing** but are rate-limited ("The free AI limit was reached" means wait a minute).
+- **AI answers with Claude cost money.** They're billed to the API key's Anthropic account. A question about a ~20-page PDF costs roughly 10–15¢. Follow-ups on the same sources are cheaper thanks to caching. Consider setting a spending limit in the Anthropic Console.
 - **Limits:** PDFs up to 10 MB, pasted or text files up to 500,000 characters per source.
 
 ## Troubleshooting
@@ -161,6 +171,7 @@ All `/api/` routes require being logged in.
 |---|---|
 | `EADDRINUSE: address already in use :::3000` | Another copy of the server is running. Stop it, or run `lsof -ti:3000 \| xargs kill` (macOS/Linux) |
 | "AI answers are off" box still showing | Check that `.env` is in the project folder and spelled correctly, then restart the server |
-| "The Anthropic API key in .env isn't valid" | The key is wrong or expired. Paste a new key into `.env` and restart |
+| "The Anthropic API key in .env isn't valid" / "The Gemini API key in .env isn't valid" | The key is wrong or expired. Paste a new key into `.env` and restart |
+| "The Gemini model ... wasn't found" | Set `GEMINI_MODEL` in `.env` to a current model name from Google AI Studio and restart |
 | Changes not showing up | Refresh the browser. For changes to `.js` files in the main folder, restart the server |
 | `Cannot find module '@anthropic-ai/sdk'` | Run `npm install` |

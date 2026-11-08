@@ -8,7 +8,7 @@
 //   schedule.js   → saving / loading calendar items (Supabase)
 //   materials.js  → saving / loading Virtual Notebook materials (Supabase)
 //   chats.js      → saved Virtual Notebook chats (Supabase)
-//   ai.js         → asking the AI about those materials
+//   ai.js         → asking the AI about those materials (Gemini or Claude: ai-gemini.js / ai-anthropic.js)
 //   feedback.js   → feedback / bug reports from the dashboard (Supabase)
 //   canvas.js     → linking Canvas and loading homework (missing / completed / upcoming)
 //   onboarding.js → first-login schedule screen, "study alone or in a group?", weekly study goal
@@ -16,13 +16,13 @@
 //   studyplan.js  → weekly study times: picked by the AI if there's a key, else by public/planner.js
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
-//   .env          → your secret keys: Supabase, Anthropic (never commit this!)
+//   .env          → your secret keys: Supabase, Gemini or Anthropic (never commit this!)
 
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-// Load secrets (SUPABASE_URL, SUPABASE_KEY, ANTHROPIC_API_KEY) from .env, if that file exists
+// Load secrets (SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY or ANTHROPIC_API_KEY) from .env, if that file exists
 try {
   process.loadEnvFile(path.join(__dirname, ".env"));
 } catch {
@@ -130,6 +130,11 @@ async function handleRequest(req, res) {
   // Who's logged in? After this, auth.getUserId(req) gives their Supabase user ID
   await auth.loadUser(req, res);
   const loggedIn = auth.isLoggedIn(req);
+
+  // Whether to show the "Demo version" AI notice on login / sign-up (no login needed)
+  if (req.method === "GET" && url.pathname === "/ai-status") {
+    return sendJson(res, { freeTier: ai.providerInfo().freeTier }); // shown even before the key is added
+  }
 
   // Front page: the login form (skip it if already logged in)
   if (req.method === "GET" && url.pathname === "/") {
@@ -254,7 +259,7 @@ async function handleRequest(req, res) {
     }
 
     // --- First-login setup and study preference (onboarding.js) ---
-    // aiScheduling: whether study times are planned by the AI (needs ANTHROPIC_API_KEY)
+    // aiScheduling: whether study times are planned by the AI (needs an AI key, see ai.js)
     if (req.method === "GET" && url.pathname === "/api/profile") {
       return sendJson(res, { ...(await onboarding.getProfile(db, userId)), aiScheduling: ai.aiEnabled() });
     }
@@ -417,12 +422,12 @@ async function handleRequest(req, res) {
 
     // --- Virtual Notebook: asking the AI ---
     if (req.method === "GET" && url.pathname === "/api/notebook/status") {
-      return sendJson(res, { aiEnabled: ai.aiEnabled() });
+      return sendJson(res, { aiEnabled: ai.aiEnabled(), freeTier: ai.aiEnabled() && ai.providerInfo().freeTier });
     }
 
     if (req.method === "POST" && url.pathname === "/api/notebook/ask") {
       return readJson(req, res, 2_000_000, async (input) => {
-        if (!ai.aiEnabled()) return sendJson(res, { error: "AI answers are off. Add your Anthropic API key to .env and restart the server." }, 503);
+        if (!ai.aiEnabled()) return sendJson(res, { error: `AI answers are off. Add ${ai.providerInfo().keyName} to .env and restart the server.` }, 503);
 
         const question = typeof input.question === "string" ? input.question.trim() : "";
         const label = typeof input.label === "string" && input.label.trim() ? input.label.trim().slice(0, 200) : question;
@@ -498,5 +503,9 @@ async function handleRequest(req, res) {
 server.listen(PORT, () => {
   console.log(`StudySync is running at http://localhost:${PORT}`);
   if (!auth.isConfigured()) console.log("Login: put the real SUPABASE_URL and SUPABASE_KEY in .env (not the example values), then restart.");
-  if (!ai.aiEnabled()) console.log("Virtual Notebook: AI answers are off (no ANTHROPIC_API_KEY in .env).");
+  const aiInfo = ai.providerInfo();
+  if (ai.providerProblem()) console.log("AI: " + ai.providerProblem());
+  else console.log(ai.aiEnabled()
+    ? `AI: using ${aiInfo.name} for notebook answers and study plans.`
+    : `Virtual Notebook: AI answers are off (no ${aiInfo.keyName} in .env).`);
 });
