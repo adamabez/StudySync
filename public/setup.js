@@ -150,6 +150,27 @@ $("finish").addEventListener("click", async () => {
   window.location.href = "/landing";
 });
 
+// ---------- Skip for now (first time only) ----------
+// Marks setup as done without a study style or goal, and goes to the dashboard. Classes they
+// already added stay; everything else can be set later (Edit schedule / the study plan page).
+async function skipSetup(event) {
+  const button = event.currentTarget;
+  button.disabled = true;
+  const res = await fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ skip: true }),
+  }).catch(() => null);
+  if (!res || !res.ok) {
+    $("finish-error").textContent = "Couldn't skip right now. Try again.";
+    button.disabled = false;
+    return;
+  }
+  window.location.href = "/dashboard";
+}
+$("skip-top").addEventListener("click", skipSetup);
+$("skip-bottom").addEventListener("click", skipSetup);
+
 // ---------- Weekly study goal: preset options, or "Other" with a number ----------
 const PRESET_HOURS = [2, 4, 6, 8, 10, 15];
 
@@ -194,6 +215,9 @@ async function load() {
     $("notes-field").hidden = !profile.aiScheduling;
     $("study-notes").value = profile.studyNotes || "";
     if (profile.onboarded) $("finish").textContent = "Save";
+    // Skipping only makes sense the first time through
+    $("skip-top").hidden = profile.onboarded;
+    $("skip-bottom").hidden = profile.onboarded;
   }
 }
 load();

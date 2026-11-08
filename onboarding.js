@@ -59,7 +59,9 @@ async function updateProfile(db, userId, input) {
     if (notes.length > MAX_NOTES) return { error: `Keep your study notes under ${MAX_NOTES} characters.` };
     fields.study_notes = notes;
   }
-  if (Object.keys(fields).length === 1) return { error: "Nothing to save." };
+  // { skip: true }: "Skip for now" on the setup screen. Just marks setup as done, so they go
+  // straight to the dashboard from now on; they can add classes and preferences later.
+  if (Object.keys(fields).length === 1 && input.skip !== true) return { error: "Nothing to save." };
 
   await saveProfile(db, userId, fields);
   return { value: await getProfile(db, userId) };
