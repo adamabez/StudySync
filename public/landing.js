@@ -128,8 +128,10 @@ function describeGroup(group) {
 }
 
 function groupCard(group) {
-  const card = document.createElement("article");
+  // The whole card opens the group's page (members + shared notes)
+  const card = document.createElement("a");
   card.className = "group-card";
+  card.href = "/group?id=" + encodeURIComponent(group.id);
 
   const name = document.createElement("strong");
   name.className = "group-name";
@@ -145,7 +147,7 @@ function groupCard(group) {
   list.className = "member-list";
   for (const member of group.members) {
     const li = document.createElement("li");
-    li.textContent = member.email + (member.isYou ? " (you)" : "");
+    li.textContent = member.name + (member.isYou ? " (you)" : "");
     list.appendChild(li);
   }
   card.appendChild(list);
@@ -157,6 +159,11 @@ function groupCard(group) {
     note.textContent = "Your other group members' schedules changed. We'll add new people as soon as their schedules fit.";
     card.appendChild(note);
   }
+
+  const open = document.createElement("span");
+  open.className = "group-open";
+  open.textContent = "Open group notes →";
+  card.appendChild(open);
   return card;
 }
 

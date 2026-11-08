@@ -197,6 +197,12 @@ async function handleRequest(req, res) {
     return sendPage(res, "dashboard.html");
   }
 
+  // One study group's page: /group?id=<group id>
+  if (req.method === "GET" && url.pathname === "/group") {
+    if (!loggedIn) return redirect(res, "/");
+    return sendPage(res, "group.html");
+  }
+
   // Log out
   // Forgot password: ask for the email, then Supabase emails a reset link
   if (req.method === "GET" && url.pathname === "/forgot") {
@@ -302,6 +308,36 @@ async function handleRequest(req, res) {
     if (req.method === "POST" && url.pathname === "/api/groups/match") {
       await groups.match(db);
       return sendJson(res, await groups.listMyGroups(db, userId));
+    }
+
+    // One group + its shared notes (only members can see it)
+    const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    const groupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})(?:/notes(?:/(${UUID}))?)?$`));
+    if (groupMatch) {
+      const [, groupId, noteId] = groupMatch;
+      const isNotes = url.pathname.includes("/notes");
+      const group = await groups.getGroup(db, groupId, userId);
+      if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
+
+      if (req.method === "GET" && !isNotes) {
+        const notes = await groups.listNotes(db, group, userId);
+        const { members, ...details } = group;
+        return sendJson(res, {
+          group: { ...details, members: members.map(groups.memberForBrowser) },
+          notes,
+        });
+      }
+      if (req.method === "POST" && isNotes && !noteId) {
+        return readJson(req, res, 50_000, async (input) => {
+          const result = await groups.addNote(db, group, userId, input);
+          if (result.error) return sendJson(res, { error: result.error }, 400);
+          sendJson(res, result.value, 201);
+        });
+      }
+      if (req.method === "DELETE" && noteId) {
+        await groups.removeNote(db, groupId, noteId);
+        return sendJson(res, { ok: true });
+      }
     }
 
     // --- Feedback / bug reports ---
