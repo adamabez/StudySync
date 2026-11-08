@@ -1,11 +1,12 @@
 // StudySync - dashboard calendar (runs in the browser, not on the server).
-// Talks to the server's /api/classes routes to load, add and remove classes.
+// Talks to the server's /api/classes routes to load, add, edit and remove classes.
 
 const DAYS = [
   ["mon", "Monday"], ["tue", "Tuesday"], ["wed", "Wednesday"], ["thu", "Thursday"],
   ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"],
 ];
 let classes = []; // everything on the calendar: classes, tasks and "other" items
+let editingId = null; // the item being edited in the form (pencil → Edit), or null when adding
 
 // What the "Add a…" dropdown changes for each choice
 const KINDS = {
@@ -24,7 +25,7 @@ function updateFormForKind() {
   document.getElementById("add-form").dataset.kind = kind;
   document.getElementById("name-label").textContent = k.nameLabel;
   document.getElementById("name").placeholder = k.placeholder;
-  document.getElementById("add-button").textContent = k.button;
+  document.getElementById("add-button").textContent = editingId ? "Save changes" : k.button;
   document.getElementById("location-field").hidden = kind !== "class";
   document.getElementById("category-field").hidden = kind !== "other";
   document.getElementById("category").required = kind === "other";
@@ -122,6 +123,7 @@ function render() {
     }
 
     for (const c of todays) col.appendChild(makeCard(c));
+    col.appendChild(makeDayAdd(key, label));
     week.appendChild(col);
   }
 
@@ -154,16 +156,154 @@ function makeCard(c) {
   const when = isAsyncItem(c) ? "Asynchronous" : formatTime(c.start) + " – " + formatTime(c.end);
   meta.textContent = when + (c.location ? " · " + c.location : "");
 
-  const remove = document.createElement("button");
-  remove.className = "remove";
-  remove.type = "button";
-  remove.title = "Remove " + c.name;
-  remove.setAttribute("aria-label", "Remove " + c.name);
-  remove.textContent = "×";
-  remove.onclick = () => removeClass(c);
+  // Pencil in the top right → a small menu with Edit and Delete
+  const pencil = document.createElement("button");
+  pencil.className = "card-menu-button";
+  pencil.type = "button";
+  pencil.title = "Edit or delete";
+  pencil.setAttribute("aria-label", "Edit or delete " + c.name);
+  pencil.setAttribute("aria-haspopup", "menu");
+  pencil.setAttribute("aria-expanded", "false");
+  pencil.innerHTML = PENCIL_SVG;
+  pencil.onclick = (e) => {
+    e.stopPropagation(); // don't let the "click outside closes the menu" listener see this click
+    const wasOpen = pencil.getAttribute("aria-expanded") === "true";
+    closeCardMenu();
+    if (!wasOpen) openCardMenu(card, pencil, c);
+  };
 
-  card.append(name, meta, remove);
+  card.append(name, meta, pencil);
   return card;
+}
+
+const PENCIL_SVG =
+  '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">' +
+  '<path d="M11.2 2.3a1.5 1.5 0 0 1 2.1 0l.4.4a1.5 1.5 0 0 1 0 2.1L5.6 12.9 2.5 13.5l.6-3.1z" ' +
+  'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>' +
+  '<path d="M10 3.5l2.5 2.5" stroke="currentColor" stroke-width="1.5"/></svg>';
+
+// "+" at the bottom of each day → a small menu: Class / Task / Other
+function makeDayAdd(dayKey, dayLabel) {
+  const wrap = document.createElement("div");
+  wrap.className = "day-add";
+
+  const plus = document.createElement("button");
+  plus.className = "day-add-button";
+  plus.type = "button";
+  plus.title = "Add to " + dayLabel;
+  plus.setAttribute("aria-label", "Add something on " + dayLabel);
+  plus.setAttribute("aria-haspopup", "menu");
+  plus.setAttribute("aria-expanded", "false");
+  plus.textContent = "+";
+  plus.onclick = (e) => {
+    e.stopPropagation();
+    const wasOpen = plus.getAttribute("aria-expanded") === "true";
+    closeCardMenu();
+    if (!wasOpen) {
+      openMenuIn(wrap, plus, [
+        { label: "Class", onClick: () => startAdding("class", dayKey) },
+        { label: "Task", onClick: () => startAdding("task", dayKey) },
+        { label: "Other (work, gym…)", onClick: () => startAdding("other", dayKey) },
+      ]);
+    }
+  };
+
+  wrap.appendChild(plus);
+  return wrap;
+}
+
+// ----- Small pop-up menus (pencil and "+"). Only one is open at a time. -----
+let openMenu = null; // { menu, button }
+
+// items: [{ label, onClick, danger }]
+function openMenuIn(container, button, items) {
+  const menu = document.createElement("div");
+  menu.className = "card-menu";
+  menu.setAttribute("role", "menu");
+
+  for (const item of items) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("role", "menuitem");
+    if (item.danger) b.className = "danger";
+    b.textContent = item.label;
+    b.onclick = () => { closeCardMenu(); item.onClick(); };
+    menu.appendChild(b);
+  }
+
+  menu.addEventListener("click", (e) => e.stopPropagation());
+  container.appendChild(menu);
+  button.setAttribute("aria-expanded", "true");
+  openMenu = { menu, button };
+  menu.firstChild.focus();
+}
+
+function openCardMenu(card, button, c) {
+  openMenuIn(card, button, [
+    { label: "Edit", onClick: () => startEditing(c) },
+    { label: "Delete", onClick: () => removeClass(c), danger: true },
+  ]);
+}
+
+function closeCardMenu({ returnFocus = false } = {}) {
+  if (!openMenu) return;
+  openMenu.menu.remove();
+  openMenu.button.setAttribute("aria-expanded", "false");
+  if (returnFocus) openMenu.button.focus();
+  openMenu = null;
+}
+
+// Click anywhere else, or press Escape, to close the menu
+document.addEventListener("click", () => closeCardMenu());
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeCardMenu({ returnFocus: true });
+});
+
+// Open the Add section if it was collapsed, then bring the form into view
+function showAddForm() {
+  const toggle = document.querySelector('.collapse-toggle[data-target="add-body"]');
+  if (toggle && toggle.getAttribute("aria-expanded") === "false") toggle.click();
+  document.getElementById("add-body").scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("name").focus({ preventScroll: true });
+}
+
+// "+" on a day → a fresh Add form for that kind, with only that day ticked
+function startAdding(kind, dayKey) {
+  if (editingId) stopEditing();
+  document.getElementById("add-form").reset();
+  document.getElementById("kind").value = kind;
+  updateFormForKind();
+  for (const [key] of DAYS) document.getElementById("day-" + key).checked = key === dayKey;
+  showAddForm();
+}
+
+// ----- Editing: the Add form doubles as the edit form -----
+function startEditing(c) {
+  editingId = c.id;
+  const kind = kindOf(c);
+  document.getElementById("kind").value = kind;
+  updateFormForKind(); // shows the right fields and the "Save changes" button
+
+  document.getElementById("name").value = c.name;
+  document.getElementById("location").value = c.location || "";
+  document.getElementById("category").value = c.category || "";
+  document.getElementById("async").checked = kind === "class" && isAsyncItem(c);
+  document.getElementById("start").value = c.start || "";
+  document.getElementById("end").value = c.end || "";
+  for (const [key] of DAYS) document.getElementById("day-" + key).checked = c.days.includes(key);
+  updateFormForAsync();
+
+  document.getElementById("edit-name").textContent = c.name;
+  document.getElementById("edit-banner").hidden = false;
+
+  showAddForm();
+}
+
+function stopEditing() {
+  editingId = null;
+  document.getElementById("edit-banner").hidden = true;
+  document.getElementById("add-form").reset();
+  updateFormForKind(); // back to "Add class" / "Add task" / "Add"
 }
 
 async function loadClasses() {
@@ -178,6 +318,7 @@ async function removeClass(c) {
   const res = await fetch("/api/classes/" + c.id, { method: "DELETE" });
   if (res.status === 401) return (window.location.href = "/");
   classes = classes.filter((x) => x.id !== c.id);
+  if (editingId === c.id) stopEditing(); // deleted the item being edited
   render();
 }
 
@@ -203,8 +344,9 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   if (!isAsync && newClass.days.length === 0) return (error.textContent = "Pick at least one day.");
   if (!isAsync && newClass.end <= newClass.start) return (error.textContent = "End time must be after the start time.");
 
-  const res = await fetch("/api/classes", {
-    method: "POST",
+  // Editing → PUT to /api/classes/<id>; adding → POST to /api/classes
+  const res = await fetch(editingId ? "/api/classes/" + editingId : "/api/classes", {
+    method: editingId ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newClass),
   });
@@ -212,12 +354,20 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   const data = await res.json();
   if (!res.ok) return (error.textContent = data.error || "Couldn't save that class.");
 
+  if (editingId) {
+    classes = classes.map((x) => (x.id === editingId ? data : x));
+    stopEditing();
+    return;
+  }
+
   classes.push(data);
   render();
   e.target.reset();
   updateFormForAsync(); // reset() unticks async, so bring the time fields back
   document.getElementById("name").focus();
 });
+
+document.getElementById("edit-cancel").addEventListener("click", stopEditing);
 
 document.getElementById("kind").addEventListener("change", updateFormForKind);
 document.getElementById("async").addEventListener("change", updateFormForAsync);

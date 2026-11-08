@@ -170,11 +170,31 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   gap: 8px;
 }
 .day-col {
+  display: flex;
+  flex-direction: column;
   background: #f7f8fc;
   border-radius: 10px;
   padding: 10px;
   min-height: 160px;
 }
+
+/* "+" at the bottom of each day: add a class, task or other item on that day */
+.day-add { position: relative; margin-top: auto; padding-top: 4px; }
+.day-add-button {
+  display: block;
+  width: 100%;
+  padding: 2px 0;
+  background: none;
+  color: #aab;
+  font-size: 20px;
+  line-height: 1.3;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+}
+.day-col:hover .day-add-button { border-color: #ccd; }
+.day-add-button:hover,
+.day-add-button[aria-expanded="true"] { background: #eef0f6; color: #2b4acb; border-color: #2b4acb; }
+.day-add .card-menu { top: auto; bottom: calc(100% + 4px); right: 50%; transform: translateX(50%); white-space: nowrap; }
 .day-col.today { outline: 2px solid #2b4acb; }
 .day-col h3 {
   margin: 0 0 10px;
@@ -199,17 +219,58 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 }
 .class-card strong { display: block; color: #222; margin-bottom: 2px; }
 .class-card .meta { color: #666; }
-.class-card .remove {
+/* Pencil in the top right: opens a small Edit / Delete menu */
+.class-card .card-menu-button {
   position: absolute;
   top: 4px;
   right: 4px;
-  padding: 0 6px;
+  display: flex;
+  padding: 4px;
   background: none;
   color: #999;
-  font-size: 16px;
-  line-height: 1.4;
+  border-radius: 4px;
 }
-.class-card .remove:hover { background: #fdecec; color: #c62828; }
+.class-card .card-menu-button:hover,
+.class-card .card-menu-button[aria-expanded="true"] { background: #eef0f6; color: #2b4acb; }
+.card-menu {
+  position: absolute;
+  top: 28px;
+  right: 4px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 96px;
+  padding: 4px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+.card-menu button {
+  padding: 6px 10px;
+  background: none;
+  color: #222;
+  font-size: 13px;
+  text-align: left;
+  border-radius: 4px;
+}
+.card-menu button:hover, .card-menu button:focus-visible { background: #eef0f6; }
+.card-menu .danger { color: #c62828; }
+.card-menu .danger:hover, .card-menu .danger:focus-visible { background: #fdecec; }
+
+/* "Editing Biology 101 · Cancel" above the form */
+.edit-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  background: #e8ebf6;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+}
+.edit-banner[hidden] { display: none; }
+.edit-banner .link-button { margin-left: auto; }
 
 /* ---------- Phones and small windows: stack things ---------- */
 @media (max-width: 900px) {

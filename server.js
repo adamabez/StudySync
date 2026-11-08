@@ -237,6 +237,15 @@ async function handleRequest(req, res) {
     }
 
     const classMatch = url.pathname.match(/^\/api\/classes\/([\w-]+)$/);
+    if (req.method === "PUT" && classMatch) {
+      return readJson(req, res, 10_000, async (input) => {
+        const result = await schedule.updateClass(db, classMatch[1], input);
+        if (result.notFound) return sendJson(res, { error: "That item was already removed. Refresh the page." }, 404);
+        if (result.error) return sendJson(res, { error: result.error }, 400);
+        sendJson(res, result.value);
+      });
+    }
+
     if (req.method === "DELETE" && classMatch) {
       await schedule.removeClass(db, classMatch[1]);
       return sendJson(res, { ok: true });
