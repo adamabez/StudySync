@@ -207,6 +207,12 @@ async function handleRequest(req, res) {
     return sendPage(res, "dashboard.html");
   }
 
+  // Account settings: change email / password, dark mode, delete account
+  if (req.method === "GET" && url.pathname === "/account") {
+    if (!loggedIn) return redirect(res, "/");
+    return sendPage(res, "account.html");
+  }
+
   // One study group's page: /group?id=<group id>
   if (req.method === "GET" && url.pathname === "/group") {
     if (!loggedIn) return redirect(res, "/");
@@ -256,6 +262,49 @@ async function handleRequest(req, res) {
     // Every query below runs as the logged-in user, so they only see their own data
     const db = auth.supabaseFor(req);
     const userId = auth.getUserId(req);
+
+    // --- Account settings (auth.js): each needs the current password ---
+    const ACCOUNT_ERRORS = {
+      invalid: "That password isn't right.",
+      weak: "Pick a new password with at least 6 characters.",
+      same: "That's already your password. Pick a different one.",
+      email: "That email address doesn't look right.",
+      sameemail: "That's already your email.",
+      exists: "There's already an account with that email.",
+      rate: "Too many tries. Wait a minute and try again.",
+      unreachable: "Couldn't reach the login service. Try again.",
+    };
+    const accountError = (code) => ({ error: ACCOUNT_ERRORS[code] || "Something went wrong. Try again." });
+
+    if (req.method === "POST" && url.pathname === "/api/account/password") {
+      return readJson(req, res, 10_000, async (input) => {
+        const result = await auth.changePassword(req, input.currentPassword, input.newPassword);
+        if (result.error) return sendJson(res, accountError(result.error), 400);
+        res.setHeader("Set-Cookie", result.cookies);
+        sendJson(res, { ok: true });
+      });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/account/email") {
+      return readJson(req, res, 10_000, async (input) => {
+        const result = await auth.changeEmail(req, input.password, input.email);
+        if (result.error) return sendJson(res, accountError(result.error), 400);
+        sendJson(res, result);
+      });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/account/delete") {
+      return readJson(req, res, 10_000, async (input) => {
+        if (input.confirm !== "DELETE") return sendJson(res, { error: "Type DELETE to confirm." }, 400);
+        const result = await auth.deleteAccount(req, input.password, async () => {
+          // PDFs live in Storage, which doesn't clean up by itself: remove them first
+          for (const source of await materials.listSources(db)) await materials.removeSource(db, source.id);
+        });
+        if (result.error) return sendJson(res, accountError(result.error), 400);
+        res.setHeader("Set-Cookie", result.cookies);
+        sendJson(res, { ok: true });
+      });
+    }
 
     // --- Who's logged in (for "Logged in as ..." on the dashboard) ---
     if (req.method === "GET" && url.pathname === "/api/me") {

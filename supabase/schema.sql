@@ -547,6 +547,36 @@ $$;
 revoke execute on function public.group_member_names(uuid) from public, anon;
 grant execute on function public.group_member_names(uuid) to authenticated;
 
+-- ---------- Delete my account ----------
+-- The app's key can't delete logins, so this runs with the owner's rights, and only ever
+-- for the logged-in student. Their classes, notes, chats, profile and so on go with them
+-- (every table cascades from auth.users). Study groups they started are handed to another
+-- member first, so classmates keep their group and its notes. (PDF files in Storage are
+-- removed by the server before this runs: see server.js /api/account/delete.)
+create or replace function public.delete_my_account()
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then raise exception 'Not logged in'; end if;
+
+  update public.study_groups sg
+  set created_by = (
+    select m.user_id from public.group_members m
+    where m.group_id = sg.id and m.user_id <> uid
+    order by m.joined_at limit 1)
+  where sg.created_by = uid
+    and exists (select 1 from public.group_members m where m.group_id = sg.id and m.user_id <> uid);
+
+  delete from public.study_groups where created_by = uid; -- groups only they were in
+  delete from auth.users where id = uid;
+end;
+$$;
+revoke execute on function public.delete_my_account() from public, anon;
+grant execute on function public.delete_my_account() to authenticated;
+
 -- Rename groups made before the "CSC 20 | Group A" names, oldest first
 do $$
 declare g record;

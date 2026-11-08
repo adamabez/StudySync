@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="/public/theme.js"></script>
   <title>StudySync – Log in</title>
   <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/dark.css">
 </head>
 <body>
   <div class="box">
@@ -54,6 +56,13 @@
       const error = document.getElementById("login-error");
       error.textContent = MESSAGES[params.get("error")] || MESSAGES.unknown;
       error.hidden = false;
+    }
+
+    // After deleting an account on the settings page
+    if (params.has("deleted")) {
+      const notice = document.getElementById("login-notice");
+      notice.textContent = "Your account was deleted.";
+      notice.hidden = false;
     }
 
     // After signing up, when Supabase wants the email confirmed first

@@ -85,6 +85,7 @@
   text-decoration: none;
 }
 .account .logout:hover { background: #eef1fb; }
+.account .account-settings-link { margin-bottom: 6px; }
 .account .logout:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
 /* Open it: tapped open (phones), keyboard focus inside (Tab), or mouse hover (computers) */

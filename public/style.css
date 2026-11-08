@@ -73,6 +73,26 @@ button:hover { background: #2240b0; }
 .notice { color: #2e7d32; font-size: 14px; }
 .switch { font-size: 14px; margin: 20px 0 0; }
 
+/* Light / dark toggle (public/theme.js puts it in the page header, or the corner) */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #d5d9e6;
+  border-radius: 50%;
+  background: #fff;
+  color: #2b4acb;
+  cursor: pointer;
+}
+.theme-toggle:hover { background: #eef1fb; }
+.theme-toggle:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.theme-toggle.floating { position: fixed; top: 14px; right: 14px; z-index: 50; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+
 /* Class picker: the line under the class name box (public/course-picker.js) */
 .course-hint { display: block; margin: 4px 0 0; font-size: 12.5px; line-height: 1.35; color: #555; text-align: left; }
 .course-hint[hidden] { display: none; }
