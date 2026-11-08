@@ -38,6 +38,10 @@ body {
 
 h1 { margin: 0 0 8px; color: #2b4acb; }
 h1 .logo { display: inline-block; height: 48px; width: auto; max-width: 100%; vertical-align: middle; }
+/* Logo at the top left of logged-in pages: takes you to your study plan (/landing) */
+h1 .logo-link { display: inline-block; border-radius: 8px; line-height: 0; transition: opacity 0.15s; }
+h1 .logo-link:hover { opacity: 0.85; }
+h1 .logo-link:focus-visible { outline: 2px solid #2b4acb; outline-offset: 3px; }
 p  { color: #666; }
 a  { color: #2b4acb; font-size: 14px; }
 
