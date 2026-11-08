@@ -84,6 +84,7 @@ StudySync/
 ├── schedule.js       Saves/loads calendar items → Supabase "classes" table
 ├── materials.js      Saves/loads notebook sources → Supabase "sources" table + Storage
 ├── chats.js          Saves/loads notebook chats → Supabase "chats" table
+├── canvas.js         Links a Canvas account → "canvas_connections" table, loads homework from Canvas
 ├── supabase/schema.sql  Creates the tables and security rules (run once in Supabase)
 ├── ai.js             Sends sources + questions to the AI, formats citations
 ├── pages/            HTML for each page (login, signup, loading, dashboard, 404)
@@ -136,6 +137,9 @@ All `/api/` routes require being logged in.
 | POST | `/api/notebook/ask` | Ask the AI (starts or continues a chat) |
 | GET | `/api/chats` | List saved chats |
 | GET / DELETE | `/api/chats/:id` | Open / delete a chat |
+| POST / DELETE | `/api/canvas/connect` | Link Canvas (`{ canvasUrl, token }`, checked with Canvas first) / unlink it |
+| GET | `/api/canvas/status` | `{ connected, canvasUrl }` (never the token) |
+| GET | `/api/canvas/assignments` | Homework sorted into `missing`, `completed` and `upcoming` |
 
 ## Good to know
 
