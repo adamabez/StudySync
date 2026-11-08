@@ -43,8 +43,10 @@ function readCookie(req, name) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+// Online (PUBLIC_URL is https) the cookies are also marked Secure: only ever sent over https
 function cookie(name, value, maxAge) {
-  return `${name}=${encodeURIComponent(value)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+  const secure = /^https:\/\//i.test((process.env.PUBLIC_URL || "").trim()) ? "; Secure" : "";
+  return `${name}=${encodeURIComponent(value)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure}`;
 }
 
 // Cookies that store a Supabase session in the browser

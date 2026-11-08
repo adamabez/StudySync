@@ -44,7 +44,18 @@ const courses = require("./courses");
 const sections = require("./sections");
 const studyplan = require("./studyplan");
 
-const PORT = 3000;
+// Hosts like Render choose the port and pass it in PORT; on your computer it's 3000
+const PORT = Number(process.env.PORT) || 3000;
+
+// The site's public address, for links in emails (password reset). Set PUBLIC_URL in .env
+// (or the host's settings) when it's online, e.g. https://studysync.onrender.com. Otherwise
+// it's worked out from the request (http://localhost:3000 on your computer).
+function siteUrl(req) {
+  const fromEnv = (process.env.PUBLIC_URL || "").trim().replace(/\/+$/, "");
+  if (fromEnv) return fromEnv;
+  const proto = String(req.headers["x-forwarded-proto"] || "http").split(",")[0].trim();
+  return `${proto === "https" ? "https" : "http"}://${req.headers.host}`;
+}
 
 // ---------- Helpers for sending responses ----------
 
@@ -230,7 +241,7 @@ async function handleRequest(req, res) {
       const email = (new URLSearchParams(body).get("email") || "").trim();
       // The link in the email comes back here. Supabase only allows addresses listed
       // under Authentication → URL Configuration → Redirect URLs.
-      const result = await auth.sendPasswordReset(email, `http://${req.headers.host}/reset-password`);
+      const result = await auth.sendPasswordReset(email, `${siteUrl(req)}/reset-password`);
       redirect(res, result.error ? `/forgot?error=${result.error}` : "/forgot?sent=1");
     });
   }
@@ -576,7 +587,7 @@ async function handleRequest(req, res) {
 
 // ---------- Start the server ----------
 server.listen(PORT, () => {
-  console.log(`StudySync is running at http://localhost:${PORT}`);
+  console.log(`StudySync is running at ${(process.env.PUBLIC_URL || "").trim() || "http://localhost:" + PORT}`);
   if (!auth.isConfigured()) console.log("Login: put the real SUPABASE_URL and SUPABASE_KEY in .env (not the example values), then restart.");
   const aiInfo = ai.providerInfo();
   if (ai.providerProblem()) console.log("AI: " + ai.providerProblem());
