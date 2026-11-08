@@ -7,7 +7,7 @@ How we're splitting the work. Each person owns different files, so we shouldn't 
 | Person | Area | Status |
 |---|---|---|
 | Anthony | Supabase, login, per-student data | ✅ Done and merged into `main` |
-| Gurkirat | Canvas integration | ⏳ Not on `main` yet: unblocked, the login and `canvas_connections` table are ready |
+| Gurkirat | Canvas integration | ✅ Done on the `canvas` branch: `canvas.js` + the `/api/canvas/...` routes. Adam can switch the homework panel from fake data to the real routes |
 | Adam | Frontend, night mode, deploy, demo | ⏳ Not on `main` yet |
 
 ## Where things stand
@@ -57,15 +57,20 @@ Next:
 
 The login and the `canvas_connections` table are ready, so this can use real users now.
 
-- [ ] Let a user connect Canvas with a **personal access token**. In Canvas, it's under Account → Settings → Approved Integrations → **+ New Access Token**. Full OAuth needs the school's Canvas admin to issue a developer key, so a token is the realistic choice for a hackathon.
-- [ ] Save the token and the school's Canvas URL in the `canvas_connections` table, linked to the user. Tokens stay on the server and never get sent to the browser.
-- [ ] Fetch assignments from the Canvas API:
+- [x] Let a user connect Canvas with a **personal access token**. In Canvas, it's under Account → Settings → Approved Integrations → **+ New Access Token**. Full OAuth needs the school's Canvas admin to issue a developer key, so a token is the realistic choice for a hackathon.
+- [x] Save the token and the school's Canvas URL in the `canvas_connections` table, linked to the user. Tokens stay on the server and never get sent to the browser.
+- [x] Fetch assignments from the Canvas API:
   - Courses: `GET /api/v1/courses?enrollment_state=active`
   - Assignments with the user's submission: `GET /api/v1/courses/:id/assignments?include[]=submission`
   - Missing work: `GET /api/v1/users/self/missing_submissions`
   - Send the token as the header `Authorization: Bearer <token>`. Canvas splits long lists into pages, so follow the `Link` header to get every page.
-- [ ] Sort assignments into **missing**, **completed** (submitted or graded) and **upcoming**
-- [ ] Add the routes listed under "Shared interfaces"
+- [x] Sort assignments into **missing**, **completed** (submitted or graded) and **upcoming**
+- [x] Add the routes listed under "Shared interfaces"
+
+Notes for Adam:
+- If the saved token stops working, `/api/canvas/assignments` answers **409** with `{ error, reconnect: true }` (not 401, which means "not logged in"). Show the Connect Canvas form again.
+- `POST /api/canvas/connect` answers `{ connected, canvasUrl, name }`, where `name` is the student's name in Canvas. Errors come back as `{ error }` with a message you can show as-is.
+- In `completed`, `score` is `null` until the assignment is graded.
 
 ### Adam: Frontend, night mode and demo
 

@@ -10,6 +10,7 @@
 //   chats.js      → saved Virtual Notebook chats (Supabase)
 //   ai.js         → asking the AI about those materials
 //   feedback.js   → feedback / bug reports from the dashboard (Supabase)
+//   canvas.js     → linking Canvas and loading homework (missing / completed / upcoming)
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
 //   .env          → your secret keys: Supabase, Anthropic (never commit this!)
@@ -31,6 +32,7 @@ const materials = require("./materials");
 const chats = require("./chats");
 const ai = require("./ai");
 const feedback = require("./feedback");
+const canvas = require("./canvas");
 
 const PORT = 3000;
 
@@ -323,6 +325,30 @@ async function handleRequest(req, res) {
         const saved = await chats.addExchange(db, chat, { label, question, ...result });
         sendJson(res, { ...result, chat: chats.summary(saved) });
       });
+    }
+
+    // --- Canvas: link an account and load homework (canvas.js) ---
+    if (url.pathname === "/api/canvas/connect" && req.method === "POST") {
+      return readJson(req, res, 10_000, async (input) => {
+        const result = await canvas.connect(db, userId, input);
+        if (result.error) return sendJson(res, { error: result.error }, result.status);
+        sendJson(res, result.value, 201);
+      });
+    }
+
+    if (url.pathname === "/api/canvas/connect" && req.method === "DELETE") {
+      await canvas.disconnect(db, userId);
+      return sendJson(res, { ok: true });
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/canvas/status") {
+      return sendJson(res, await canvas.status(db));
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/canvas/assignments") {
+      const result = await canvas.getAssignments(db);
+      if (result.error) return sendJson(res, { error: result.error, reconnect: Boolean(result.reconnect) }, result.status);
+      return sendJson(res, result.value);
     }
 
     return sendJson(res, { error: "Not found" }, 404);
