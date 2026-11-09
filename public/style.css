@@ -37,7 +37,9 @@ body {
 }
 
 h1 { margin: 0 0 8px; color: #2b4acb; }
-h1 .logo { display: inline-block; height: 48px; width: auto; max-width: 100%; vertical-align: middle; }
+/* height:auto + max-height (not a fixed height) so that when max-width kicks in on narrow
+   phones the logo scales down proportionally instead of squashing horizontally */
+h1 .logo { display: inline-block; height: auto; max-height: 48px; width: auto; max-width: 100%; object-fit: contain; vertical-align: middle; }
 /* Logo at the top left of logged-in pages: takes you to your study plan (/landing) */
 h1 .logo-link { display: inline-block; border-radius: 8px; line-height: 0; transition: opacity 0.15s; }
 h1 .logo-link:hover { opacity: 0.85; }
