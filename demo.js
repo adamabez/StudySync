@@ -424,8 +424,7 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
     }
   }
 
-  // --- Feedback ---
-  if (m === "POST" && p === "/api/feedback") return sendJson(res, { error: "Feedback needs an account so we can follow up. Create a free one, or tell the team in person!" }, 403);
+  // (Feedback from the demo goes to the real feedback table: server.js handles it before this)
 
   // --- Calendar ---
   if (m === "GET" && p === "/api/classes") return sendJson(res, data.classes);
@@ -578,9 +577,9 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
 
 const BANNER = `
   <div class="demo-banner" role="region" aria-label="Demo">
-    <span class="demo-banner-text"><strong>You're trying a demo.</strong> This is sample data, so play around: nothing you change is saved.</span>
+    <span class="demo-banner-text"><strong>You're trying a demo.</strong> This is sample data, so play around: nothing you change is saved. StudySync is still in development, so tell us what you'd like it to do!</span>
     <span class="demo-banner-actions">
-      <a href="/signup?fromDemo=1" class="demo-banner-cta">Create a free account</a>
+      <a href="/signup" class="demo-banner-cta">Create a free account</a>
       <a href="/logout" class="demo-banner-exit">Exit demo</a>
     </span>
   </div>`;
@@ -598,7 +597,7 @@ const PREVIEW_STYLE = `
   <style>
     html { scrollbar-width: none; }
     html::-webkit-scrollbar { display: none; }
-    .ai-notice, .ai-disclaimer, .theme-toggle, .dash-footer { display: none !important; }
+    .ai-notice, .ai-disclaimer, .theme-toggle, .dash-footer, .fb-fab { display: none !important; }
     body { pointer-events: none; align-items: flex-start !important; } /* page at the top, not centered */
   </style>`;
 

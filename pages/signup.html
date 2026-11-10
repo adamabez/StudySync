@@ -7,13 +7,13 @@
   <script src="/public/theme.js"></script>
   <title>StudySync – Sign up</title>
   <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/feedback.css">
   <link rel="stylesheet" href="/public/dark.css">
 </head>
 <body>
   <div class="box">
-    <h1><img src="/public/logo.png" alt="StudySync" class="logo"></h1>
+    <h1 class="logo-heading"><img src="/public/logo.png" alt="StudySync" class="logo"><span class="beta-tag" title="StudySync is still in development">Beta</span></h1>
     <p>Create your account</p>
-    <p id="from-demo" class="notice" hidden>Liked the demo? Sign up to plan your own week. It takes under a minute.</p>
     <form method="POST" action="/signup">
       <label>Email
         <input name="email" type="email" autocomplete="email" required autofocus>
@@ -47,8 +47,6 @@
       config: "Sign-up isn't set up yet: SUPABASE_URL and SUPABASE_KEY in .env are missing or still the example values.",
       unknown: "Something went wrong. Try again.",
     };
-    // Came from the demo banner's "Create a free account"
-    if (new URLSearchParams(location.search).has("fromDemo")) document.getElementById("from-demo").hidden = false;
 
     const code = new URLSearchParams(location.search).get("error");
     if (code) {
@@ -57,5 +55,6 @@
       error.hidden = false;
     }
   </script>
+  <script src="/public/feedback.js"></script>
 </body>
 </html>

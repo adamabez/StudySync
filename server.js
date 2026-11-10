@@ -134,6 +134,19 @@ function readJson(req, res, limit, callback) {
   });
 }
 
+// Feedback without an account: at most FEEDBACK_LIMIT messages per visitor (IP) every 10 minutes
+const FEEDBACK_LIMIT = 5;
+const feedbackTimes = new Map(); // ip → [times]
+function feedbackLimited(req) {
+  const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+  const since = Date.now() - 10 * 60 * 1000;
+  const times = (feedbackTimes.get(ip) || []).filter((t) => t > since);
+  if (feedbackTimes.size > 5_000) feedbackTimes.clear(); // never grows without limit
+  if (times.length >= FEEDBACK_LIMIT) return true;
+  feedbackTimes.set(ip, [...times, Date.now()]);
+  return false;
+}
+
 // ---------- Routes: which URL shows what ----------
 const server = http.createServer((req, res) => {
   handleRequest(req, res).catch((error) => handleError(res, error));
@@ -229,9 +242,8 @@ async function handleRequest(req, res) {
   }
 
   if (req.method === "GET" && url.pathname === "/setup") {
-    if (inDemo) return redirect(res, "/landing"); // the demo student is already set up
-    if (!loggedIn) return redirect(res, "/");
-    return sendPage(res, "setup.html");
+    if (!loggedIn && !inDemo) return redirect(res, "/");
+    return sendPage(res, "setup.html", 200, inDemo); // "Edit schedule" works in the demo too
   }
 
   if (req.method === "GET" && url.pathname === "/landing") {
@@ -246,7 +258,7 @@ async function handleRequest(req, res) {
 
   // Account settings: change email / password, dark mode, delete account
   if (req.method === "GET" && url.pathname === "/account") {
-    if (inDemo) return redirect(res, "/signup?fromDemo=1"); // no account to change in the demo
+    if (inDemo) return redirect(res, "/signup"); // no account to change in the demo
     if (!loggedIn) return redirect(res, "/");
     return sendPage(res, "account.html");
   }
@@ -293,6 +305,31 @@ async function handleRequest(req, res) {
   if (req.method === "GET" && url.pathname === "/logout") {
     if (demo.hasDemo(req)) demo.end(req);
     return redirect(res, "/", { "Set-Cookie": endDemo(await auth.logOut(req)) });
+  }
+
+  // --- Feedback / bug reports / feature ideas: from every page, account or not ---
+  // Logged in: saved as that user, with their email. Otherwise (login page, the demo):
+  // saved without a user, with an email only if they typed one, and rate limited.
+  if (req.method === "POST" && url.pathname === "/api/feedback") {
+    return readJson(req, res, 20_000, async (input) => {
+      if (!loggedIn && feedbackLimited(req)) {
+        return sendJson(res, { error: "Thanks for all the feedback! Wait a few minutes before sending more." }, 429);
+      }
+      let email = req.user ? req.user.email : (typeof input.email === "string" ? input.email.trim() : "");
+      if (!loggedIn && email && (email.length > 200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+        return sendJson(res, { error: "That email doesn't look right. Leave it empty if you'd rather not share it." }, 400);
+      }
+      const page = (inDemo ? "[demo] " : "") + (typeof input.page === "string" ? input.page : "");
+      try {
+        const result = await feedback.addFeedback(auth.supabaseFor(req), { ...input, page }, req.headers["user-agent"], email);
+        if (result.error) return sendJson(res, { error: result.error }, 400);
+      } catch (error) {
+        // Without an account this needs the newest supabase/schema.sql (feedback without a user)
+        console.error("Feedback failed" + (loggedIn ? "" : " (no account: run supabase/schema.sql again?)") + ":", error.message || error);
+        return sendJson(res, { error: "Couldn't send that right now. Try again in a bit." }, 502);
+      }
+      sendJson(res, { ok: true }, 201);
+    });
   }
 
   // ----- API: the dashboard's JavaScript talks to these -----
@@ -459,15 +496,6 @@ async function handleRequest(req, res) {
         await groups.removeNote(db, groupId, noteId);
         return sendJson(res, { ok: true });
       }
-    }
-
-    // --- Feedback / bug reports ---
-    if (req.method === "POST" && url.pathname === "/api/feedback") {
-      return readJson(req, res, 20_000, async (input) => {
-        const result = await feedback.addFeedback(db, input, req.headers["user-agent"], req.user.email);
-        if (result.error) return sendJson(res, { error: result.error }, 400);
-        sendJson(res, { ok: true }, 201);
-      });
     }
 
     // --- Class schedule ---

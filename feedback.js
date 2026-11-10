@@ -1,6 +1,8 @@
-// StudySync - feedback and bug reports from the "Send feedback" link at the bottom of the dashboard.
-// Stored in the Supabase "feedback" table (see supabase/schema.sql).
-// Users can only add reports, not read them; the team reads them in the
+// StudySync - feedback, bug reports and feature ideas from the "Suggest a feature" button
+// on every page (public/feedback.js). Stored in the Supabase "feedback" table (see supabase/schema.sql).
+// `db` is the logged-in user's client, or a client without a login for visitors with no
+// account (login page, the demo): their reports have no user_id.
+// Nobody can read reports back from the app; the team reads them in the
 // Supabase dashboard → Table Editor → feedback.
 
 const KINDS = ["bug", "feedback", "idea"];

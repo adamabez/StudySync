@@ -120,6 +120,14 @@ html[data-theme="dark"] .account .logout:focus-visible {
 html[data-theme="dark"] h2 {
   color: #dddddd;
 }
+html[data-theme="dark"] .catalog-note {
+  border: 1px solid #3e5145;
+  background: #1a2b1f;
+  color: #91c9a4;
+}
+html[data-theme="dark"] .catalog-note strong {
+  color: #8ccfa2;
+}
 html[data-theme="dark"] .add-form {
   background: #1c2030;
 }
@@ -233,12 +241,6 @@ html[data-theme="dark"] .collapse-toggle:focus-visible {
 }
 html[data-theme="dark"] .dash-footer {
   border-top: 1px solid #42485a;
-  color: #8c8c8c;
-}
-html[data-theme="dark"] .feedback-dialog h2 {
-  color: #dddddd;
-}
-html[data-theme="dark"] .feedback-note {
   color: #8c8c8c;
 }
 html[data-theme="dark"] .class-card.study-time {
