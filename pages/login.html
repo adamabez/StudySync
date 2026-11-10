@@ -3,12 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/public/favicon.png">
   <script src="/public/theme.js"></script>
   <title>StudySync – Log in</title>
   <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/demo.css">
   <link rel="stylesheet" href="/public/dark.css">
 </head>
 <body>
+  <main class="auth-layout">
   <div class="box">
     <h1><img src="/public/logo.png" alt="StudySync" class="logo"></h1>
     <p>Log in to continue</p>
@@ -25,6 +28,10 @@
     </form>
     <p class="switch"><a href="/forgot">Forgot password?</a></p>
     <p class="switch">New here? <a href="/signup">Create an account</a></p>
+    <p class="or-divider">or</p>
+    <a href="/demo" class="demo-try">Try the demo
+      <span class="demo-try-hint">No sign-up. Look around with sample data.</span>
+    </a>
     <p id="ai-notice" class="ai-notice" hidden>
       <strong>Early access.</strong> StudySync is still being built, so expect some rough edges.
       AI answers can take a little while, and sometimes the AI is busy or errors out. If that
@@ -33,7 +40,32 @@
       products. AI answers can also be wrong, so check them against your materials.
     </p>
   </div>
+
+  <!-- Live preview: the real demo, scaled down, playing through the main features (public/preview.js) -->
+  <section class="preview" id="preview" aria-labelledby="preview-title">
+    <div class="preview-head">
+      <span class="preview-eyebrow">See how it works</span>
+      <h2 id="preview-title">Get matched with classmates</h2>
+      <p id="preview-text">A study group for each class, meeting when everyone's free.</p>
+    </div>
+    <div class="preview-screen">
+      <div class="preview-chrome" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="preview-viewport" id="preview-viewport">
+        <p class="preview-loading" id="preview-loading">Loading a sample week…</p>
+        <iframe id="preview-landing" title="StudySync study groups preview" tabindex="-1" aria-hidden="true"></iframe>
+        <iframe id="preview-dashboard" title="StudySync dashboard preview" tabindex="-1" aria-hidden="true"></iframe>
+      </div>
+      <!-- The whole screen opens the demo -->
+      <a href="/demo" class="preview-overlay" aria-label="Open the demo and try it yourself"><span>Click to try it</span></a>
+    </div>
+    <div class="preview-foot">
+      <div class="preview-dots" id="preview-dots" aria-label="Preview steps"></div>
+      <a href="/demo" class="preview-try">Try it yourself →</a>
+    </div>
+  </section>
+  </main>
   <script src="/public/ai-notice.js"></script>
+  <script src="/public/preview.js"></script>
 
   <script>
     // The server sends you back to /?error=<code> when logging in fails

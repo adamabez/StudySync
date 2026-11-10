@@ -68,4 +68,4 @@ async function deleteChat(db, id) {
   if (error) throw error;
 }
 
-module.exports = { listChats, getChat, historyFor, addExchange, deleteChat, summary };
+module.exports = { listChats, getChat, historyFor, addExchange, deleteChat, summary, makeTitle };

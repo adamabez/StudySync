@@ -9,6 +9,11 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 **Login and loading screen**
 - Sign up and log in with email and password (Supabase Auth), followed by a short loading screen, then the dashboard.
 
+**Try the demo (no account)**
+- **Try the demo** on the login page, or any link to **`/demo`** (handy for a QR code), opens the real app with a sample student's week: classes, two study groups with notes, course materials, a saved notebook chat and Canvas homework.
+- Visitors can click around and change things; it's kept in server memory only (per visitor, for 3 hours) and never saved to Supabase. A banner on every page links to sign-up.
+- The notebook gives real AI answers about the sample materials, limited to 8 questions per visitor and 120 an hour overall (`demo.js`). PDF uploads, feedback and linking a real Canvas need an account.
+
 **Weekly calendar (Monday–Sunday)**
 - Add **Classes** (with an optional room), **Tasks**, or **Other** items you name yourself (e.g. Work, Gym, Club).
 - Pick one or more days, a start time and an end time.
@@ -105,6 +110,7 @@ StudySync/
 ├── supabase/courses.sql Every Sac State course, for the class picker (run after schema.sql)
 ├── scripts/import-courses.js  Rebuilds courses.sql from catalog.csus.edu (run each semester or two)
 ├── ai.js             Sends sources + questions to the AI, formats citations
+├── demo.js           "Try the demo": sample data in memory, answers /api/ for demo visitors
 ├── pages/            HTML for each page (login, signup, loading, dashboard, 404)
 ├── public/           CSS and browser JavaScript
 │   ├── style.css       Shared look (card, buttons, inputs, spinner)

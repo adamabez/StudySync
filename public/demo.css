@@ -1,0 +1,155 @@
+/* StudySync - the "You're trying a demo" banner (added to pages by demo.js) */
+
+/* Stack the banner above the page's card instead of beside it */
+body.is-demo { flex-direction: column; justify-content: flex-start; gap: 16px; }
+body.is-demo > .box { margin: 0 auto; }
+
+.demo-banner {
+  width: 100%;
+  max-width: 1100px;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #eef1fd;
+  border: 1px solid #c9d2f6;
+  color: #23306b;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.demo-banner-text { flex: 1 1 320px; }
+.demo-banner-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.demo-banner-cta {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #2b4acb;
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.demo-banner-cta:hover { background: #2240b0; }
+.demo-banner-exit { color: #2b4acb; white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .demo-banner { padding: 10px 12px; }
+  .demo-banner-actions { width: 100%; justify-content: space-between; }
+}
+
+/* "Try the demo" on the login and sign-up pages */
+.demo-try {
+  display: block;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1.5px solid #2b4acb;
+  border-radius: 8px;
+  color: #2b4acb;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+}
+.demo-try:hover { background: #eef1fd; }
+.demo-try-hint { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: #666; }
+
+.or-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0 0; color: #999; font-size: 13px; }
+.or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: #dde; }
+
+/* ---------- Login page: form + live preview side by side ---------- */
+.auth-layout {
+  width: 100%;
+  max-width: 1180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+.auth-layout > .box { flex: none; }
+
+.preview { flex: 1 1 0; min-width: 0; max-width: 720px; display: flex; flex-direction: column; gap: 14px; }
+.preview-head h2 { margin: 4px 0 4px; font-size: 24px; color: #1d2a5c; }
+.preview-head p { margin: 0; font-size: 15px; min-height: 1.4em; }
+.preview-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2b4acb; }
+
+.preview-screen {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #dde2f0;
+  box-shadow: 0 18px 50px rgba(30, 45, 110, 0.18);
+}
+.preview-chrome { display: flex; gap: 6px; padding: 9px 12px; background: #eef0f6; border-bottom: 1px solid #dde2f0; }
+.preview-chrome span { width: 10px; height: 10px; border-radius: 50%; background: #cfd4e2; }
+
+.preview-viewport { position: relative; display: block; aspect-ratio: 16 / 10.5; overflow: hidden; background: #f4f6fb; }
+.preview-viewport iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  transform-origin: 0 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.preview-viewport iframe.active { opacity: 1; }
+.preview-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; font-size: 14px; color: #888; }
+
+/* Clicking anywhere on the screen opens the full demo */
+.preview-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 18px; text-decoration: none; }
+.preview-overlay span {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(29, 42, 92, 0.88);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.preview-overlay:hover span, .preview-overlay:focus-visible span { opacity: 1; transform: none; }
+.preview-overlay:focus-visible { outline: 3px solid #2b4acb; outline-offset: -3px; border-radius: 14px; }
+
+.preview-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.preview-dots { display: flex; gap: 8px; }
+.preview-dot { width: 9px; height: 9px; padding: 0; border-radius: 999px; background: #c9d0e6; transition: width 0.25s, background 0.25s; }
+.preview-dot:hover { background: #9aa6d6; }
+.preview-dot[aria-current="true"] { width: 26px; background: #2b4acb; }
+.preview-try { font-size: 15px; font-weight: 600; text-decoration: none; }
+.preview-try:hover { text-decoration: underline; }
+
+/* Phones and narrow windows: the preview goes under the login form */
+@media (max-width: 900px) {
+  .auth-layout { flex-direction: column; gap: 28px; }
+  .preview { width: 100%; max-width: 440px; flex: none; }
+  .preview-head { text-align: center; }
+  .preview-head h2 { font-size: 20px; }
+  .preview-viewport { aspect-ratio: 4 / 5; }
+  .preview-overlay span { opacity: 1; transform: none; } /* no hover on phones: always show it */
+}
+
+/* Dark mode */
+html[data-theme="dark"] .preview-head h2 { color: #e3e7f7; }
+html[data-theme="dark"] .preview-eyebrow { color: #8ea0e7; }
+html[data-theme="dark"] .preview-screen { background: #23262e; border-color: #343a4d; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); }
+html[data-theme="dark"] .preview-chrome { background: #2b2f3a; border-color: #343a4d; }
+html[data-theme="dark"] .preview-chrome span { background: #4a5063; }
+html[data-theme="dark"] .preview-viewport { background: #1b212f; }
+html[data-theme="dark"] .preview-dot { background: #3f4660; }
+html[data-theme="dark"] .preview-dot[aria-current="true"] { background: #8ea0e7; }
+html[data-theme="dark"] .demo-banner { background: #262d45; border-color: #3a4570; color: #d6dcf5; }
+html[data-theme="dark"] .demo-banner-cta { background: #4a63d6; }
+html[data-theme="dark"] .demo-banner-cta:hover { background: #5871dc; }
+html[data-theme="dark"] .demo-banner-exit { color: #8ea0e7; }
+html[data-theme="dark"] .demo-try { border-color: #8ea0e7; color: #8ea0e7; }
+html[data-theme="dark"] .demo-try:hover { background: #262d45; }
+html[data-theme="dark"] .demo-try-hint { color: #999; }
+html[data-theme="dark"] .or-divider { color: #777; }
+html[data-theme="dark"] .or-divider::before, html[data-theme="dark"] .or-divider::after { background: #3f3f4d; }

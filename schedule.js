@@ -146,4 +146,4 @@ async function removeClass(db, id) {
   if (error) throw error;
 }
 
-module.exports = { DAY_KEYS, isTime, loadClasses, addClass, updateClass, removeClass };
+module.exports = { DAY_KEYS, isTime, validateClass, loadClasses, addClass, updateClass, removeClass };

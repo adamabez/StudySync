@@ -16,6 +16,7 @@
 //   courses.js    → the Sac State course catalog students pick their classes from
 //   sections.js   → each class's sections (days, times, room) from Sac State's class schedule
 //   studyplan.js  → weekly study times: picked by the AI if there's a key, else by public/planner.js
+//   demo.js       → "Try the demo": the real pages with sample data, no account needed
 //   pages/        → the HTML for each page
 //   public/       → CSS and browser JavaScript the pages load
 //   .env          → your secret keys: Supabase, Gemini or Anthropic (never commit this!)
@@ -43,6 +44,7 @@ const groups = require("./groups");
 const courses = require("./courses");
 const sections = require("./sections");
 const studyplan = require("./studyplan");
+const demo = require("./demo");
 
 // Hosts like Render choose the port and pass it in PORT; on your computer it's 3000
 const PORT = Number(process.env.PORT) || 3000;
@@ -60,8 +62,11 @@ function siteUrl(req) {
 // ---------- Helpers for sending responses ----------
 
 // Send one of the HTML files from the pages/ folder
-function sendPage(res, fileName, status = 200) {
-  const html = fs.readFileSync(path.join(__dirname, "pages", fileName), "utf8");
+// (inDemo adds the "You're trying a demo" banner; "embed" is the login page's live preview)
+function sendPage(res, fileName, status = 200, inDemo = false) {
+  let html = fs.readFileSync(path.join(__dirname, "pages", fileName), "utf8");
+  if (inDemo === "embed") html = demo.forPreview(html);
+  else if (inDemo) html = demo.withBanner(html);
   res.writeHead(status, { "Content-Type": "text/html; charset=utf-8" });
   res.end(html);
 }
@@ -145,6 +150,24 @@ async function handleRequest(req, res) {
   // Who's logged in? After this, auth.getUserId(req) gives their Supabase user ID
   await auth.loadUser(req, res);
   const loggedIn = auth.isLoggedIn(req);
+  // Trying the demo (demo.js): no account, sample data. A real login always wins.
+  const inDemo = !loggedIn && demo.hasDemo(req);
+  // Logging in, signing up or logging out also ends the demo
+  // The login page's live preview: the demo without its banner
+  const demoMode = inDemo && url.searchParams.get("embed") === "1" ? "embed" : inDemo;
+  const endDemo = (cookies) => (demo.hasDemo(req) ? [...[].concat(cookies), demo.clearCookie()] : cookies);
+
+  // "Try the demo" (the login page's button, or a QR code pointing here): straight to the
+  // landing page with a sample student's week, no sign-up
+  // The login page's live preview loads /demo?embed=1&to=dashboard in a frame: same demo,
+  // without the banner.
+  if (req.method === "GET" && url.pathname === "/demo") {
+    const embed = url.searchParams.get("embed") === "1";
+    const target = (url.searchParams.get("to") === "dashboard" ? "/dashboard" : "/landing") + (embed ? "?embed=1" : "");
+    if (loggedIn) return redirect(res, "/home");
+    if (inDemo) return redirect(res, target);
+    return redirect(res, target, { "Set-Cookie": demo.startCookie(demo.start()) });
+  }
 
   // Whether to show the "Demo version" AI notice on login / sign-up (no login needed)
   if (req.method === "GET" && url.pathname === "/ai-status") {
@@ -163,7 +186,7 @@ async function handleRequest(req, res) {
       const form = new URLSearchParams(body);
       const result = await auth.logIn((form.get("email") || "").trim(), form.get("password") || "");
       if (result.error) return redirect(res, `/?error=${result.error}`);
-      redirect(res, "/home", { "Set-Cookie": result.cookies });
+      redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
     });
   }
 
@@ -179,12 +202,13 @@ async function handleRequest(req, res) {
       const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "");
       if (result.error) return redirect(res, `/signup?error=${result.error}`);
       if (result.confirmEmail) return redirect(res, "/?checkEmail=1");
-      redirect(res, "/home", { "Set-Cookie": result.cookies });
+      redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
     });
   }
 
   // Loading screen, then the dashboard (logged-in users only)
   if (req.method === "GET" && url.pathname === "/home") {
+    if (inDemo) return redirect(res, "/landing");
     if (!loggedIn) return redirect(res, "/");
     return sendPage(res, "loading.html");
   }
@@ -192,6 +216,7 @@ async function handleRequest(req, res) {
   // After the loading screen: first login → the schedule screen, otherwise → the dashboard.
   // (Finishing the schedule screen shows the landing page once: study plan + groups.)
   if (req.method === "GET" && url.pathname === "/start") {
+    if (inDemo) return redirect(res, "/landing");
     if (!loggedIn) return redirect(res, "/");
     try {
       const profile = await onboarding.getProfile(auth.supabaseFor(req), auth.getUserId(req));
@@ -204,30 +229,32 @@ async function handleRequest(req, res) {
   }
 
   if (req.method === "GET" && url.pathname === "/setup") {
+    if (inDemo) return redirect(res, "/landing"); // the demo student is already set up
     if (!loggedIn) return redirect(res, "/");
     return sendPage(res, "setup.html");
   }
 
   if (req.method === "GET" && url.pathname === "/landing") {
-    if (!loggedIn) return redirect(res, "/");
-    return sendPage(res, "landing.html");
+    if (!loggedIn && !inDemo) return redirect(res, "/");
+    return sendPage(res, "landing.html", 200, demoMode);
   }
 
   if (req.method === "GET" && url.pathname === "/dashboard") {
-    if (!loggedIn) return redirect(res, "/");
-    return sendPage(res, "dashboard.html");
+    if (!loggedIn && !inDemo) return redirect(res, "/");
+    return sendPage(res, "dashboard.html", 200, demoMode);
   }
 
   // Account settings: change email / password, dark mode, delete account
   if (req.method === "GET" && url.pathname === "/account") {
+    if (inDemo) return redirect(res, "/signup?fromDemo=1"); // no account to change in the demo
     if (!loggedIn) return redirect(res, "/");
     return sendPage(res, "account.html");
   }
 
   // One study group's page: /group?id=<group id>
   if (req.method === "GET" && url.pathname === "/group") {
-    if (!loggedIn) return redirect(res, "/");
-    return sendPage(res, "group.html");
+    if (!loggedIn && !inDemo) return redirect(res, "/");
+    return sendPage(res, "group.html", 200, inDemo);
   }
 
   // Log out
@@ -262,12 +289,15 @@ async function handleRequest(req, res) {
     });
   }
 
+  // (also ends the demo: "Exit demo" in the demo banner comes here)
   if (req.method === "GET" && url.pathname === "/logout") {
-    return redirect(res, "/", { "Set-Cookie": await auth.logOut(req) });
+    if (demo.hasDemo(req)) demo.end(req);
+    return redirect(res, "/", { "Set-Cookie": endDemo(await auth.logOut(req)) });
   }
 
   // ----- API: the dashboard's JavaScript talks to these -----
   if (url.pathname.startsWith("/api/")) {
+    if (inDemo) return demo.handleApi(req, res, url, { sendJson, readJson });
     if (!loggedIn) return sendJson(res, { error: "Not logged in" }, 401);
 
     // Every query below runs as the logged-in user, so they only see their own data
