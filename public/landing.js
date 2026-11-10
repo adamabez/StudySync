@@ -225,13 +225,7 @@ function updateViews() {
 
 for (const radio of document.querySelectorAll('input[name="preference"]')) {
   radio.addEventListener("change", async () => {
-    // Switching to "alone" takes you out of your study group
-    if (radio.value === "alone" && groups.length) {
-      if (!confirm("Switch to studying on your own? You'll leave your study group.")) {
-        updateViews(); // put the switch back
-        return;
-      }
-    }
+    // Switching to "alone" takes you out of your study group; switching back re-matches you
     preference = radio.value;
     updateViews();
     // Save it. The server re-matches: joins a group (group) or leaves it (alone).
