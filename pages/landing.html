@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/public/style.css">
   <link rel="stylesheet" href="/public/dashboard.css">
   <link rel="stylesheet" href="/public/landing.css">
+  <link rel="stylesheet" href="/public/feedback.css">
   <link rel="stylesheet" href="/public/dark.css">
 </head>
 <body>
@@ -51,8 +52,27 @@
 
     <!-- ========== With a group: matched automatically ========== -->
     <section id="group-view" hidden>
-      <h2>Your study groups</h2>
-      <p class="hint">One group for each of your classes, meeting at a time everyone in it is free.</p>
+      <h2>Your study groups <span class="early-tag">Early preview</span></h2>
+      <!-- Study groups are the newest, least finished part of StudySync: say so plainly -->
+      <div class="early-box" role="note">
+        <span class="early-box-icon" aria-hidden="true">🧪</span>
+        <div>
+          <strong>Study groups are at a very early stage.</strong>
+          <p>Groups and members may change while we test, and some things won't work yet.</p>
+          <p class="early-soon"><strong>Coming soon:</strong></p>
+          <ul class="early-soon-list">
+            <li>Pick where to meet, together</li>
+            <li>See who's showing up to each session</li>
+            <li>A study session summary that pulls together every concept your group covered</li>
+            <li>Profiles with your study streaks, who you've studied with, and how many sessions you've done</li>
+          </ul>
+          <p>We're building this to help <em>you</em>, so tell us what you'd want from a study group.
+            Check back often: improvements land all the time, and there's a good chance your idea will be one of them.
+            <button type="button" class="early-box-link" data-feedback-open="idea">Tell us what you want</button></p>
+        </div>
+      </div>
+      <p class="hint">No more phone tag trying to find a time: we make a group for each of your classes
+        automatically, meeting when everyone in it is free.</p>
       <div id="my-groups" class="group-grid"></div>
 
       <!-- Classes that don't have a group yet (when they have at least one group) -->
@@ -87,5 +107,6 @@
   </div>
 
   <script src="/public/landing.js"></script>
+  <script src="/public/feedback.js"></script>
 </body>
 </html>

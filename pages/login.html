@@ -8,12 +8,13 @@
   <title>StudySync – Log in</title>
   <link rel="stylesheet" href="/public/style.css">
   <link rel="stylesheet" href="/public/demo.css">
+  <link rel="stylesheet" href="/public/feedback.css">
   <link rel="stylesheet" href="/public/dark.css">
 </head>
 <body>
   <main class="auth-layout">
   <div class="box">
-    <h1><img src="/public/logo.png" alt="StudySync" class="logo"></h1>
+    <h1 class="logo-heading"><img src="/public/logo.png" alt="StudySync" class="logo"><span class="beta-tag" title="StudySync is still in development">Beta</span></h1>
     <p>Log in to continue</p>
     <p id="login-notice" class="notice" hidden></p>
     <form method="POST" action="/login">
@@ -43,6 +44,12 @@
 
   <!-- Live preview: the real demo, scaled down, playing through the main features (public/preview.js) -->
   <section class="preview" id="preview" aria-labelledby="preview-title">
+    <!-- The problem StudySync solves, before showing how -->
+    <p class="preview-pitch">
+      <strong>No more phone tag.</strong> Finding a time to study together usually means days of
+      "when are you free?" texts. StudySync checks everyone's class schedules and makes your
+      study groups for you, automatically.
+    </p>
     <div class="preview-head">
       <span class="preview-eyebrow">See how it works</span>
       <h2 id="preview-title">Get matched with classmates</h2>
@@ -56,7 +63,10 @@
         <iframe id="preview-dashboard" title="StudySync dashboard preview" tabindex="-1" aria-hidden="true"></iframe>
       </div>
       <!-- The whole screen opens the demo -->
-      <a href="/demo" class="preview-overlay" aria-label="Open the demo and try it yourself"><span>Click to try it</span></a>
+      <a href="/demo" class="preview-overlay" aria-label="Open the demo and try it yourself">
+        <span class="preview-overlay-desktop">Click to try it</span>
+        <span class="preview-overlay-touch">Swipe to explore · tap to try it</span>
+      </a>
     </div>
     <div class="preview-foot">
       <div class="preview-dots" id="preview-dots" aria-label="Preview steps"></div>
@@ -104,5 +114,6 @@
       notice.hidden = false;
     }
   </script>
+  <script src="/public/feedback.js"></script>
 </body>
 </html>

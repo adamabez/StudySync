@@ -14,6 +14,12 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 - Visitors can click around and change things; it's kept in server memory only (per visitor, for 3 hours) and never saved to Supabase. A banner on every page links to sign-up.
 - The notebook gives real AI answers about the sample materials, limited to 8 questions per visitor and 120 an hour overall (`demo.js`). PDF uploads, feedback and linking a real Canvas need an account.
 
+**Feedback and feature ideas (on every page)**
+- A **💡 Suggest a feature** button in the bottom corner of every main page (and *Suggest a feature · Report a bug* in the dashboard footer) opens a short form: feature idea, something broke, or general feedback.
+- Works without an account too (login page, the demo): those reports have no user and an optional email, limited to 5 per visitor every 10 minutes. This needs the latest `supabase/schema.sql`.
+- A link ending in `#feedback` (e.g. `https://your-site/#feedback`) opens the form right away.
+- Read everything in Supabase → Table Editor → `feedback`. Demo visitors' reports have `[demo]` in the page column.
+
 **Weekly calendar (Monday–Sunday)**
 - Add **Classes** (with an optional room), **Tasks**, or **Other** items you name yourself (e.g. Work, Gym, Club).
 - Pick one or more days, a start time and an end time.

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/public/style.css">
   <link rel="stylesheet" href="/public/dashboard.css">
   <link rel="stylesheet" href="/public/landing.css">
+  <link rel="stylesheet" href="/public/feedback.css">
   <link rel="stylesheet" href="/public/dark.css">
 </head>
 <body>
@@ -35,6 +36,12 @@
         <label><input type="radio" name="kind" value="class" checked> Class</label>
         <label><input type="radio" name="kind" value="other"> Work, club or other</label>
       </div>
+
+      <p class="catalog-note">
+        <span aria-hidden="true">🎓</span>
+        <span><strong>Every Sac State class is built in.</strong> Start typing a course (like CSC 20), pick your section,
+          and the days, times and room fill in for you. More schools are coming soon.</span>
+      </p>
 
       <form id="add-form" class="add-form" data-kind="class">
         <label class="name"><span id="name-label">Class name</span>
@@ -119,5 +126,6 @@
 
   <script src="/public/setup.js"></script>
   <script src="/public/course-picker.js"></script>
+  <script src="/public/feedback.js"></script>
 </body>
 </html>

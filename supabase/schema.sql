@@ -85,6 +85,8 @@ create table if not exists public.feedback (
   user_agent  text not null default '',          -- browser + device, helps with bugs
   created_at  timestamptz not null default now()
 );
+-- Visitors without an account (login page, the demo) can send feedback too: no user_id
+alter table public.feedback alter column user_id drop not null;
 
 -- ---------- Profile: one row per user (has the user finished the first-login setup?) ----------
 create table if not exists public.profiles (
@@ -615,6 +617,14 @@ drop policy if exists "Send feedback" on public.feedback;
 create policy "Send feedback" on public.feedback
   for insert to authenticated
   with check (user_id = (select auth.uid()));
+
+-- Feedback from visitors without an account (login page, the demo). Still insert only.
+-- The server limits how often one visitor can send it (server.js).
+drop policy if exists "Send feedback without an account" on public.feedback;
+create policy "Send feedback without an account" on public.feedback
+  for insert to anon
+  with check (user_id is null);
+grant insert on public.feedback to anon;
 
 drop policy if exists "Own classes" on public.classes;
 create policy "Own classes" on public.classes
