@@ -432,8 +432,9 @@ begin
 
     if gid is not null then
       if alone_gid is not null then
-        -- Moving out of a group you were alone in: bring your notes, then remove the empty group
+        -- Moving out of a group you were alone in: bring your notes and suggested spots, then remove the empty group
         update public.group_notes set group_id = gid where group_id = alone_gid;
+        update public.group_spots set group_id = gid where group_id = alone_gid;
         delete from public.group_members where group_id = alone_gid and user_id = uid;
         delete from public.study_groups where id = alone_gid;
       end if;
@@ -690,3 +691,124 @@ create policy "Own homework check-offs" on public.homework_done
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
+
+-- ---------- Meetups and Discord ----------
+-- StudySync is where a group decides where to meet; the conversation happens on Discord.
+--   course_discord  → one Discord server invite per class, shared by every group in it
+--   group_discord   → each group's own channel in that server, and a webhook StudySync posts to
+--   group_spots     → places members suggest; group_spot_votes → who likes which
+--   group_meetup    → the place the group settled on
+
+-- Is the logged-in student taking this class? (course = a course key, like study_groups.course)
+create or replace function public.takes_course(p_course text)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.classes c
+    where c.user_id = (select auth.uid()) and c.kind = 'class'
+      and public.course_key(c.course_code, c.name) = p_course
+  );
+$$;
+revoke execute on function public.takes_course(text) from public, anon;
+grant execute on function public.takes_course(text) to authenticated;
+
+create table if not exists public.course_discord (
+  course      text primary key,                  -- course key, e.g. 'CSC 130'
+  invite_url  text not null check (char_length(invite_url) <= 200),
+  set_by      uuid default auth.uid() references auth.users (id) on delete set null,
+  updated_at  timestamptz not null default now()
+);
+alter table public.course_discord enable row level security;
+
+drop policy if exists "Classmates read the class Discord" on public.course_discord;
+create policy "Classmates read the class Discord" on public.course_discord
+  for select to authenticated using (public.takes_course(course));
+drop policy if exists "Classmates add the class Discord" on public.course_discord;
+create policy "Classmates add the class Discord" on public.course_discord
+  for insert to authenticated with check (public.takes_course(course));
+drop policy if exists "Classmates change the class Discord" on public.course_discord;
+create policy "Classmates change the class Discord" on public.course_discord
+  for update to authenticated using (public.takes_course(course)) with check (public.takes_course(course));
+drop policy if exists "Classmates remove the class Discord" on public.course_discord;
+create policy "Classmates remove the class Discord" on public.course_discord
+  for delete to authenticated using (public.takes_course(course));
+
+create table if not exists public.group_discord (
+  group_id     uuid primary key references public.study_groups (id) on delete cascade,
+  channel_url  text check (char_length(channel_url) <= 200),
+  webhook_url  text check (char_length(webhook_url) <= 300),  -- the app never sends this to browsers
+  updated_at   timestamptz not null default now()
+);
+alter table public.group_discord enable row level security;
+
+drop policy if exists "Members read group Discord" on public.group_discord;
+create policy "Members read group Discord" on public.group_discord
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members add group Discord" on public.group_discord;
+create policy "Members add group Discord" on public.group_discord
+  for insert to authenticated with check (public.is_group_member(group_id));
+drop policy if exists "Members change group Discord" on public.group_discord;
+create policy "Members change group Discord" on public.group_discord
+  for update to authenticated using (public.is_group_member(group_id)) with check (public.is_group_member(group_id));
+
+create table if not exists public.group_spots (
+  id          uuid primary key default gen_random_uuid(),
+  group_id    uuid not null references public.study_groups (id) on delete cascade,
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  place       text not null check (char_length(place) between 1 and 120),
+  created_at  timestamptz not null default now()
+);
+create index if not exists group_spots_group_id_idx on public.group_spots (group_id, created_at);
+alter table public.group_spots enable row level security;
+
+drop policy if exists "Members read spots" on public.group_spots;
+create policy "Members read spots" on public.group_spots
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members suggest spots" on public.group_spots;
+create policy "Members suggest spots" on public.group_spots
+  for insert to authenticated with check (user_id = (select auth.uid()) and public.is_group_member(group_id));
+drop policy if exists "Remove own spots" on public.group_spots;
+create policy "Remove own spots" on public.group_spots
+  for delete to authenticated using (user_id = (select auth.uid()));
+
+create table if not exists public.group_spot_votes (
+  spot_id     uuid not null references public.group_spots (id) on delete cascade,
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  primary key (spot_id, user_id)
+);
+alter table public.group_spot_votes enable row level security;
+
+drop policy if exists "Members read votes" on public.group_spot_votes;
+create policy "Members read votes" on public.group_spot_votes
+  for select to authenticated
+  using (exists (select 1 from public.group_spots s where s.id = spot_id and public.is_group_member(s.group_id)));
+drop policy if exists "Members vote" on public.group_spot_votes;
+create policy "Members vote" on public.group_spot_votes
+  for insert to authenticated
+  with check (user_id = (select auth.uid())
+    and exists (select 1 from public.group_spots s where s.id = spot_id and public.is_group_member(s.group_id)));
+drop policy if exists "Take back own vote" on public.group_spot_votes;
+create policy "Take back own vote" on public.group_spot_votes
+  for delete to authenticated using (user_id = (select auth.uid()));
+
+create table if not exists public.group_meetup (
+  group_id    uuid primary key references public.study_groups (id) on delete cascade,
+  place       text not null check (char_length(place) between 1 and 120),
+  set_by      uuid default auth.uid() references auth.users (id) on delete set null,
+  set_at      timestamptz not null default now()
+);
+alter table public.group_meetup enable row level security;
+
+drop policy if exists "Members read meetup" on public.group_meetup;
+create policy "Members read meetup" on public.group_meetup
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members set meetup" on public.group_meetup;
+create policy "Members set meetup" on public.group_meetup
+  for insert to authenticated with check (public.is_group_member(group_id));
+drop policy if exists "Members change meetup" on public.group_meetup;
+create policy "Members change meetup" on public.group_meetup
+  for update to authenticated using (public.is_group_member(group_id)) with check (public.is_group_member(group_id));
+drop policy if exists "Members clear meetup" on public.group_meetup;
+create policy "Members clear meetup" on public.group_meetup
+  for delete to authenticated using (public.is_group_member(group_id));

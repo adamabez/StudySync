@@ -41,6 +41,7 @@ const feedback = require("./feedback");
 const canvas = require("./canvas");
 const onboarding = require("./onboarding");
 const groups = require("./groups");
+const meetups = require("./meetups");
 const courses = require("./courses");
 const sections = require("./sections");
 const studyplan = require("./studyplan");
@@ -132,6 +133,19 @@ function readJson(req, res, limit, callback) {
     }
     return callback(data && typeof data === "object" ? data : {});
   });
+}
+
+// Meetup changes (spots, votes, Discord links): at most WRITE_LIMIT a minute per student,
+// mostly so nobody can use StudySync to spam a Discord channel
+const WRITE_LIMIT = 30;
+const writeTimes = new Map(); // user ID → [times]
+function writeAllowed(userId) {
+  const since = Date.now() - 60 * 1000;
+  const times = (writeTimes.get(userId) || []).filter((t) => t > since);
+  if (writeTimes.size > 5_000) writeTimes.clear();
+  if (times.length >= WRITE_LIMIT) return false;
+  writeTimes.set(userId, [...times, Date.now()]);
+  return true;
 }
 
 // Feedback without an account: at most FEEDBACK_LIMIT messages per visitor (IP) every 10 minutes
@@ -472,8 +486,44 @@ async function handleRequest(req, res) {
       }
     }
 
-    // One group + its shared notes (only members can see it)
     const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
+    // A group's meeting spot, suggested spots and Discord links (meetups.js). Every change
+    // answers with the fresh { meetup, spots, discord } so the page just redraws.
+    const meetupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})/(meetup|spots|discord)(?:/(${UUID})(/vote)?)?$`));
+    if (meetupMatch) {
+      const [, groupId, part, spotId, isVote] = meetupMatch;
+      const group = await groups.getGroup(db, groupId, userId);
+      if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
+
+      const reply = async (result, status = 200) => {
+        if (result && result.error) return sendJson(res, { error: result.error }, 400);
+        const info = await meetups.getInfo(db, group, userId);
+        sendJson(res, { ...info, ...(result && typeof result.value === "object" ? result.value : {}) }, status);
+      };
+      const run = (work) => work().catch((error) => {
+        if (!meetups.isMissingTable(error)) throw error;
+        console.error("Meetups need the latest supabase/schema.sql:", error.message || error);
+        sendJson(res, { error: "Meetups aren't set up yet. Run the latest supabase/schema.sql in Supabase.", notSetUp: true }, 503);
+      });
+      const body = (limit, work) => readJson(req, res, limit, (input) => run(() => work(input)));
+
+      if (req.method !== "GET" && !writeAllowed(userId)) {
+        return sendJson(res, { error: "That's a lot of changes at once. Wait a few seconds and try again." }, 429);
+      }
+      if (req.method === "GET" && part === "meetup") return run(() => reply(null));
+      if (req.method === "POST" && part === "meetup") return body(2_000, async (input) => reply(await meetups.setMeetup(db, group, userId, input)));
+      if (req.method === "DELETE" && part === "meetup") return run(async () => { await meetups.clearMeetup(db, group); await reply(null); });
+      if (req.method === "POST" && part === "spots" && !spotId) return body(2_000, async (input) => reply(await meetups.addSpot(db, group, userId, input), 201));
+      if (req.method === "POST" && part === "spots" && spotId && isVote) {
+        return body(1_000, async (input) => reply(await meetups.setVote(db, group, userId, spotId, input.on !== false)));
+      }
+      if (req.method === "DELETE" && part === "spots" && spotId && !isVote) return run(async () => { await meetups.removeSpot(db, group, spotId); await reply(null); });
+      if (req.method === "POST" && part === "discord") return body(2_000, async (input) => reply(await meetups.saveDiscord(db, group, userId, input)));
+      return sendJson(res, { error: "Not found" }, 404);
+    }
+
+    // One group + its shared notes (only members can see it)
     const groupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})(?:/notes(?:/(${UUID}))?)?$`));
     if (groupMatch) {
       const [, groupId, noteId] = groupMatch;

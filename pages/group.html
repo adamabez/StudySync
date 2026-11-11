@@ -36,10 +36,9 @@
       <span class="early-box-icon" aria-hidden="true">🧪</span>
       <div>
         <strong>Study groups are at a very early stage.</strong>
-        <p>Members may change while we test, and there's no chat or reminders yet.</p>
+        <p>Members may change while we test, and there are no reminders yet. Talk with your group on Discord, and settle where to meet here.</p>
         <p class="early-soon"><strong>Coming soon:</strong></p>
         <ul class="early-soon-list">
-          <li>Pick where to meet, together</li>
           <li>See who's showing up to each session</li>
           <li>A study session summary that pulls together every concept your group covered</li>
           <li>Profiles with your study streaks, who you've studied with, and how many sessions you've done</li>
@@ -56,6 +55,68 @@
       <section>
         <h2>Members</h2>
         <ul id="group-members" class="member-list"></ul>
+      </section>
+
+      <!-- Where the group meets: suggestions, votes, and the spot they settled on (public/group.js) -->
+      <section class="mt" aria-labelledby="meet-title">
+        <h2 id="meet-title">Where we're meeting</h2>
+        <div id="meet-status" class="mt-status">
+          <p class="hint">Loading…</p>
+        </div>
+        <div id="meet-ideas" class="mt-ideas" hidden>
+          <div class="mt-ideas-head">
+            <h3>Ideas</h3>
+            <span class="hint">Vote for the places that work for you. Anyone can make one the spot.</span>
+          </div>
+          <ul id="spot-list" class="spot-list"></ul>
+          <form id="spot-form" class="spot-form">
+            <input id="spot-input" maxlength="120" autocomplete="off" placeholder="Suggest a place, e.g. Library 2nd floor" aria-label="Suggest a place">
+            <button type="submit" id="spot-submit">Suggest</button>
+          </form>
+        </div>
+        <p id="meet-error" class="mt-error" role="alert" hidden></p>
+      </section>
+
+      <!-- Discord: the class's server, this group's channel, and posting the spot there -->
+      <section class="dc" aria-labelledby="discord-title" id="discord-section" hidden>
+        <div class="dc-head">
+          <h2 id="discord-title"><span class="dc-logo"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.3 5.3A16.6 16.6 0 0 0 15.2 4l-.5 1a15.4 15.4 0 0 0-5.4 0l-.5-1a16.5 16.5 0 0 0-4.1 1.3C2.1 9.2 1.4 13 1.7 16.7a16.7 16.7 0 0 0 5 2.5l1.1-1.7a10.8 10.8 0 0 1-1.7-.8l.4-.3a11.9 11.9 0 0 0 11 0l.4.3c-.5.3-1.1.6-1.7.8l1.1 1.7a16.6 16.6 0 0 0 5-2.5c.4-4.3-.7-8-3-11.4ZM8.7 14.4c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Zm6.6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Z"/></svg></span>Discord</h2>
+          <button type="button" id="discord-edit" class="link-button">Set up</button>
+        </div>
+        <p class="hint">Chat on your class's Discord server. StudySync can post your meeting spot to your group's channel.</p>
+        <div id="discord-view" class="dc-view"></div>
+
+        <form id="discord-form" class="dc-form" hidden>
+          <label>Class server invite
+            <input id="discord-invite" autocomplete="off" placeholder="discord.gg/your-class">
+            <span class="field-hint" id="discord-invite-hint">Shared with every study group in this class.</span>
+          </label>
+          <label>Your group's channel
+            <input id="discord-channel" autocomplete="off" placeholder="https://discord.com/channels/…">
+            <span class="field-hint">In Discord, right-click your group's channel → Copy Link.</span>
+          </label>
+          <label><span>Channel webhook <span class="dc-optional">(optional)</span></span>
+            <input id="discord-webhook" type="password" autocomplete="off" placeholder="https://discord.com/api/webhooks/…">
+            <span class="field-hint">Lets StudySync post your meeting spot in the channel.</span>
+          </label>
+          <details class="dc-help">
+            <summary>How do I get a webhook link?</summary>
+            <ol>
+              <li>In Discord, hover over your group's channel and click the gear (Edit Channel).</li>
+              <li>Open <strong>Integrations</strong> → <strong>Webhooks</strong> → <strong>New Webhook</strong>.</li>
+              <li>Click <strong>Copy Webhook URL</strong> and paste it here.</li>
+            </ol>
+            <p>You need permission to manage the channel. If you don't have it, ask whoever runs the class server.</p>
+          </details>
+          <label class="dc-disconnect" id="discord-disconnect-row" hidden>
+            <input type="checkbox" id="discord-disconnect"> Stop posting to Discord
+          </label>
+          <p id="discord-error" class="mt-error" role="alert" hidden></p>
+          <div class="dc-actions">
+            <button type="button" id="discord-cancel" class="link-button">Cancel</button>
+            <button type="submit" id="discord-save">Save</button>
+          </div>
+        </form>
       </section>
 
       <section>

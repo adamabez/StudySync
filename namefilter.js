@@ -104,4 +104,38 @@ function checkName(name) {
   return null;
 }
 
-module.exports = { checkName };
+
+// ---------- Free text members write (suggested meeting spots) ----------
+// Much more lenient than names: everyday words and class vocabulary are fine.
+// Only slurs and the harshest profanity are blocked, in any word of the text.
+const CHAT_ANYWHERE = [
+  "fuck", "nigger", "nigga", "faggot", "retard", "whore", "bitch", "motherf",
+  "wetback", "tranny", "killyourself",
+];
+const CHAT_WHOLE_WORDS = ["cunt", "cunts", "fag", "fags", "kike", "spic", "chink", "gook", "slut", "sluts", "kys", "fck", "fuk"];
+
+// null if the message is fine, otherwise { error }
+function checkMessage(text) {
+  const words = simplify(text).split(/[^\p{L}]+/u).filter(Boolean);
+  // Also join runs of single letters, so "f u c k" is caught
+  const joined = [];
+  let run = "";
+  for (const w of words) {
+    if (w.length === 1) { run += w; continue; }
+    if (run.length > 1) joined.push(run);
+    run = "";
+    joined.push(w);
+  }
+  if (run.length > 1) joined.push(run);
+
+  for (const word of joined) {
+    for (const form of spellings(word)) {
+      if (CHAT_ANYWHERE.some((bad) => form.includes(bad)) || CHAT_WHOLE_WORDS.includes(form)) {
+        return { error: "Please keep it respectful. Try rewording that." };
+      }
+    }
+  }
+  return null;
+}
+
+module.exports = { checkName, checkMessage };

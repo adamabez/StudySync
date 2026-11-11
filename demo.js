@@ -17,6 +17,7 @@ const schedule = require("./schedule");
 const courses = require("./courses");
 const sections = require("./sections");
 const chats = require("./chats");
+const meetups = require("./meetups");
 const ai = require("./ai");
 const planner = require("./public/planner");
 
@@ -221,6 +222,15 @@ function sampleData() {
     classes,
     groups,
     notes,
+    meetups: {
+      [csGroupId]: {
+        meetup: { place: "Library 2nd floor, by the windows", setBy: "Maya R.", setAt: iso(60 * 5) },
+        spots: [
+          { id: uuid(), place: "Library 2nd floor, by the windows", by: "Priya S.", voters: new Set(["Priya S.", "Maya R.", "Jordan T."]) },
+          { id: uuid(), place: "Student Union food court", by: "Jordan T.", voters: new Set(["Jordan T."]) },
+        ],
+      },
+    },
     sources,
     chats: savedChats,
     homework,
@@ -385,6 +395,70 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
   // --- Groups ---
   if (m === "POST" && p === "/api/groups/match") return sendJson(res, myGroups(data));
   if (m === "GET" && p === "/api/groups/classes") return sendJson(res, classGroups(data));
+
+  // --- Meetups (kept in memory). Discord links can't be saved in the demo, so it never posts anywhere. ---
+  const meetupMatch = p.match(/^\/api\/groups\/([\w-]+)\/(meetup|spots|discord)(?:\/([\w-]+)(\/vote)?)?$/);
+  if (meetupMatch) {
+    const [, groupId, part, spotId, isVote] = meetupMatch;
+    const group = myGroups(data).find((g) => g.id === groupId);
+    if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
+    const state = (data.meetups[groupId] = data.meetups[groupId] || { meetup: null, spots: [] });
+    const info = (extra = {}) => ({
+      meetup: state.meetup && { ...state.meetup, setBy: state.meetup.setBy === DEMO_NAME ? "You" : state.meetup.setBy },
+      spots: state.spots
+        .map((x) => ({
+          id: x.id, place: x.place, by: x.by === DEMO_NAME ? "You" : x.by, isYours: x.by === DEMO_NAME,
+          votes: x.voters.size, votedByYou: x.voters.has(DEMO_NAME), isTheSpot: state.meetup?.place === x.place,
+        }))
+        .sort((a, b) => b.votes - a.votes),
+      discord: { serverInvite: "", channelUrl: "", connected: false },
+      ...extra,
+    });
+
+    if (m === "GET" && part === "meetup") return sendJson(res, info());
+    if (part === "discord") {
+      return sendJson(res, { error: "In the demo, Discord links aren't saved. Create a free account to connect your class's Discord." }, 400);
+    }
+    if (m === "POST" && part === "meetup") {
+      return readJson(req, res, 2_000, (input) => {
+        const place = meetups.cleanPlace(input.place);
+        if (place.error) return sendJson(res, { error: place.error }, 400);
+        state.meetup = { place: place.value, setBy: DEMO_NAME, setAt: new Date().toISOString() };
+        sendJson(res, info({ posted: false, discordConnected: false }));
+      });
+    }
+    if (m === "DELETE" && part === "meetup") {
+      state.meetup = null;
+      return sendJson(res, info());
+    }
+    if (m === "POST" && part === "spots" && !spotId) {
+      return readJson(req, res, 2_000, (input) => {
+        const place = meetups.cleanPlace(input.place);
+        if (place.error) return sendJson(res, { error: place.error }, 400);
+        if (state.spots.some((x) => x.place.toLowerCase() === place.value.toLowerCase())) {
+          return sendJson(res, { error: "Someone already suggested that. Vote for it instead." }, 400);
+        }
+        if (state.spots.length >= meetups.MAX_SPOTS) {
+          return sendJson(res, { error: "That's " + meetups.MAX_SPOTS + " suggestions already. Remove one or vote for an existing spot." }, 400);
+        }
+        state.spots.push({ id: uuid(), place: place.value, by: DEMO_NAME, voters: new Set([DEMO_NAME]) });
+        sendJson(res, info(), 201);
+      });
+    }
+    const spot = state.spots.find((x) => x.id === spotId);
+    if (m === "POST" && spotId && isVote) {
+      return readJson(req, res, 1_000, (input) => {
+        if (!spot) return sendJson(res, { error: "That suggestion was removed." }, 400);
+        input.on === false ? spot.voters.delete(DEMO_NAME) : spot.voters.add(DEMO_NAME);
+        sendJson(res, info());
+      });
+    }
+    if (m === "DELETE" && spotId && !isVote) {
+      state.spots = state.spots.filter((x) => !(x.id === spotId && x.by === DEMO_NAME));
+      return sendJson(res, info());
+    }
+    return sendJson(res, { error: "Not found" }, 404);
+  }
 
   const groupMatch = p.match(/^\/api\/groups\/([\w-]+)(?:\/notes(?:\/([\w-]+))?)?$/);
   if (groupMatch && !["match", "classes"].includes(groupMatch[1])) {

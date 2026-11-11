@@ -432,6 +432,116 @@ html[data-theme="dark"] .note-card .meta {
 html[data-theme="dark"] .note-body {
   color: #cccccc;
 }
+html[data-theme="dark"] .mt-card {
+  background: linear-gradient(135deg, #131a35, #1d0f3c);
+  border: 1px solid #343d65;
+}
+html[data-theme="dark"] .mt-card-empty {
+  background: #1c2030;
+  border-color: #3a425c;
+}
+html[data-theme="dark"] .mt-label {
+  color: #aeb6d4;
+}
+html[data-theme="dark"] .mt-place {
+  color: #8394d8;
+}
+html[data-theme="dark"] .mt-when {
+  color: #7f86a4;
+}
+html[data-theme="dark"] .mt-card-empty strong {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .mt-card-empty span {
+  color: #7b819d;
+}
+html[data-theme="dark"] .mt-flash {
+  color: #7ddeab;
+}
+html[data-theme="dark"] .mt-error {
+  color: #e78787;
+}
+html[data-theme="dark"] .mt-ideas-head h3 {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .spot {
+  background: #23262e;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .spot.is-the-spot {
+  border-color: #2a3455;
+  background: #10153e;
+}
+html[data-theme="dark"] .spot-empty {
+  color: #7b829d;
+  border: 1px dashed #3a425c;
+}
+html[data-theme="dark"] .spot-vote {
+  border: 1px solid #3c445f;
+  background: #23262e;
+  color: #8f95b5;
+}
+html[data-theme="dark"] .spot-vote:hover {
+  background: #191e30;
+}
+html[data-theme="dark"] .spot-vote[aria-pressed="true"] {
+  background: #131a32;
+  border-color: #2a3455;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .spot-text strong {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .spot-text span {
+  color: #7b829d;
+}
+html[data-theme="dark"] .spot-choose {
+  border: 1px solid #313c64;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .spot-choose:hover {
+  background: #131a35;
+}
+html[data-theme="dark"] .spot-remove {
+  color: #7880a0;
+}
+html[data-theme="dark"] .spot-remove:hover {
+  background: #351212;
+  color: #e78787;
+}
+html[data-theme="dark"] .dc-button {
+  border: 1px solid #2f3466;
+  background: #23262e;
+  color: #a8ade3;
+}
+html[data-theme="dark"] .dc-button:hover {
+  background: #121538;
+}
+html[data-theme="dark"] .dc-button.primary {
+  border-color: #8992f6;
+}
+html[data-theme="dark"] .dc-status {
+  color: #7b819d;
+}
+html[data-theme="dark"] .dc-status.on {
+  color: #7ddeab;
+}
+html[data-theme="dark"] .dc-form {
+  background: #1c2030;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .dc-optional {
+  color: #7b829d;
+}
+html[data-theme="dark"] .dc-help {
+  color: #8f95b5;
+}
+html[data-theme="dark"] .dc-help summary {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .dc-help p {
+  color: #7b819d;
+}
 html[data-theme="dark"] .settings-card {
   background: #23262e;
   border: 1px solid #42485a;
