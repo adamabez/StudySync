@@ -692,65 +692,13 @@ create policy "Own homework check-offs" on public.homework_done
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
--- ---------- Meetups and Discord ----------
--- StudySync is where a group decides where to meet; the conversation happens on Discord.
---   course_discord  → one Discord server invite per class, shared by every group in it
---   group_discord   → each group's own channel in that server, and a webhook StudySync posts to
---   group_spots     → places members suggest; group_spot_votes → who likes which
---   group_meetup    → the place the group settled on
-
--- Is the logged-in student taking this class? (course = a course key, like study_groups.course)
-create or replace function public.takes_course(p_course text)
-returns boolean
-language sql stable security definer set search_path = ''
-as $$
-  select exists (
-    select 1 from public.classes c
-    where c.user_id = (select auth.uid()) and c.kind = 'class'
-      and public.course_key(c.course_code, c.name) = p_course
-  );
-$$;
-revoke execute on function public.takes_course(text) from public, anon;
-grant execute on function public.takes_course(text) to authenticated;
-
-create table if not exists public.course_discord (
-  course      text primary key,                  -- course key, e.g. 'CSC 130'
-  invite_url  text not null check (char_length(invite_url) <= 200),
-  set_by      uuid default auth.uid() references auth.users (id) on delete set null,
-  updated_at  timestamptz not null default now()
-);
-alter table public.course_discord enable row level security;
-
-drop policy if exists "Classmates read the class Discord" on public.course_discord;
-create policy "Classmates read the class Discord" on public.course_discord
-  for select to authenticated using (public.takes_course(course));
-drop policy if exists "Classmates add the class Discord" on public.course_discord;
-create policy "Classmates add the class Discord" on public.course_discord
-  for insert to authenticated with check (public.takes_course(course));
-drop policy if exists "Classmates change the class Discord" on public.course_discord;
-create policy "Classmates change the class Discord" on public.course_discord
-  for update to authenticated using (public.takes_course(course)) with check (public.takes_course(course));
-drop policy if exists "Classmates remove the class Discord" on public.course_discord;
-create policy "Classmates remove the class Discord" on public.course_discord
-  for delete to authenticated using (public.takes_course(course));
-
-create table if not exists public.group_discord (
-  group_id     uuid primary key references public.study_groups (id) on delete cascade,
-  channel_url  text check (char_length(channel_url) <= 200),
-  webhook_url  text check (char_length(webhook_url) <= 300),  -- the app never sends this to browsers
-  updated_at   timestamptz not null default now()
-);
-alter table public.group_discord enable row level security;
-
-drop policy if exists "Members read group Discord" on public.group_discord;
-create policy "Members read group Discord" on public.group_discord
-  for select to authenticated using (public.is_group_member(group_id));
-drop policy if exists "Members add group Discord" on public.group_discord;
-create policy "Members add group Discord" on public.group_discord
-  for insert to authenticated with check (public.is_group_member(group_id));
-drop policy if exists "Members change group Discord" on public.group_discord;
-create policy "Members change group Discord" on public.group_discord
-  for update to authenticated using (public.is_group_member(group_id)) with check (public.is_group_member(group_id));
+-- ---------- Meeting up: where, who's coming, and moving a session ----------
+-- A group should be able to go from matched to meeting without messaging anyone:
+--   group_spots / group_spot_votes → places members suggest, and who likes which
+--   group_meetup                   → the place the group settled on
+--   group_rsvps                    → Going / Running late / Can't make it, per weekly session
+--   group_session_moves            → one week's session moved to another time everyone is free
+-- A session is named by the date it would normally happen (session_date), even if it's moved.
 
 create table if not exists public.group_spots (
   id          uuid primary key default gen_random_uuid(),
@@ -812,3 +760,118 @@ create policy "Members change meetup" on public.group_meetup
 drop policy if exists "Members clear meetup" on public.group_meetup;
 create policy "Members clear meetup" on public.group_meetup
   for delete to authenticated using (public.is_group_member(group_id));
+
+create table if not exists public.group_rsvps (
+  group_id      uuid not null references public.study_groups (id) on delete cascade,
+  user_id       uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  session_date  date not null,
+  status        text not null check (status in ('going', 'late', 'cant')),
+  updated_at    timestamptz not null default now(),
+  primary key (group_id, user_id, session_date)
+);
+alter table public.group_rsvps enable row level security;
+
+drop policy if exists "Members read RSVPs" on public.group_rsvps;
+create policy "Members read RSVPs" on public.group_rsvps
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "RSVP for yourself" on public.group_rsvps;
+create policy "RSVP for yourself" on public.group_rsvps
+  for insert to authenticated with check (user_id = (select auth.uid()) and public.is_group_member(group_id));
+drop policy if exists "Change own RSVP" on public.group_rsvps;
+create policy "Change own RSVP" on public.group_rsvps
+  for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "Take back own RSVP" on public.group_rsvps;
+create policy "Take back own RSVP" on public.group_rsvps
+  for delete to authenticated using (user_id = (select auth.uid()));
+
+create table if not exists public.group_session_moves (
+  group_id      uuid not null references public.study_groups (id) on delete cascade,
+  session_date  date not null,                 -- the week's usual date
+  new_date      date not null,
+  new_start     text not null,                 -- 'HH:MM', like study_groups.start_time
+  new_end       text not null,
+  moved_by      uuid references auth.users (id) on delete set null,
+  moved_at      timestamptz not null default now(),
+  primary key (group_id, session_date)
+);
+alter table public.group_session_moves enable row level security;
+
+-- Members read moves and can undo one; moving goes through move_group_session() below,
+-- which checks that every member is free first
+drop policy if exists "Members read moves" on public.group_session_moves;
+create policy "Members read moves" on public.group_session_moves
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members undo moves" on public.group_session_moves;
+create policy "Members undo moves" on public.group_session_moves
+  for delete to authenticated using (public.is_group_member(group_id));
+
+-- Times in the week when EVERY member of the group is free for a session as long as the
+-- usual one: their classes, tasks and other groups are checked (weekdays 9 AM – 9 PM,
+-- weekends 10 AM – 6 PM, on the half hour). Members only. Used to move one week's session.
+create or replace function public.group_free_slots(gid uuid)
+returns table (day_key text, start_time text, end_time text)
+language sql stable security definer set search_path = ''
+as $$
+  with g as (
+    select sg.id, (sg.end_time::time - sg.start_time::time) as len
+    from public.study_groups sg
+    where sg.id = gid and public.is_group_member(gid)
+  ),
+  slots as (
+    select d.day_key, d.ord, t,
+           to_char(t, 'HH24:MI') as s_start,
+           to_char(t + g.len, 'HH24:MI') as s_end
+    from g
+    cross join unnest(array['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']) with ordinality as d(day_key, ord)
+    cross join lateral generate_series(timestamp '2000-01-01 09:00', timestamp '2000-01-01 21:00' - g.len, interval '30 minutes') as t
+    where d.ord <= 5 or (t >= timestamp '2000-01-01 10:00' and t + g.len <= timestamp '2000-01-01 18:00')
+  )
+  select s.day_key, s.s_start, s.s_end
+  from slots s
+  where not exists (
+    select 1 from public.group_members m
+    where m.group_id = gid
+      and (not public.user_is_free(m.user_id, array[s.day_key], s.s_start, s.s_end)
+           or not public.user_groups_free(m.user_id, array[s.day_key], s.s_start, s.s_end, gid))
+  )
+  order by s.ord, s.t;
+$$;
+
+-- Move one week's session (named by its usual date) to another time every member is free.
+-- Clears that session's RSVPs, since the time changed, and marks the mover as going.
+create or replace function public.move_group_session(gid uuid, p_session date, p_new date, p_start text, p_end text)
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  uid uuid := (select auth.uid());
+begin
+  if not public.is_group_member(gid) then
+    raise exception 'Not a member of this group';
+  end if;
+  if p_session < current_date - 7 or p_session > current_date + 14
+     or p_new < current_date - 1 or p_new > current_date + 9 then
+    raise exception 'That date is too far away';
+  end if;
+  if not exists (
+    select 1 from public.group_free_slots(gid) f
+    where f.day_key = lower(to_char(p_new, 'dy')) and f.start_time = p_start and f.end_time = p_end
+  ) then
+    raise exception 'Not everyone is free then';
+  end if;
+
+  insert into public.group_session_moves (group_id, session_date, new_date, new_start, new_end, moved_by, moved_at)
+  values (gid, p_session, p_new, p_start, p_end, uid, now())
+  on conflict (group_id, session_date) do update
+    set new_date = excluded.new_date, new_start = excluded.new_start, new_end = excluded.new_end,
+        moved_by = excluded.moved_by, moved_at = excluded.moved_at;
+
+  delete from public.group_rsvps where group_id = gid and session_date = p_session;
+  insert into public.group_rsvps (group_id, user_id, session_date, status) values (gid, uid, p_session, 'going');
+end;
+$$;
+
+revoke execute on function public.group_free_slots(uuid) from public, anon;
+grant execute on function public.group_free_slots(uuid) to authenticated;
+revoke execute on function public.move_group_session(uuid, date, date, text, text) from public, anon;
+grant execute on function public.move_group_session(uuid, date, date, text, text) to authenticated;

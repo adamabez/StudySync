@@ -509,38 +509,106 @@ html[data-theme="dark"] .spot-remove:hover {
   background: #351212;
   color: #e78787;
 }
-html[data-theme="dark"] .dc-button {
-  border: 1px solid #2f3466;
+html[data-theme="dark"] .ns-card {
   background: #23262e;
-  color: #a8ade3;
-}
-html[data-theme="dark"] .dc-button:hover {
-  background: #121538;
-}
-html[data-theme="dark"] .dc-button.primary {
-  border-color: #8992f6;
-}
-html[data-theme="dark"] .dc-status {
-  color: #7b819d;
-}
-html[data-theme="dark"] .dc-status.on {
-  color: #7ddeab;
-}
-html[data-theme="dark"] .dc-form {
-  background: #1c2030;
   border: 1px solid #42485a;
 }
-html[data-theme="dark"] .dc-optional {
-  color: #7b829d;
+html[data-theme="dark"] .ns-soon {
+  color: #aeb6d4;
 }
-html[data-theme="dark"] .dc-help {
+html[data-theme="dark"] .ns-soon.live {
+  color: #7ddeab;
+}
+html[data-theme="dark"] .ns-date {
+  color: #8394d8;
+}
+html[data-theme="dark"] .ns-time {
   color: #8f95b5;
 }
-html[data-theme="dark"] .dc-help summary {
+html[data-theme="dark"] .ns-where {
+  background: #131a35;
+  color: #8394d8;
+}
+html[data-theme="dark"] .ns-place.none {
+  color: #7b829d;
+}
+html[data-theme="dark"] .ns-moved {
+  background: #372c0e;
+  color: #e6c774;
+}
+html[data-theme="dark"] .ns-choice {
+  border: 1.5px solid #3c445f;
+  background: #23262e;
+  color: #9199ca;
+}
+html[data-theme="dark"] .ns-choice:hover {
+  background: #1b212f;
+}
+html[data-theme="dark"] .ns-choice.going[aria-pressed="true"] {
+  background: #182920;
+  border-color: #46ca8a;
+  color: #7be0ab;
+}
+html[data-theme="dark"] .ns-choice.late[aria-pressed="true"] {
+  background: #35280d;
+  border-color: #eab34d;
+  color: #ffc55c;
+}
+html[data-theme="dark"] .ns-choice.cant[aria-pressed="true"] {
+  background: #351212;
+  border-color: #e48481;
+  color: #e37b78;
+}
+html[data-theme="dark"] .ns-summary {
+  color: #7b819d;
+}
+html[data-theme="dark"] .ns-person {
+  background: #1b212f;
+}
+html[data-theme="dark"] .ns-person::before {
+  background: #0e1013;
+}
+html[data-theme="dark"] .ns-name {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .ns-status {
+  color: #7d839b;
+}
+html[data-theme="dark"] .ns-move {
+  border-top: 1px solid #454b5e;
+}
+html[data-theme="dark"] .ns-move p {
+  color: #8f95b5;
+}
+html[data-theme="dark"] .ns-move.needed p {
+  color: #e37b78;
+}
+html[data-theme="dark"] .ns-find {
+  border: 1px solid #313c64;
   color: #8ea0e7;
 }
-html[data-theme="dark"] .dc-help p {
-  color: #7b819d;
+html[data-theme="dark"] .ns-find:hover {
+  background: #131a35;
+}
+html[data-theme="dark"] .ns-find.primary {
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .ns-times {
+  background: #1c2030;
+}
+html[data-theme="dark"] .ns-times-title {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .ns-day + .ns-day {
+  border-top: 1px solid #42495e;
+}
+html[data-theme="dark"] .ns-day-label {
+  color: #8f95b5;
+}
+html[data-theme="dark"] .ns-time-option {
+  background: #23262e;
+  border: 1px solid #313c64;
+  color: #8ea0e7;
 }
 html[data-theme="dark"] .settings-card {
   background: #23262e;
@@ -1072,6 +1140,10 @@ html[data-theme="dark"] select { background-image: url("data:image/svg+xml,%3Csv
 /* Notebook: the question box sits inside its own bordered box, and a waiting Send button stays quiet */
 html[data-theme="dark"] .composer-box textarea { background: transparent; border: none; }
 html[data-theme="dark"] .composer-send:disabled, html[data-theme="dark"] .composer-send:disabled:hover { background: #30364c; color: #7d849c; }
+html[data-theme="dark"] .ns-person::before { background: #5a6078; }
+html[data-theme="dark"] .ns-person.going::before { background: #3fbf7f; }
+html[data-theme="dark"] .ns-person.late::before { background: #f0ad3a; }
+html[data-theme="dark"] .ns-person.cant::before { background: #ef6b67; }
 html[data-theme="dark"] .nb-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
 /* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
    theme.js swaps the image too, for browsers that ignore content on images. */

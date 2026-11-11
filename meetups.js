@@ -1,112 +1,47 @@
-// StudySync - deciding where a study group meets, and connecting it to Discord.
-// StudySync is the one place for where and when; the conversation happens on Discord.
+// StudySync - getting a study group from "matched" to "meeting" without messaging anyone.
 //
 //   Spots     Members suggest places and vote. Anyone can make one "the spot".
-//   Discord   Each class has one Discord server (course_discord, shared by every group in
-//             the class). Each group links its own channel there (group_discord), and can add
-//             the channel's webhook so StudySync posts when the meeting spot is set.
+//   RSVPs     Going / Running late / Can't make it, for each weekly session.
+//   Moving    Can't make it? StudySync finds times this week when every member is free
+//             (group_free_slots in the database), and one tap moves that week's session.
 //
-// Tables and security rules: the "Meetups and Discord" part of supabase/schema.sql.
+// A session is named by the date it would normally happen (sessionDate, "YYYY-MM-DD"), even
+// when it's moved. The browser works out which date is next, since it knows the local time.
+//
+// Tables, rules and functions: the "Meeting up" part of supabase/schema.sql.
 // Every function takes `db` first: the Supabase client for the logged-in user.
 
 const { checkMessage } = require("./namefilter");
 
 const MAX_PLACE = 120;
 const MAX_SPOTS = 8; // suggestions per group, so the list stays short
+const STATUSES = ["going", "late", "cant"];
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-// ---------- Checking links ----------
-
-// "discord.gg/abc" → "https://discord.gg/abc"; anything else that isn't an invite → null
-function cleanInvite(text) {
-  let url = String(text || "").trim();
-  if (!url) return "";
-  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-  return /^https:\/\/(www\.)?(discord\.gg|discord(app)?\.com\/invite)\/[A-Za-z0-9-]{2,32}\/?$/i.test(url.replace(/^http:/i, "https:"))
-    ? url.replace(/^http:/i, "https:").replace(/\/$/, "")
-    : null;
+// "YYYY-MM-DD" a number of days from today (UTC; a day of slack either way covers time zones)
+function dayOffset(days) {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
-// A link to a channel: https://discord.com/channels/<server>/<channel>
-function cleanChannel(text) {
-  let url = String(text || "").trim();
-  if (!url) return "";
-  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-  return /^https:\/\/((www|ptb|canary)\.)?discord(app)?\.com\/channels\/\d{15,21}\/\d{15,21}\/?$/i.test(url.replace(/^http:/i, "https:"))
-    ? url.replace(/^http:/i, "https:").replace(/\/$/, "")
-    : null;
-}
-
-// A channel webhook: https://discord.com/api/webhooks/<id>/<token>
-function cleanWebhook(text) {
-  const url = String(text || "").trim();
-  if (!url) return "";
-  return /^https:\/\/((ptb|canary)\.)?discord(app)?\.com\/api\/webhooks\/\d{15,21}\/[A-Za-z0-9_-]{30,100}\/?$/i.test(url)
-    ? url.replace(/\/$/, "")
-    : null;
-}
-
-// ---------- Posting to Discord ----------
-
-function formatTime(t) {
-  let [h, m] = String(t).split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
-const DAY_NAMES = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
-function whenText(group) {
-  return `${group.days.map((d) => DAY_NAMES[d]).join(", ")} · ${formatTime(group.start)} – ${formatTime(group.end)}`;
-}
-
-function groupLink(group) {
-  const base = (process.env.PUBLIC_URL || "").trim().replace(/\/+$/, "");
-  return base ? `${base}/group?id=${group.id}` : undefined;
-}
-
-// Send one message to a channel webhook. Mentions are switched off, so nothing typed in
-// StudySync can ping @everyone. Returns true if Discord accepted it.
-async function postToDiscord(webhookUrl, message) {
-  try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: "StudySync", allowed_mentions: { parse: [] }, ...message }),
-      signal: AbortSignal.timeout(6000),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-function spotMessage(group, place, setBy) {
-  return {
-    embeds: [{
-      title: "📍 Meeting spot set",
-      description: `**${place.replace(/[*_~`|>]/g, "")}**`,
-      color: 0x2b4acb,
-      url: groupLink(group),
-      fields: [
-        { name: "When", value: whenText(group), inline: true },
-        { name: "Set by", value: setBy, inline: true },
-      ],
-      footer: { text: group.name },
-    }],
-  };
+function isDate(text) {
+  return typeof text === "string" && DATE.test(text) && !isNaN(Date.parse(text + "T00:00:00Z"));
 }
 
 // ---------- Reading ----------
 
-// The group's meetup, suggested spots and Discord links, for the group page
+// Everything the group page shows about meeting up
 async function getInfo(db, group, userId) {
-  const [meetup, spots, discord, classDiscord] = await Promise.all([
+  const since = dayOffset(-8); // last week's session can still be "upcoming" if it was moved later
+  const [meetup, spots, rsvps, moves] = await Promise.all([
     db.from("group_meetup").select("place, set_by, set_at").eq("group_id", group.id).maybeSingle(),
     db.from("group_spots").select("id, user_id, place, created_at").eq("group_id", group.id).order("created_at"),
-    db.from("group_discord").select("channel_url, webhook_url").eq("group_id", group.id).maybeSingle(),
-    db.from("course_discord").select("invite_url").eq("course", group.course).maybeSingle(),
+    db.from("group_rsvps").select("user_id, session_date, status").eq("group_id", group.id).gte("session_date", since),
+    db.from("group_session_moves").select("session_date, new_date, new_start, new_end, moved_by").eq("group_id", group.id).gte("session_date", since),
   ]);
-  for (const result of [meetup, spots, discord, classDiscord]) if (result.error) throw result.error;
+  for (const result of [meetup, spots, rsvps, moves]) if (result.error) throw result.error;
 
   const ids = spots.data.map((s) => s.id);
   let votes = [];
@@ -137,11 +72,17 @@ async function getInfo(db, group, userId) {
         };
       })
       .sort((a, b) => b.votes - a.votes),
-    discord: {
-      serverInvite: classDiscord.data?.invite_url || "",
-      channelUrl: discord.data?.channel_url || "",
-      connected: Boolean(discord.data?.webhook_url), // the webhook itself never goes to the browser
-    },
+    // Members (in the order they joined) with their answer for each session
+    rsvps: rsvps.data
+      .filter((r) => names.has(r.user_id))
+      .map((r) => ({ sessionDate: r.session_date, name: names.get(r.user_id), isYou: r.user_id === userId, status: r.status })),
+    moves: moves.data.map((m) => ({
+      sessionDate: m.session_date,
+      date: m.new_date,
+      start: m.new_start,
+      end: m.new_end,
+      movedBy: nameOf(m.moved_by),
+    })),
   };
 }
 
@@ -193,26 +134,13 @@ async function setVote(db, group, userId, spotId, on) {
   return { value: true };
 }
 
-// ---------- The meeting spot ----------
-
-// Make a place the group's meeting spot, and tell the group's Discord channel.
-// Returns { value: { posted } } or { error }.
 async function setMeetup(db, group, userId, input) {
   const place = cleanPlace(input.place);
   if (place.error) return place;
-
   const { error } = await db.from("group_meetup")
     .upsert({ group_id: group.id, place: place.value, set_by: userId, set_at: new Date().toISOString() }, { onConflict: "group_id" });
   if (error) throw error;
-
-  const discord = await db.from("group_discord").select("webhook_url").eq("group_id", group.id).maybeSingle();
-  if (discord.error) throw discord.error;
-  let posted = false;
-  if (discord.data?.webhook_url) {
-    const me = group.members.find((m) => m.userId === userId);
-    posted = await postToDiscord(discord.data.webhook_url, spotMessage(group, place.value, me?.name || "A member"));
-  }
-  return { value: { posted, discordConnected: Boolean(discord.data?.webhook_url) } };
+  return { value: true };
 }
 
 async function clearMeetup(db, group) {
@@ -220,54 +148,73 @@ async function clearMeetup(db, group) {
   if (error) throw error;
 }
 
-// ---------- Discord links ----------
+// ---------- RSVPs ----------
 
-// Save any of: the class server invite, the group's channel link, the channel webhook.
-// An empty value removes it. A new webhook gets a hello message first, to make sure it works.
-async function saveDiscord(db, group, userId, input) {
-  if (input.serverInvite !== undefined) {
-    const invite = cleanInvite(input.serverInvite);
-    if (invite === null) return { error: "That doesn't look like a Discord invite. It should look like discord.gg/abc123." };
-    const result = invite
-      ? await db.from("course_discord").upsert({ course: group.course, invite_url: invite, set_by: userId, updated_at: new Date().toISOString() }, { onConflict: "course" })
-      : await db.from("course_discord").delete().eq("course", group.course);
-    if (result.error) throw result.error;
+// { sessionDate, status }: status "going" | "late" | "cant", or null to take the answer back
+async function setRsvp(db, group, userId, input) {
+  if (!isDate(input.sessionDate) || input.sessionDate < dayOffset(-8) || input.sessionDate > dayOffset(15)) {
+    return { error: "That session isn't coming up." };
   }
-
-  const fields = {};
-  if (input.channelUrl !== undefined) {
-    const channel = cleanChannel(input.channelUrl);
-    if (channel === null) return { error: "That doesn't look like a channel link. In Discord, right-click the channel → Copy Link." };
-    fields.channel_url = channel || null;
-  }
-  if (input.webhookUrl !== undefined) {
-    const webhook = cleanWebhook(input.webhookUrl);
-    if (webhook === null) return { error: "That doesn't look like a Discord webhook link. It starts with https://discord.com/api/webhooks/." };
-    if (webhook) {
-      const ok = await postToDiscord(webhook, {
-        content: `👋 StudySync is connected to this channel for **${group.name.replace(/[*_~`|>]/g, "")}**. ` +
-          "When your group picks a meeting spot, it'll show up here.",
-      });
-      if (!ok) return { error: "Discord didn't accept that webhook. Check the link, or make a new webhook and try again." };
-    }
-    fields.webhook_url = webhook || null;
-  }
-
-  if (Object.keys(fields).length) {
-    const { error } = await db.from("group_discord")
-      .upsert({ group_id: group.id, ...fields, updated_at: new Date().toISOString() }, { onConflict: "group_id" });
+  if (input.status === null) {
+    const { error } = await db.from("group_rsvps").delete()
+      .eq("group_id", group.id).eq("user_id", userId).eq("session_date", input.sessionDate);
     if (error) throw error;
+    return { value: true };
   }
+  if (!STATUSES.includes(input.status)) return { error: "Pick Going, Running late or Can't make it." };
+  const { error } = await db.from("group_rsvps").upsert(
+    { group_id: group.id, user_id: userId, session_date: input.sessionDate, status: input.status, updated_at: new Date().toISOString() },
+    { onConflict: "group_id,user_id,session_date" },
+  );
+  if (error) throw error;
+  return { value: true };
+}
+
+// ---------- Moving one week's session ----------
+
+// Weekly times every member is free for a session as long as the usual one:
+// [{ day: "thu", start: "15:00", end: "16:30" }]. The browser turns them into dates.
+async function freeSlots(db, group) {
+  const { data, error } = await db.rpc("group_free_slots", { gid: group.id });
+  if (error) throw error;
+  return data.map((row) => ({ day: row.day_key, start: row.start_time, end: row.end_time }));
+}
+
+// { sessionDate, date, start, end }: move that week's session. The database checks again
+// that everyone is free, then clears the session's RSVPs and marks you as going.
+async function moveSession(db, group, input) {
+  if (!isDate(input.sessionDate) || !isDate(input.date) || !TIME.test(input.start || "") || !TIME.test(input.end || "")) {
+    return { error: "Pick one of the suggested times." };
+  }
+  const { error } = await db.rpc("move_group_session", {
+    gid: group.id, p_session: input.sessionDate, p_new: input.date, p_start: input.start, p_end: input.end,
+  });
+  if (error) {
+    if (/Not everyone is free/.test(error.message || "")) return { error: "Someone's schedule changed and that time doesn't work anymore. Pick another." };
+    if (/too far away/.test(error.message || "")) return { error: "You can only move a session within the next week or so." };
+    throw error;
+  }
+  return { value: true };
+}
+
+// Put a moved session back at its usual time
+async function undoMove(db, group, input) {
+  if (!isDate(input.sessionDate)) return { error: "That session isn't coming up." };
+  const { error } = await db.from("group_session_moves").delete().eq("group_id", group.id).eq("session_date", input.sessionDate);
+  if (error) throw error;
   return { value: true };
 }
 
 // The tables are new: true if this error means the database hasn't been updated yet
 function isMissingTable(error) {
-  return Boolean(error && (error.code === "42P01" || error.code === "PGRST205" ||
-    /group_spots|group_meetup|group_discord|course_discord|group_spot_votes/.test(error.message || "")));
+  if (!error) return false;
+  if (["42P01", "42883", "PGRST202", "PGRST205"].includes(error.code)) return true; // no such table / function
+  return /does not exist|could not find/i.test(error.message || "") &&
+    /group_spots|group_meetup|group_spot_votes|group_rsvps|group_session_moves|group_free_slots|move_group_session/.test(error.message || "");
 }
 
 module.exports = {
-  getInfo, addSpot, removeSpot, setVote, setMeetup, clearMeetup, saveDiscord, isMissingTable,
-  cleanInvite, cleanChannel, cleanWebhook, cleanPlace, MAX_SPOTS,
+  getInfo, addSpot, removeSpot, setVote, setMeetup, clearMeetup,
+  setRsvp, freeSlots, moveSession, undoMove, isMissingTable,
+  cleanPlace, MAX_SPOTS, STATUSES,
 };

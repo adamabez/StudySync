@@ -175,6 +175,10 @@ ${PREFIX} select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http:
 /* Notebook: the question box sits inside its own bordered box, and a waiting Send button stays quiet */
 ${PREFIX} .composer-box textarea { background: transparent; border: none; }
 ${PREFIX} .composer-send:disabled, ${PREFIX} .composer-send:disabled:hover { background: #30364c; color: #7d849c; }
+${PREFIX} .ns-person::before { background: #5a6078; }
+${PREFIX} .ns-person.going::before { background: #3fbf7f; }
+${PREFIX} .ns-person.late::before { background: #f0ad3a; }
+${PREFIX} .ns-person.cant::before { background: #ef6b67; }
 ${PREFIX} .nb-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
 /* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
    theme.js swaps the image too, for browsers that ignore content on images. */

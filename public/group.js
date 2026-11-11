@@ -1,5 +1,5 @@
 // StudySync - one study group's page (runs in the browser): who's in it, when it meets,
-// where the group meets (and its Discord), and the notes members share with each other.
+// the next session (who's coming, moving it, where), and the notes members share with each other.
 
 const DAY_SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
 const $ = (id) => document.getElementById(id);
@@ -101,16 +101,57 @@ $("note-form").addEventListener("submit", async (event) => {
   }
 });
 
-// ---------- Where we're meeting + Discord (meetups.js on the server) ----------
+// ---------- Meeting up: the next session, RSVPs, moving it, and where (meetups.js on the server) ----------
+// The goal: a group can go from matched to meeting without messaging anyone.
 let currentGroup = null;
-let info = null; // { meetup, spots, discord } from the server
+let info = null; // { meetup, spots, rsvps, moves } from the server
+
+const DAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+const DAY_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const pad = (n) => String(n).padStart(2, "0");
+const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const atTime = (date, hhmm) => new Date(`${date}T${hhmm}:00`); // local time
+const dayKeyOf = (date) => Object.keys(DAY_INDEX).find((k) => DAY_INDEX[k] === atTime(date, "12:00").getDay());
 
 const whenText = (group) => group.days.map((d) => DAY_SHORT[d]).join(", ") + " · " +
   formatTime(group.start) + " – " + formatTime(group.end);
 
-function showMeetError(text) {
-  $("meet-error").textContent = text || "";
-  $("meet-error").hidden = !text;
+function prettyDate(date) {
+  const d = atTime(date, "12:00");
+  return DAY_LONG[d.getDay()] + ", " + d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// "Today", "Tomorrow", "In 3 days"
+function soonText(date) {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const days = Math.round((atTime(date, "12:00") - today) / 86_400_000);
+  return days === 0 ? "Today" : days === 1 ? "Tomorrow" : days < 0 ? "" : `In ${days} days`;
+}
+
+// The group's weekly sessions around now, with any one-off moves applied, soonest first
+function upcomingSessions() {
+  const now = new Date();
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+  const list = [];
+  for (let i = -7; i <= 14; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    const usual = ymd(d);
+    if (!currentGroup.days.includes(dayKeyOf(usual))) continue;
+    const move = info.moves.find((m) => m.sessionDate === usual);
+    const date = move ? move.date : usual;
+    const start = move ? move.start : currentGroup.start;
+    const end = move ? move.end : currentGroup.end;
+    list.push({ sessionDate: usual, date, start, end, move, startsAt: atTime(date, start), endsAt: atTime(date, end) });
+  }
+  return list.filter((s) => s.endsAt > now).sort((a, b) => a.startsAt - b.startsAt);
+}
+
+function showNote(id, text) {
+  $(id).textContent = text || "";
+  $(id).hidden = !text;
 }
 
 // Send a change; the server answers with the fresh meetup info
@@ -130,12 +171,232 @@ async function meetupRequest(path, method = "POST", body) {
 }
 
 function notSetUp(message) {
+  $("next-card").innerHTML = "";
   $("meet-status").innerHTML = "";
   $("meet-ideas").hidden = true;
-  $("discord-section").hidden = true;
-  showMeetError(message);
+  showNote("next-error", message);
 }
 
+function renderAll() {
+  renderNext();
+  renderMeetup();
+}
+
+// ----- Next session: when and where, RSVPs, who's coming -----
+const STATUS = {
+  going: { label: "Going", icon: "✓" },
+  late: { label: "Running late", icon: "⏱" },
+  cant: { label: "Can't make it", icon: "✕" },
+};
+
+let picker = null; // open "find another time" list: { sessionDate } or null
+
+function renderNext() {
+  const card = $("next-card");
+  card.innerHTML = "";
+  const session = upcomingSessions()[0];
+  if (!session) {
+    card.innerHTML = '<p class="hint">No upcoming session found.</p>';
+    return;
+  }
+  const answers = info.rsvps.filter((r) => r.sessionDate === session.sessionDate);
+  const mine = answers.find((r) => r.isYou)?.status || null;
+  const now = new Date();
+  const live = session.startsAt <= now && now < session.endsAt;
+
+  // When + where
+  const head = document.createElement("div");
+  head.className = "ns-head";
+  head.innerHTML = `<div class="ns-when">
+      <span class="ns-soon${live ? " live" : ""}"></span>
+      <strong class="ns-date"></strong>
+      <span class="ns-time"></span>
+    </div>
+    <div class="ns-where"><span aria-hidden="true">📍</span><span class="ns-place"></span></div>`;
+  head.querySelector(".ns-soon").textContent = live ? "Happening now" : soonText(session.date);
+  head.querySelector(".ns-date").textContent = prettyDate(session.date);
+  head.querySelector(".ns-time").textContent = formatTime(session.start) + " – " + formatTime(session.end);
+  const place = head.querySelector(".ns-place");
+  if (info.meetup) place.textContent = info.meetup.place;
+  else {
+    place.textContent = "No spot picked yet";
+    place.classList.add("none");
+  }
+  card.appendChild(head);
+
+  if (session.move) {
+    const moved = document.createElement("p");
+    moved.className = "ns-moved";
+    moved.textContent = `Moved this week by ${session.move.movedBy}. It's usually ${DAY_SHORT[dayKeyOf(session.sessionDate)]} ${formatTime(currentGroup.start)}. `;
+    const undo = document.createElement("button");
+    undo.type = "button";
+    undo.className = "link-button";
+    undo.textContent = "Put it back";
+    undo.addEventListener("click", async () => {
+      if (!confirm("Move this session back to its usual time?")) return;
+      await act(() => meetupRequest("/move?session=" + session.sessionDate, "DELETE"));
+    });
+    moved.appendChild(undo);
+    card.appendChild(moved);
+  }
+
+  // Your answer
+  const rsvp = document.createElement("div");
+  rsvp.className = "ns-rsvp";
+  rsvp.setAttribute("role", "group");
+  rsvp.setAttribute("aria-label", "Are you coming?");
+  for (const [key, s] of Object.entries(STATUS)) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `ns-choice ${key}`;
+    b.setAttribute("aria-pressed", String(mine === key));
+    b.innerHTML = `<span aria-hidden="true">${s.icon}</span> ${s.label}`;
+    b.addEventListener("click", async () => {
+      const status = mine === key ? null : key; // tap again to take it back
+      await act(() => meetupRequest("/rsvp", "POST", { sessionDate: session.sessionDate, status }));
+      if (status === "cant") picker = { sessionDate: session.sessionDate };
+      renderNext();
+    });
+    rsvp.appendChild(b);
+  }
+  card.appendChild(rsvp);
+
+  // Who's coming
+  const counts = { going: 0, late: 0, cant: 0, none: 0 };
+  const people = document.createElement("ul");
+  people.className = "ns-people";
+  for (const member of currentGroup.members) {
+    const status = answers.find((r) => (member.isYou ? r.isYou : r.name === member.name && !r.isYou))?.status || "none";
+    counts[status]++;
+    const li = document.createElement("li");
+    li.className = "ns-person " + status;
+    li.innerHTML = '<span class="ns-name"></span><span class="ns-status"></span>';
+    li.querySelector(".ns-name").textContent = member.isYou ? "You" : member.name;
+    li.querySelector(".ns-status").textContent = status === "none" ? "No answer yet" : STATUS[status].label;
+    people.appendChild(li);
+  }
+  const summary = document.createElement("p");
+  summary.className = "ns-summary";
+  summary.textContent = [
+    counts.going && `${counts.going} going`,
+    counts.late && `${counts.late} running late`,
+    counts.cant && `${counts.cant} can't make it`,
+    counts.none && `${counts.none} haven't answered`,
+  ].filter(Boolean).join(" · ");
+  card.append(summary, people);
+
+  // Can't make it? Find a time that works for everyone
+  const cantNames = answers.filter((r) => r.status === "cant").map((r) => (r.isYou ? "You" : r.name));
+  const move = document.createElement("div");
+  move.className = "ns-move" + (cantNames.length ? " needed" : "");
+  const prompt = document.createElement("p");
+  prompt.textContent = cantNames.length
+    ? `${cantNames.join(" and ")} can't make this one. Want to move it?`
+    : "This time doesn't work this week?";
+  const find = document.createElement("button");
+  find.type = "button";
+  find.className = cantNames.length ? "ns-find primary" : "ns-find";
+  find.textContent = "Find a time that works for everyone";
+  find.addEventListener("click", () => {
+    picker = picker ? null : { sessionDate: session.sessionDate };
+    renderNext();
+  });
+  move.append(prompt, find);
+  card.appendChild(move);
+
+  if (picker && picker.sessionDate === session.sessionDate) {
+    const box = document.createElement("div");
+    box.className = "ns-times";
+    box.innerHTML = '<p class="hint">Checking everyone\'s schedules…</p>';
+    card.appendChild(box);
+    loadTimes(session, box);
+  }
+}
+
+// Times in the next week when every member is free, as buttons
+async function loadTimes(session, box) {
+  let slots;
+  try {
+    slots = await meetupRequest("/slots", "GET");
+  } catch (e) {
+    box.innerHTML = "";
+    showNote("next-error", e.message);
+    return;
+  }
+  const now = new Date();
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+  const options = [];
+  for (let i = 0; i <= 7; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    const date = ymd(d);
+    const day = dayKeyOf(date);
+    for (const slot of slots.filter((x) => x.day === day)) {
+      if (atTime(date, slot.start) <= now) continue;
+      if (date === session.date && slot.start === session.start) continue; // the time it's at now
+      options.push({ date, ...slot });
+    }
+  }
+
+  box.innerHTML = "";
+  if (options.length === 0) {
+    box.innerHTML = '<p class="hint">No time this week works for everyone. Try marking yourself as running late, or skip this one.</p>';
+    return;
+  }
+  const title = document.createElement("p");
+  title.className = "ns-times-title";
+  title.textContent = "Everyone is free at these times:";
+  box.appendChild(title);
+
+  // A few per day, for the first few days that have any, so the list stays short
+  const byDay = new Map();
+  for (const o of options) {
+    if (!byDay.has(o.date)) byDay.set(o.date, []);
+    byDay.get(o.date).push(o);
+  }
+  for (const [date, list] of [...byDay].slice(0, 4)) {
+    const row = document.createElement("div");
+    row.className = "ns-day";
+    const label = document.createElement("span");
+    label.className = "ns-day-label";
+    label.textContent = (soonText(date) === "Today" || soonText(date) === "Tomorrow" ? soonText(date) + " · " : "") + prettyDate(date);
+    row.appendChild(label);
+    const times = document.createElement("div");
+    times.className = "ns-day-times";
+    // Spread the picks across the day instead of only the first few half-hours
+    const step = Math.max(1, Math.floor(list.length / 4));
+    for (const o of list.filter((_, i) => i % step === 0).slice(0, 4)) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ns-time-option";
+      b.textContent = formatTime(o.start);
+      b.title = formatTime(o.start) + " – " + formatTime(o.end);
+      b.addEventListener("click", async () => {
+        if (!confirm(`Move this week's session to ${prettyDate(o.date)}, ${formatTime(o.start)} – ${formatTime(o.end)}? Everyone will see the new time and answer again.`)) return;
+        picker = null;
+        await act(() => meetupRequest("/move", "POST", { sessionDate: session.sessionDate, date: o.date, start: o.start, end: o.end }));
+      });
+      times.appendChild(b);
+    }
+    row.appendChild(times);
+    box.appendChild(row);
+  }
+}
+
+// Run a change, then redraw everything with the fresh info
+async function act(request) {
+  showNote("next-error", "");
+  showNote("meet-error", "");
+  try {
+    info = await request();
+    renderAll();
+  } catch (e) {
+    showNote("next-error", e.message);
+  }
+}
+
+// ----- Where we're meeting: the spot and suggestions -----
 function renderMeetup() {
   const status = $("meet-status");
   status.innerHTML = "";
@@ -145,7 +406,7 @@ function renderMeetup() {
     card.innerHTML = '<span class="mt-pin" aria-hidden="true">📍</span><div class="mt-card-text">' +
       '<span class="mt-label">Meeting spot</span><strong class="mt-place"></strong><span class="mt-when"></span></div>';
     card.querySelector(".mt-place").textContent = info.meetup.place;
-    card.querySelector(".mt-when").textContent = whenText(currentGroup) + " · set by " + info.meetup.setBy;
+    card.querySelector(".mt-when").textContent = "Set by " + info.meetup.setBy;
     const clear = document.createElement("button");
     clear.type = "button";
     clear.className = "link-button mt-clear";
@@ -153,7 +414,7 @@ function renderMeetup() {
     clear.title = "Remove the meeting spot";
     clear.addEventListener("click", async () => {
       if (!confirm("Clear the meeting spot for everyone in the group?")) return;
-      try { info = await meetupRequest("/meetup", "DELETE"); renderMeetup(); } catch (e) { showMeetError(e.message); }
+      await spotChange(() => meetupRequest("/meetup", "DELETE"));
     });
     card.appendChild(clear);
     status.appendChild(card);
@@ -179,14 +440,13 @@ function renderMeetup() {
     vote.setAttribute("aria-label", (spot.votedByYou ? "Take back your vote for " : "Vote for ") + spot.place);
     vote.innerHTML = '<span aria-hidden="true">👍</span><span class="spot-count"></span>';
     vote.querySelector(".spot-count").textContent = spot.votes;
-    vote.addEventListener("click", () => change(`/spots/${spot.id}/vote`, "POST", { on: !spot.votedByYou }));
+    vote.addEventListener("click", () => spotChange(() => meetupRequest(`/spots/${spot.id}/vote`, "POST", { on: !spot.votedByYou })));
 
     const text = document.createElement("div");
     text.className = "spot-text";
     text.innerHTML = "<strong></strong><span></span>";
     text.querySelector("strong").textContent = spot.place;
     text.querySelector("span").textContent = "Suggested by " + spot.by;
-
     li.append(vote, text);
 
     if (spot.isTheSpot) {
@@ -199,7 +459,10 @@ function renderMeetup() {
       choose.type = "button";
       choose.className = "spot-choose";
       choose.textContent = "Make it the spot";
-      choose.addEventListener("click", () => setSpot(spot.place));
+      choose.addEventListener("click", () => {
+        const ask = info.meetup ? `Change the meeting spot to "${spot.place}"?` : `Make "${spot.place}" the meeting spot?`;
+        if (confirm(ask)) spotChange(() => meetupRequest("/meetup", "POST", { place: spot.place }));
+      });
       li.appendChild(choose);
     }
     if (spot.isYours) {
@@ -209,7 +472,7 @@ function renderMeetup() {
       remove.textContent = "×";
       remove.title = "Remove your suggestion";
       remove.setAttribute("aria-label", "Remove your suggestion " + spot.place);
-      remove.addEventListener("click", () => change(`/spots/${spot.id}`, "DELETE"));
+      remove.addEventListener("click", () => spotChange(() => meetupRequest(`/spots/${spot.id}`, "DELETE")));
       li.appendChild(remove);
     }
     list.appendChild(li);
@@ -217,41 +480,14 @@ function renderMeetup() {
   $("meet-ideas").hidden = false;
 }
 
-async function change(path, method, body) {
-  showMeetError("");
+async function spotChange(request) {
+  showNote("meet-error", "");
   try {
-    info = await meetupRequest(path, method, body);
-    renderMeetup();
-    renderDiscord();
+    info = await request();
+    renderAll();
   } catch (e) {
-    showMeetError(e.message);
+    showNote("meet-error", e.message);
   }
-}
-
-async function setSpot(place) {
-  const ask = info.meetup ? `Change the meeting spot to "${place}"?` : `Make "${place}" the meeting spot?`;
-  if (!confirm(ask + (info.discord.connected ? " It'll be posted to your Discord channel." : ""))) return;
-  showMeetError("");
-  try {
-    info = await meetupRequest("/meetup", "POST", { place });
-    renderMeetup();
-    if (info.discordConnected && !info.posted) {
-      showMeetError("The spot is saved, but Discord didn't accept the post. The webhook may have been deleted: set it up again below.");
-    } else if (info.posted) {
-      flash($("meet-status"), "Posted to your Discord channel ✓");
-    }
-  } catch (e) {
-    showMeetError(e.message);
-  }
-}
-
-// A small note that fades away
-function flash(after, text) {
-  const note = document.createElement("p");
-  note.className = "mt-flash";
-  note.textContent = text;
-  after.after(note);
-  setTimeout(() => note.remove(), 4000);
 }
 
 $("spot-form").addEventListener("submit", async (event) => {
@@ -259,111 +495,22 @@ $("spot-form").addEventListener("submit", async (event) => {
   const input = $("spot-input");
   if (!input.value.trim()) return input.focus();
   $("spot-submit").disabled = true;
-  showMeetError("");
-  try {
-    info = await meetupRequest("/spots", "POST", { place: input.value });
+  await spotChange(async () => {
+    const data = await meetupRequest("/spots", "POST", { place: input.value });
     input.value = "";
-    renderMeetup();
-  } catch (e) {
-    showMeetError(e.message);
-  } finally {
-    $("spot-submit").disabled = false;
-  }
-});
-
-// ----- Discord -----
-const DISCORD_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.3 5.3A16.6 16.6 0 0 0 15.2 4l-.5 1a15.4 15.4 0 0 0-5.4 0l-.5-1a16.5 16.5 0 0 0-4.1 1.3C2.1 9.2 1.4 13 1.7 16.7a16.7 16.7 0 0 0 5 2.5l1.1-1.7a10.8 10.8 0 0 1-1.7-.8l.4-.3a11.9 11.9 0 0 0 11 0l.4.3c-.5.3-1.1.6-1.7.8l1.1 1.7a16.6 16.6 0 0 0 5-2.5c.4-4.3-.7-8-3-11.4ZM8.7 14.4c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Zm6.6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Z"/></svg>';
-
-function linkButton(href, label, primary) {
-  const a = document.createElement("a");
-  a.href = href;
-  a.target = "_blank";
-  a.rel = "noopener";
-  a.className = "dc-button" + (primary ? " primary" : "");
-  a.innerHTML = DISCORD_ICON + "<span></span>";
-  a.querySelector("span").textContent = label;
-  return a;
-}
-
-function renderDiscord() {
-  const d = info.discord;
-  const view = $("discord-view");
-  view.innerHTML = "";
-  const course = currentGroup.course;
-
-  const buttons = document.createElement("div");
-  buttons.className = "dc-buttons";
-  if (d.serverInvite) buttons.appendChild(linkButton(d.serverInvite, `Join the ${course} server`, !d.channelUrl));
-  if (d.channelUrl) buttons.appendChild(linkButton(d.channelUrl, "Open your group's channel", true));
-  if (buttons.children.length) view.appendChild(buttons);
-
-  const status = document.createElement("p");
-  status.className = "dc-status" + (d.connected ? " on" : "");
-  status.textContent = d.connected
-    ? "✓ Meeting spots are posted to your group's channel."
-    : !d.serverInvite && !d.channelUrl
-      ? `No Discord linked yet. If ${course} has a Discord server, add its invite so your group can find it.`
-      : "Meeting spots aren't posted to Discord yet. Add a channel webhook to turn that on.";
-  view.appendChild(status);
-
-  $("discord-edit").textContent = d.serverInvite || d.channelUrl || d.connected ? "Edit" : "Set up";
-  $("discord-invite-hint").textContent = `Shared with every study group in ${course}.`;
-  $("discord-section").hidden = false;
-}
-
-function openDiscordForm() {
-  const d = info.discord;
-  $("discord-invite").value = d.serverInvite;
-  $("discord-channel").value = d.channelUrl;
-  $("discord-webhook").value = "";
-  $("discord-webhook").placeholder = d.connected ? "Connected. Paste a new link to replace it." : "https://discord.com/api/webhooks/…";
-  $("discord-disconnect").checked = false;
-  $("discord-disconnect-row").hidden = !d.connected;
-  $("discord-error").hidden = true;
-  $("discord-form").hidden = false;
-  $("discord-edit").hidden = true;
-  $("discord-invite").focus();
-}
-
-function closeDiscordForm() {
-  $("discord-form").hidden = true;
-  $("discord-edit").hidden = false;
-}
-
-$("discord-edit").addEventListener("click", openDiscordForm);
-$("discord-cancel").addEventListener("click", closeDiscordForm);
-$("discord-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const body = { serverInvite: $("discord-invite").value, channelUrl: $("discord-channel").value };
-  const webhook = $("discord-webhook").value.trim();
-  if (webhook) body.webhookUrl = webhook;
-  else if ($("discord-disconnect").checked) body.webhookUrl = "";
-
-  $("discord-save").disabled = true;
-  $("discord-save").textContent = webhook ? "Connecting…" : "Saving…";
-  $("discord-error").hidden = true;
-  try {
-    info = await meetupRequest("/discord", "POST", body);
-    closeDiscordForm();
-    renderDiscord();
-    if (webhook) flash($("discord-view"), "Connected. StudySync said hi in your channel ✓");
-  } catch (e) {
-    $("discord-error").textContent = e.message;
-    $("discord-error").hidden = false;
-  } finally {
-    $("discord-save").disabled = false;
-    $("discord-save").textContent = "Save";
-  }
+    return data;
+  });
+  $("spot-submit").disabled = false;
 });
 
 async function startMeetups(group) {
   currentGroup = group;
   try {
     info = await meetupRequest("/meetup", "GET");
-    renderMeetup();
-    renderDiscord();
+    renderAll();
   } catch (e) {
-    if (!$("meet-error").textContent) showMeetError("Couldn't load the meeting spot. Refresh the page to try again.");
+    if (!$("next-error").textContent) showNote("next-error", "Couldn't load your next session. Refresh the page to try again.");
+    $("next-card").innerHTML = "";
     $("meet-status").innerHTML = "";
   }
 }

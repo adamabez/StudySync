@@ -93,6 +93,38 @@ function end(req) {
 // ---------- The sample student ----------
 
 const uuid = () => crypto.randomUUID();
+
+// "YYYY-MM-DD" of the next given weekday ("tue"): today, unless a session ending at endTime is already over
+function nextDate(dayKey, endTime = "23:59") {
+  const keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const d = new Date();
+  const ahead = (keys.indexOf(dayKey) - d.getDay() + 7) % 7;
+  const overToday = ahead === 0 && d.getHours() * 60 + d.getMinutes() >= Number(endTime.slice(0, 2)) * 60 + Number(endTime.slice(3, 5));
+  d.setDate(d.getDate() + (overToday ? 7 : ahead));
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+// Weekly times the demo student is free for a session as long as the group's usual one
+// (the sample classmates are always free). Same hours as the real thing: weekdays 9-9, weekends 10-6.
+function demoFreeSlots(data, group) {
+  const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const toTime = (n) => String(Math.floor(n / 60)).padStart(2, "0") + ":" + String(n % 60).padStart(2, "0");
+  const len = toMin(group.end) - toMin(group.start);
+  const busy = [
+    ...data.classes.filter((c) => c.start && c.end).map((c) => ({ days: c.days, start: toMin(c.start), end: toMin(c.end) })),
+    ...myGroups(data).filter((g) => g.id !== group.id).map((g) => ({ days: g.days, start: toMin(g.start), end: toMin(g.end) })),
+  ];
+  const slots = [];
+  for (const [i, day] of ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].entries()) {
+    const [open, close] = i < 5 ? [9 * 60, 21 * 60] : [10 * 60, 18 * 60];
+    for (let s = open; s + len <= close; s += 30) {
+      if (!busy.some((b) => b.days.includes(day) && b.start < s + len && s < b.end)) {
+        slots.push({ day, start: toTime(s), end: toTime(s + len) });
+      }
+    }
+  }
+  return slots;
+}
 const ENGL_ID = "async";
 
 // Due dates are worked out from today, so the homework always looks current
@@ -229,6 +261,11 @@ function sampleData() {
           { id: uuid(), place: "Library 2nd floor, by the windows", by: "Priya S.", voters: new Set(["Priya S.", "Maya R.", "Jordan T."]) },
           { id: uuid(), place: "Student Union food court", by: "Jordan T.", voters: new Set(["Jordan T."]) },
         ],
+        rsvps: [
+          { sessionDate: nextDate("tue", "18:30"), name: "Maya R.", status: "going" },
+          { sessionDate: nextDate("tue", "18:30"), name: "Jordan T.", status: "late" },
+        ],
+        moves: [],
       },
     },
     sources,
@@ -396,14 +433,14 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
   if (m === "POST" && p === "/api/groups/match") return sendJson(res, myGroups(data));
   if (m === "GET" && p === "/api/groups/classes") return sendJson(res, classGroups(data));
 
-  // --- Meetups (kept in memory). Discord links can't be saved in the demo, so it never posts anywhere. ---
-  const meetupMatch = p.match(/^\/api\/groups\/([\w-]+)\/(meetup|spots|discord)(?:\/([\w-]+)(\/vote)?)?$/);
+  // --- Meeting up (kept in memory): spots, RSVPs, and moving a week's session ---
+  const meetupMatch = p.match(/^\/api\/groups\/([\w-]+)\/(meetup|spots|rsvp|slots|move)(?:\/([\w-]+)(\/vote)?)?$/);
   if (meetupMatch) {
     const [, groupId, part, spotId, isVote] = meetupMatch;
     const group = myGroups(data).find((g) => g.id === groupId);
     if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
-    const state = (data.meetups[groupId] = data.meetups[groupId] || { meetup: null, spots: [] });
-    const info = (extra = {}) => ({
+    const state = (data.meetups[groupId] = data.meetups[groupId] || { meetup: null, spots: [], rsvps: [], moves: [] });
+    const info = () => ({
       meetup: state.meetup && { ...state.meetup, setBy: state.meetup.setBy === DEMO_NAME ? "You" : state.meetup.setBy },
       spots: state.spots
         .map((x) => ({
@@ -411,20 +448,18 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
           votes: x.voters.size, votedByYou: x.voters.has(DEMO_NAME), isTheSpot: state.meetup?.place === x.place,
         }))
         .sort((a, b) => b.votes - a.votes),
-      discord: { serverInvite: "", channelUrl: "", connected: false },
-      ...extra,
+      rsvps: state.rsvps.map((r) => ({ ...r, isYou: r.name === DEMO_NAME })),
+      moves: state.moves.map((x) => ({ ...x, movedBy: x.movedBy === DEMO_NAME ? "You" : x.movedBy })),
     });
+    const isDate = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
     if (m === "GET" && part === "meetup") return sendJson(res, info());
-    if (part === "discord") {
-      return sendJson(res, { error: "In the demo, Discord links aren't saved. Create a free account to connect your class's Discord." }, 400);
-    }
     if (m === "POST" && part === "meetup") {
       return readJson(req, res, 2_000, (input) => {
         const place = meetups.cleanPlace(input.place);
         if (place.error) return sendJson(res, { error: place.error }, 400);
         state.meetup = { place: place.value, setBy: DEMO_NAME, setAt: new Date().toISOString() };
-        sendJson(res, info({ posted: false, discordConnected: false }));
+        sendJson(res, info());
       });
     }
     if (m === "DELETE" && part === "meetup") {
@@ -446,15 +481,44 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
       });
     }
     const spot = state.spots.find((x) => x.id === spotId);
-    if (m === "POST" && spotId && isVote) {
+    if (m === "POST" && part === "spots" && spotId && isVote) {
       return readJson(req, res, 1_000, (input) => {
         if (!spot) return sendJson(res, { error: "That suggestion was removed." }, 400);
         input.on === false ? spot.voters.delete(DEMO_NAME) : spot.voters.add(DEMO_NAME);
         sendJson(res, info());
       });
     }
-    if (m === "DELETE" && spotId && !isVote) {
+    if (m === "DELETE" && part === "spots" && spotId && !isVote) {
       state.spots = state.spots.filter((x) => !(x.id === spotId && x.by === DEMO_NAME));
+      return sendJson(res, info());
+    }
+    if (m === "POST" && part === "rsvp") {
+      return readJson(req, res, 1_000, (input) => {
+        if (!isDate(input.sessionDate)) return sendJson(res, { error: "That session isn't coming up." }, 400);
+        state.rsvps = state.rsvps.filter((r) => !(r.sessionDate === input.sessionDate && r.name === DEMO_NAME));
+        if (input.status !== null) {
+          if (!meetups.STATUSES.includes(input.status)) return sendJson(res, { error: "Pick Going, Running late or Can't make it." }, 400);
+          state.rsvps.push({ sessionDate: input.sessionDate, name: DEMO_NAME, status: input.status });
+        }
+        sendJson(res, info());
+      });
+    }
+    if (m === "GET" && part === "slots") return sendJson(res, demoFreeSlots(data, group));
+    if (m === "POST" && part === "move") {
+      return readJson(req, res, 1_000, (input) => {
+        const day = isDate(input.date) && ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(input.date + "T12:00:00Z").getUTCDay()];
+        const fits = demoFreeSlots(data, group).some((x) => x.day === day && x.start === input.start && x.end === input.end);
+        if (!isDate(input.sessionDate) || !fits) return sendJson(res, { error: "Pick one of the suggested times." }, 400);
+        state.moves = state.moves.filter((x) => x.sessionDate !== input.sessionDate);
+        state.moves.push({ sessionDate: input.sessionDate, date: input.date, start: input.start, end: input.end, movedBy: DEMO_NAME });
+        // The time changed, so everyone answers again (you're going, since you picked it)
+        state.rsvps = state.rsvps.filter((r) => r.sessionDate !== input.sessionDate);
+        state.rsvps.push({ sessionDate: input.sessionDate, name: DEMO_NAME, status: "going" });
+        sendJson(res, info());
+      });
+    }
+    if (m === "DELETE" && part === "move") {
+      state.moves = state.moves.filter((x) => x.sessionDate !== url.searchParams.get("session"));
       return sendJson(res, info());
     }
     return sendJson(res, { error: "Not found" }, 404);

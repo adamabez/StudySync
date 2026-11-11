@@ -149,7 +149,12 @@ Students pick their classes from the Sac State catalog (`courses` table), so eve
 
 Each student who wants groups gets one group per class (up to 4 people), meeting weekly in a 90-minute slot when every member is free: weekdays 9 AM – 9 PM, weekends 10 AM – 6 PM. A student's groups never clash with each other or with their schedule. Matching runs in the database (`match_study_group()` in `schema.sql`) whenever a student opens their study plan or changes their schedule.
 
-Each group's page has **Where we're meeting**: members suggest places, vote, and anyone can make one the meeting spot (`meetups.js`). Conversation happens on **Discord**: each class can link its Discord server (one invite shared by every group in the class), each group links its own channel, and a channel webhook lets StudySync post the meeting spot there. Posts never ping anyone (mentions are switched off), and webhook links are never sent to browsers. This needs the latest `supabase/schema.sql`.
+Each group's page aims to get a group from matched to meeting without anyone having to message each other (`meetups.js`):
+- **Next session**: the date, time and place, plus **Going / Running late / Can't make it** for each member.
+- **Find a time that works for everyone**: if someone can't make it, StudySync lists times in the next week when every member is free (their classes, tasks and other groups are checked by `group_free_slots` in the database), and one tap moves that week's session. Everyone answers again for the new time.
+- **Where we're meeting**: members suggest places and vote, and anyone can make one the meeting spot.
+
+These need the latest `supabase/schema.sql`.
 
 To refresh the class list (new semester): `node scripts/import-courses.js`, then run the new `supabase/courses.sql`.
 

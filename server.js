@@ -135,8 +135,7 @@ function readJson(req, res, limit, callback) {
   });
 }
 
-// Meetup changes (spots, votes, Discord links): at most WRITE_LIMIT a minute per student,
-// mostly so nobody can use StudySync to spam a Discord channel
+// Meetup changes (spots, votes, RSVPs, moving a session): at most WRITE_LIMIT a minute per student
 const WRITE_LIMIT = 30;
 const writeTimes = new Map(); // user ID → [times]
 function writeAllowed(userId) {
@@ -488,9 +487,9 @@ async function handleRequest(req, res) {
 
     const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
-    // A group's meeting spot, suggested spots and Discord links (meetups.js). Every change
-    // answers with the fresh { meetup, spots, discord } so the page just redraws.
-    const meetupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})/(meetup|spots|discord)(?:/(${UUID})(/vote)?)?$`));
+    // Meeting up (meetups.js): the spot and suggestions, RSVPs, and moving a week's session.
+    // Every change answers with the fresh { meetup, spots, rsvps, moves } so the page just redraws.
+    const meetupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})/(meetup|spots|rsvp|slots|move)(?:/(${UUID})(/vote)?)?$`));
     if (meetupMatch) {
       const [, groupId, part, spotId, isVote] = meetupMatch;
       const group = await groups.getGroup(db, groupId, userId);
@@ -519,7 +518,12 @@ async function handleRequest(req, res) {
         return body(1_000, async (input) => reply(await meetups.setVote(db, group, userId, spotId, input.on !== false)));
       }
       if (req.method === "DELETE" && part === "spots" && spotId && !isVote) return run(async () => { await meetups.removeSpot(db, group, spotId); await reply(null); });
-      if (req.method === "POST" && part === "discord") return body(2_000, async (input) => reply(await meetups.saveDiscord(db, group, userId, input)));
+      if (req.method === "POST" && part === "rsvp") return body(1_000, async (input) => reply(await meetups.setRsvp(db, group, userId, input)));
+      if (req.method === "GET" && part === "slots") return run(async () => sendJson(res, await meetups.freeSlots(db, group)));
+      if (req.method === "POST" && part === "move") return body(1_000, async (input) => reply(await meetups.moveSession(db, group, input)));
+      if (req.method === "DELETE" && part === "move") {
+        return run(async () => reply(await meetups.undoMove(db, group, { sessionDate: url.searchParams.get("session") })));
+      }
       return sendJson(res, { error: "Not found" }, 404);
     }
 
