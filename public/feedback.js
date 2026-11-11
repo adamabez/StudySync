@@ -86,6 +86,9 @@
     </div>`;
 
   document.body.append(fab, dialog);
+  // Leave room at the bottom of the page for the button (feedback.css). Not inside the
+  // login page's live preview, which hides the button.
+  if (window.self === window.top) document.body.classList.add("has-fb-fab");
 
   const $ = (selector) => dialog.querySelector(selector);
   const form = $(".fb-form");
@@ -167,6 +170,35 @@
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
+
+  // ---------- "Study groups are at a very early stage" notices: – shrinks them to their title ----------
+  // Remembered in this browser, so it stays small on every study group page once minimized.
+  const EARLY_KEY = "studysync-early-box-minimized";
+  let earlyMinimized = false;
+  try { earlyMinimized = localStorage.getItem(EARLY_KEY) === "1"; } catch {}
+  const earlyBoxes = [...document.querySelectorAll(".early-box")];
+  const setEarly = (on) => {
+    earlyMinimized = on;
+    for (const box of earlyBoxes) {
+      box.classList.toggle("minimized", on);
+      const toggle = box.querySelector(".early-box-toggle");
+      toggle.textContent = on ? "+" : "–";
+      toggle.title = on ? "Show more" : "Minimize";
+      toggle.setAttribute("aria-label", on ? "Show the full notice" : "Minimize this notice");
+      toggle.setAttribute("aria-expanded", String(!on));
+    }
+  };
+  for (const box of earlyBoxes) {
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "early-box-toggle";
+    toggle.addEventListener("click", () => {
+      setEarly(!earlyMinimized);
+      try { earlyMinimized ? localStorage.setItem(EARLY_KEY, "1") : localStorage.removeItem(EARLY_KEY); } catch {}
+    });
+    box.appendChild(toggle);
+  }
+  if (earlyBoxes.length) setEarly(earlyMinimized);
 
   // A link ending in #feedback (e.g. studysync.../#feedback on a poster) opens the form right away
   if (location.hash === "#feedback") open("idea");

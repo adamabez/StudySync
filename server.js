@@ -212,7 +212,9 @@ async function handleRequest(req, res) {
   if (req.method === "POST" && url.pathname === "/signup") {
     return readBody(req, res, 10_000, async (body) => {
       const form = new URLSearchParams(body);
-      const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "");
+      const name = onboarding.cleanName(form.get("name"));
+      if (name.error) return redirect(res, `/signup?error=${name.code}`);
+      const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value);
       if (result.error) return redirect(res, `/signup?error=${result.error}`);
       if (result.confirmEmail) return redirect(res, "/?checkEmail=1");
       redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
@@ -386,13 +388,15 @@ async function handleRequest(req, res) {
 
     // --- Who's logged in (for "Logged in as ..." on the dashboard) ---
     if (req.method === "GET" && url.pathname === "/api/me") {
-      return sendJson(res, { email: req.user.email });
+      const profile = await onboarding.getProfile(db, userId);
+      return sendJson(res, { email: req.user.email, name: onboarding.displayName(profile, req.user) });
     }
 
     // --- First-login setup and study preference (onboarding.js) ---
     // aiScheduling: whether study times are planned by the AI (needs an AI key, see ai.js)
     if (req.method === "GET" && url.pathname === "/api/profile") {
-      return sendJson(res, { ...(await onboarding.getProfile(db, userId)), aiScheduling: ai.aiEnabled() });
+      const profile = await onboarding.getProfile(db, userId);
+      return sendJson(res, { ...profile, displayName: onboarding.displayName(profile, req.user), aiScheduling: ai.aiEnabled() });
     }
 
     // --- Weekly study plan (studyplan.js) ---
@@ -536,7 +540,7 @@ async function handleRequest(req, res) {
     }
 
     if (req.method === "POST" && url.pathname === "/api/sources") {
-      return readJson(req, res, 15_000_000, async (input) => { // room for a 10 MB PDF
+      return readJson(req, res, 7_500_000, async (input) => { // room for a 5 MB PDF (base64 is a third bigger)
         const result = await materials.addSource(db, userId, input);
         if (result.error) return sendJson(res, { error: result.error }, 400);
         sendJson(res, result.value, 201);
@@ -544,6 +548,32 @@ async function handleRequest(req, res) {
     }
 
     const sourceMatch = url.pathname.match(/^\/api\/sources\/([\w-]+)$/);
+
+    // Viewing a material: its details, plus the text for typed or pasted notes
+    if (req.method === "GET" && sourceMatch) {
+      const source = await materials.getSource(db, sourceMatch[1]);
+      if (!source) return sendJson(res, { error: "That material was removed. Refresh the page." }, 404);
+      const text = source.type === "text" ? await materials.readContent(db, source) : null;
+      return sendJson(res, { ...materials.forBrowser(source), text });
+    }
+
+    // The PDF itself, shown in the browser's PDF viewer
+    const sourceFileMatch = url.pathname.match(/^\/api\/sources\/([\w-]+)\/file$/);
+    if (req.method === "GET" && sourceFileMatch) {
+      const source = await materials.getSource(db, sourceFileMatch[1]);
+      if (!source || source.type !== "pdf") return sendJson(res, { error: "PDF not found" }, 404);
+      const pdf = await materials.readPdf(db, source);
+      const filename = source.title.replace(/[^\w .()-]+/g, "").trim() || "material";
+      res.writeHead(200, {
+        "Content-Type": "application/pdf",
+        "Content-Length": pdf.length,
+        "Content-Disposition": `inline; filename="${filename}.pdf"`,
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, max-age=300",
+      });
+      return res.end(pdf);
+    }
+
     if (req.method === "DELETE" && sourceMatch) {
       await materials.removeSource(db, sourceMatch[1]);
       return sendJson(res, { ok: true });

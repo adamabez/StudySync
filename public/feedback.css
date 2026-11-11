@@ -34,8 +34,13 @@
   text-transform: uppercase;
 }
 
+/* Room under the page for the button, so it never sits on top of the last thing on the page
+   (like "Try it yourself" on the login page). feedback.js adds the class. */
+body.has-fb-fab { padding-bottom: 84px; }
+
 /* Phones: just the bulb and "Ideas?", so it covers less of the page */
 @media (max-width: 600px) {
+  body.has-fb-fab { padding-bottom: 68px; }
   .fb-fab { right: 12px; bottom: 12px; padding: 9px 12px; }
   .fb-fab-text { font-size: 0; }
   .fb-fab-text::after { content: "Ideas?"; font-size: 13px; }
@@ -167,6 +172,28 @@
   text-align: left;
 }
 .early-box-icon { font-size: 22px; line-height: 1.2; }
+.early-box { position: relative; padding-right: 48px; }
+/* The – / + button in the corner */
+.early-box-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  background: none;
+  color: #8a6a10;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+.early-box-toggle:hover { background: rgba(138, 106, 16, 0.12); }
+.early-box-toggle:focus-visible { outline: 2px solid #2b4acb; outline-offset: 1px; }
+/* Minimized: just the icon and the bold title */
+.early-box.minimized { align-items: center; padding-top: 10px; padding-bottom: 10px; }
+.early-box.minimized .early-box-icon { font-size: 18px; }
+.early-box.minimized > div > :not(:first-child) { display: none; }
 .early-box strong { display: block; font-size: 15px; color: #4a3a08; }
 .early-box p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #5c4a12; }
 .early-box .early-soon { margin-top: 8px; }
@@ -190,6 +217,8 @@ html[data-theme="dark"] .early-box { background: #3a2f12; border-color: #6b5520;
 html[data-theme="dark"] .early-box strong { color: #f6e2ad; }
 html[data-theme="dark"] .early-box p { color: #e0cf9f; }
 html[data-theme="dark"] .early-box-link { color: #9fb0f0; }
+html[data-theme="dark"] .early-box-toggle { color: #e8cf8f; }
+html[data-theme="dark"] .early-box-toggle:hover { background: rgba(232, 207, 143, 0.12); }
 html[data-theme="dark"] .early-box-link:hover { color: #c3cdf7; }
 html[data-theme="dark"] .beta-tag { background: #4a3a14; color: #f3d38a; }
 html[data-theme="dark"] .fb-fab { background: #262b38; border-color: #3a4256; color: #e3e7f7; box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45); }

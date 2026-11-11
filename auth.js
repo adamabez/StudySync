@@ -102,9 +102,11 @@ async function logIn(email, password) {
 // Returns { cookies } if the user can start right away,
 // { confirmEmail: true } if Supabase sent a confirmation email first,
 // or { error: "<code>" }
-async function signUp(email, password) {
+// name: what classmates see. Saved on the account (user_metadata.name) because there's no
+// session yet to write the profile with; group_member_names falls back to it.
+async function signUp(email, password, name) {
   if (!isConfigured()) return { error: "config" };
-  const { data, error } = await safely(() => newClient().auth.signUp({ email, password }));
+  const { data, error } = await safely(() => newClient().auth.signUp({ email, password, options: { data: { name } } }));
   if (error) return { error: errorCode(error) };
   // With "Confirm email" on, Supabase also returns no session for an email that's
   // already registered, so the response can't be used to find out who has an account.

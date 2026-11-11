@@ -10,8 +10,11 @@
 const crypto = require("crypto");
 
 const BUCKET = "sources";
-const MAX_TEXT_CHARS = 500_000;          // about 250 pages of notes
-const MAX_PDF_BYTES = 10 * 1024 * 1024;  // 10 MB per PDF
+// Limits keep each class's library small enough to read through and to send to the AI.
+// public/notebook.js shows the same numbers, so change both together.
+const MAX_TEXT_CHARS = 50_000;           // about 25 pages of notes
+const MAX_PDF_BYTES = 5 * 1024 * 1024;   // 5 MB per PDF
+const MAX_TOTAL_BYTES = 50 * 1024 * 1024; // everything in one student's library together
 
 // The columns the browser needs (leaves out the text itself, which can be big)
 const LIST_COLUMNS = "id, user_id, title, course, type, size, added_at";
@@ -35,6 +38,28 @@ async function listSources(db) {
   return data.map(fromRow);
 }
 
+// One material, or null if it doesn't exist (or isn't this user's)
+async function getSource(db, id) {
+  const { data, error } = await db.from("sources").select(LIST_COLUMNS).eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data ? fromRow(data) : null;
+}
+
+// The PDF itself, as a Buffer, for viewing it in the browser
+async function readPdf(db, source) {
+  const { data, error } = await db.storage.from(BUCKET).download(pdfPath(source));
+  if (error) throw error;
+  return Buffer.from(await data.arrayBuffer());
+}
+
+// { error } if adding `size` more would go over the library's total space, else null
+async function libraryFull(db, size) {
+  const used = (await listSources(db)).reduce((sum, s) => sum + (s.size || 0), 0);
+  if (used + size <= MAX_TOTAL_BYTES) return null;
+  const left = Math.max(0, MAX_TOTAL_BYTES - used) / 1024 / 1024;
+  return { error: `That won't fit: your library has ${left.toFixed(1)} MB of its 50 MB left. Remove something first.` };
+}
+
 // Check and save a new piece of material. `userId` names the user's PDF folder.
 // Returns { value } or { error }.
 async function addSource(db, userId, input) {
@@ -48,13 +73,17 @@ async function addSource(db, userId, input) {
   if (input.type === "text") {
     const text = typeof input.text === "string" ? input.text.trim() : "";
     if (!text) return { error: "The material is empty." };
-    if (text.length > MAX_TEXT_CHARS) return { error: "That's too much text for one source. Split it into smaller parts." };
+    if (text.length > MAX_TEXT_CHARS) return { error: `Notes can be up to ${MAX_TEXT_CHARS.toLocaleString("en-US")} characters. Split it into smaller parts.` };
+    const full = await libraryFull(db, text.length);
+    if (full) return full;
     row.text_content = text;
     row.size = text.length;
   } else if (input.type === "pdf") {
     const pdf = typeof input.data === "string" ? Buffer.from(input.data, "base64") : Buffer.alloc(0);
     if (pdf.subarray(0, 5).toString() !== "%PDF-") return { error: "That file doesn't look like a PDF." };
-    if (pdf.length > MAX_PDF_BYTES) return { error: "PDFs can be 10 MB max." };
+    if (pdf.length > MAX_PDF_BYTES) return { error: "PDFs can be 5 MB max." };
+    const full = await libraryFull(db, pdf.length);
+    if (full) return full;
     const upload = await db.storage.from(BUCKET).upload(`${userId}/${row.id}.pdf`, pdf, { contentType: "application/pdf" });
     if (upload.error) throw upload.error;
     row.size = pdf.length;
@@ -90,4 +119,4 @@ async function readContent(db, source) {
   return data.text_content;
 }
 
-module.exports = { listSources, addSource, removeSource, readContent, forBrowser };
+module.exports = { listSources, getSource, addSource, removeSource, readContent, readPdf, forBrowser };

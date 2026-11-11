@@ -15,8 +15,12 @@
     <h1 class="logo-heading"><img src="/public/logo.png" alt="StudySync" class="logo"><span class="beta-tag" title="StudySync is still in development">Beta</span></h1>
     <p>Create your account</p>
     <form method="POST" action="/signup">
+      <label>Full name
+        <input name="name" type="text" autocomplete="name" maxlength="40" required autofocus placeholder="e.g. Alex Kim">
+        <span class="field-hint">So your study group knows who you are. Your email stays private.</span>
+      </label>
       <label>Email
-        <input name="email" type="email" autocomplete="email" required autofocus>
+        <input name="email" type="email" autocomplete="email" required>
       </label>
       <label>Password
         <input name="password" type="password" autocomplete="new-password" minlength="6" required>
@@ -39,6 +43,11 @@
   <script>
     // The server sends you back to /signup?error=<code> when signing up fails
     const MESSAGES = {
+      name: "Enter your full name (up to 40 characters).",
+      "name-full": "Enter your first and last name, e.g. Alex Kim.",
+      "name-chars": "Use letters only in your name (spaces, hyphens, apostrophes and periods are fine).",
+      "name-bad": "Please choose a different name. Your study group sees it, so keep it appropriate.",
+      "name-reserved": "That name could look like StudySync staff. Please use your own name.",
       exists: "There's already an account with that email. Log in instead.",
       weak: "Pick a stronger password (at least 6 characters).",
       email: "That email address doesn't look right.",
