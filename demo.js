@@ -354,7 +354,7 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
 
   // --- Account ---
   if (p.startsWith("/api/account/")) return sendJson(res, { error: "This is a demo, so there's no account to change. Create a free account to get your own." }, 403);
-  if (m === "GET" && p === "/api/me") return sendJson(res, { email: DEMO_NAME, demo: true });
+  if (m === "GET" && p === "/api/me") return sendJson(res, { email: DEMO_NAME, name: DEMO_NAME, demo: true });
 
   // --- Profile and study plan ---
   if (m === "GET" && p === "/api/profile") return sendJson(res, { ...data.profile, aiScheduling: false });
@@ -476,6 +476,11 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
     });
   }
   const sourceMatch = p.match(/^\/api\/sources\/([\w-]+)$/);
+  if (m === "GET" && sourceMatch) {
+    const source = data.sources.find((s) => s.id === sourceMatch[1]);
+    if (!source) return sendJson(res, { error: "That material was removed. Refresh the page." }, 404);
+    return sendJson(res, { ...sourceForBrowser(source), text: source.text });
+  }
   if (m === "DELETE" && sourceMatch) {
     data.sources = data.sources.filter((s) => s.id !== sourceMatch[1]);
     return sendJson(res, { ok: true });

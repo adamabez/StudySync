@@ -18,7 +18,7 @@
     <div class="dash-header">
       <div class="brand">
         <h1><a href="/landing" class="logo-link" title="Go to your study plan" aria-label="StudySync: go to your study plan"><img src="/public/logo.png" alt="StudySync" class="logo"></a></h1>
-        <p>Welcome to your dashboard!</p>
+        <p id="dash-welcome">Welcome to your dashboard!</p>
       </div>
       <a href="/landing" class="home-link"><span aria-hidden="true">✦</span> Study plan &amp; groups</a>
       <div class="account" id="account">
@@ -28,6 +28,7 @@
         <div class="account-menu" id="account-menu">
           <div class="account-card">
             <span class="account-label">Logged in as</span>
+            <span class="account-name" id="account-name" hidden></span>
             <span class="account-email" id="account-email">your account</span>
             <a href="/account" class="logout account-settings-link">Account settings</a>
             <a href="/logout" class="logout">Log out</a>
@@ -195,109 +196,177 @@
       </div>
     </div>
 
-    <!-- ========== Course materials + Virtual Notebook (collapsible) ========== -->
+    <!-- ========== Course materials + study assistant (collapsible, public/notebook.js) ========== -->
     <div class="section-head nb-heading">
       <div class="nb-title">
         <h2>Course materials</h2>
-        <p class="nb-subtitle">Your notes, readings and PDFs, plus an AI that answers from them.</p>
+        <p class="nb-subtitle">Keep each class's notes and PDFs in one place, and ask questions about them.</p>
       </div>
       <button type="button" class="collapse-toggle" data-target="notebook-body" data-name="Course materials"></button>
     </div>
 
     <div id="notebook-body" class="collapse-body">
-      <!-- Filled in by notebook.js: All courses / one chip per course -->
-      <div id="nb-courses" class="nb-courses" role="group" aria-label="Show materials for" hidden></div>
+      <!-- All courses / one tab per course (filled in by notebook.js) -->
+      <nav id="nb-courses" class="nb-courses" aria-label="Show materials for" hidden></nav>
 
       <div class="notebook">
-      <!-- Left: materials -->
-      <section class="nb-panel nb-sources" aria-labelledby="sources-title">
-        <div class="nb-panel-head">
-          <h3 id="sources-title">Materials <span id="source-count" class="nb-count"></span></h3>
-          <button type="button" id="source-open" class="add-open">+ Add</button>
-        </div>
+        <!-- ===== Library: the materials, as cards grouped by course ===== -->
+        <section class="nb-library" aria-labelledby="library-title">
+          <header class="nb-library-head">
+            <h3 id="library-title">Library</h3>
+            <div class="nb-library-tools">
+              <label class="nb-search" id="source-search-wrap" hidden>
+                <span class="nb-sr">Search materials</span>
+                <input id="source-search" type="search" placeholder="Search" autocomplete="off">
+              </label>
+              <button type="button" id="source-open" class="nb-add-button"><span aria-hidden="true">+</span> Add</button>
+            </div>
+          </header>
+          <div id="source-list" class="nb-shelves"></div>
+          <div id="nb-storage" class="nb-storage" hidden></div>
+          <p id="source-error" class="error nb-load-error" hidden></p>
+        </section>
 
-        <form id="source-form" class="source-form" hidden>
-          <div class="nb-tabs" role="tablist">
-            <button type="button" class="nb-tab active" data-mode="file" role="tab" aria-selected="true">Upload a file</button>
-            <button type="button" class="nb-tab" data-mode="paste" role="tab" aria-selected="false">Paste text</button>
+        <!-- ===== Study assistant: chat about the materials ===== -->
+        <section class="nb-assistant" aria-labelledby="chat-title">
+          <header class="nb-assistant-head">
+            <div class="nb-assistant-name">
+              <span class="nb-spark" aria-hidden="true">✦</span>
+              <h3 id="chat-title">Study assistant</h3>
+            </div>
+            <div class="chat-tools">
+              <select id="chat-picker" aria-label="Switch between saved chats"></select>
+              <button type="button" id="delete-chat" class="nb-icon-button" title="Delete this chat" aria-label="Delete this chat">
+                <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3 4h10M6.5 4V2.8h3V4M4.5 4l.6 9h5.8l.6-9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" id="new-chat" class="nb-icon-button" title="New chat" aria-label="New chat">
+                <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <div id="ai-off" class="ai-off" hidden>
+            <strong>AI answers aren't turned on yet.</strong>
+            <p>You can still add and read your materials. They'll be ready to ask about once it's on.</p>
+            <details>
+              <summary>Setting up StudySync?</summary>
+              <p>Create a file named <code>.env</code> in your StudySync folder containing
+                <code>AI_PROVIDER=gemini</code> and <code>GEMINI_API_KEY=your-key-here</code>
+                (free key from aistudio.google.com/apikey), then restart the server.</p>
+            </details>
           </div>
 
-          <label id="file-field" class="drop-zone">
-            <input id="source-file" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown">
-            <span class="drop-icon" aria-hidden="true">⬆</span>
-            <span id="drop-text" class="drop-text"><strong>Drop a file here</strong> or click to choose one</span>
-            <span class="drop-hint">PDF, .txt or .md · PDFs up to 10 MB</span>
-          </label>
-          <label id="paste-field" hidden>Notes or text
-            <textarea id="source-text" rows="5" placeholder="Paste lecture notes, a reading, slides text…"></textarea>
-          </label>
+          <div id="chat-log" class="chat-log" aria-live="polite"></div>
 
-          <div class="nb-form-row">
-            <label>Title
-              <input id="source-title" maxlength="120" placeholder="e.g. Chapter 3 – Cell Biology">
-            </label>
-            <label>Course
-              <select id="source-course"></select>
-            </label>
-          </div>
+          <form id="ask-form" class="composer">
+            <div class="composer-chips" id="composer-chips" aria-label="Quick actions">
+              <button type="button" class="chip-button" data-prompt="summary">Summarize</button>
+              <button type="button" class="chip-button" data-prompt="guide">Study guide</button>
+              <button type="button" class="chip-button" data-prompt="quiz">Quiz me</button>
+              <button type="button" class="chip-button" data-prompt="terms">Key terms</button>
+            </div>
+            <div class="composer-box">
+              <textarea id="question" rows="1" maxlength="5000" placeholder="Ask about your materials…" aria-label="Question"></textarea>
+              <button type="submit" id="ask-button" class="composer-send" aria-label="Send">
+                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="composer-context">
+              <button type="button" id="source-pick" class="context-button" aria-expanded="false" aria-controls="context-menu"></button>
+              <div id="context-menu" class="context-menu" hidden></div>
+            </div>
+          </form>
 
-          <p id="source-error" class="error"></p>
-          <div class="nb-form-actions">
-            <button type="button" id="source-cancel" class="link-button">Cancel</button>
-            <button type="submit" id="source-submit">Add material</button>
-          </div>
-        </form>
-
-        <p id="source-pick" class="nb-pick" hidden></p>
-        <ul id="source-list" class="source-list"></ul>
-      </section>
-
-      <!-- Right: chat -->
-      <section class="nb-panel nb-chat" aria-labelledby="chat-title">
-        <div class="nb-chat-head">
-          <h3 id="chat-title">Ask your notebook</h3>
-          <div class="chat-tools">
-            <select id="chat-picker" aria-label="Switch between saved chats"></select>
-            <button type="button" id="delete-chat" class="link-button danger" title="Delete this chat">Delete</button>
-            <button type="button" id="new-chat" class="link-button">+ New chat</button>
-          </div>
-        </div>
-
-        <div id="ai-off" class="ai-off" hidden>
-          <strong>AI answers aren't turned on yet.</strong>
-          <p>You can still add and organize your materials, and they'll be ready to ask about once it's on.</p>
-          <details>
-            <summary>Setting up StudySync?</summary>
-            <p>Create a file named <code>.env</code> in your StudySync folder containing
-              <code>AI_PROVIDER=gemini</code> and <code>GEMINI_API_KEY=your-key-here</code>
-              (free key from aistudio.google.com/apikey), then restart the server.</p>
-          </details>
-        </div>
-
-        <div class="nb-actions">
-          <button type="button" class="chip-button" data-prompt="summary">Summarize</button>
-          <button type="button" class="chip-button" data-prompt="guide">Study guide</button>
-          <button type="button" class="chip-button" data-prompt="quiz">Quiz me</button>
-          <button type="button" class="chip-button" data-prompt="terms">Key terms</button>
-        </div>
-
-        <div id="chat-log" class="chat-log" aria-live="polite"></div>
-
-        <form id="ask-form" class="ask-form">
-          <textarea id="question" rows="2" maxlength="5000" placeholder="Ask a question about your sources…" aria-label="Question"></textarea>
-          <button type="submit" id="ask-button">Ask</button>
-        </form>
-
-        <!-- Shown while the AI runs on Gemini's free tier (see ai.js) -->
-        <p id="ai-disclaimer" class="ai-disclaimer" hidden>
-          <strong>Early access.</strong> Answers can take a little while, and the AI may be busy or
-          error out when lots of people use it. If so, wait a minute and try again. It runs on Google
-          Gemini's free tier, so don't use private or sensitive material: Google may use what you send
-          to improve its products. The AI can make mistakes, so check important answers against your
-          sources.
-        </p>
-      </section>
+          <!-- Shown while the AI runs on Gemini's free tier (see ai.js) -->
+          <p id="ai-disclaimer" class="ai-disclaimer" hidden>
+            <strong>Early access.</strong> Answers can take a little while, and the AI may be busy or
+            error out when lots of people use it. If so, wait a minute and try again. It runs on Google
+            Gemini's free tier, so don't use private or sensitive material: Google may use what you send
+            to improve its products. The AI can make mistakes, so check important answers against your
+            sources.
+          </p>
+        </section>
       </div>
+
+      <!-- ===== Adding a material ===== -->
+      <dialog id="source-dialog" class="nb-dialog nb-add-dialog" aria-labelledby="add-title">
+        <form id="source-form" class="source-form" novalidate>
+          <header class="nb-dialog-head">
+            <h3 id="add-title">Add material</h3>
+            <button type="button" id="source-cancel" class="nb-icon-button" aria-label="Close">×</button>
+          </header>
+          <div class="nb-dialog-body">
+            <div class="nb-tabs" role="tablist">
+              <button type="button" class="nb-tab active" data-mode="file" role="tab" aria-selected="true">Upload a file</button>
+              <button type="button" class="nb-tab" data-mode="paste" role="tab" aria-selected="false">Paste notes</button>
+            </div>
+
+            <label id="file-field" class="drop-zone">
+              <input id="source-file" type="file" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown">
+              <span class="drop-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" width="20" height="20"><path d="M10 13V4M6 8l4-4 4 4M4 14v2h12v-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span id="drop-text" class="drop-text"><strong>Drop a file here</strong> or click to choose one</span>
+              <span id="drop-hint" class="drop-hint"></span>
+            </label>
+            <label id="paste-field" class="nb-field" hidden>
+              <span class="nb-field-label">Notes</span>
+              <textarea id="source-text" rows="7" placeholder="Paste lecture notes, a reading, slide text…"></textarea>
+              <span id="paste-count" class="nb-field-hint"></span>
+            </label>
+
+            <div class="nb-form-row">
+              <label class="nb-field"><span class="nb-field-label">Title</span>
+                <input id="source-title" maxlength="120" placeholder="e.g. Lecture 5 – Hash tables">
+              </label>
+              <label class="nb-field"><span class="nb-field-label">Class</span>
+                <select id="source-course"></select>
+              </label>
+            </div>
+            <p id="course-room" class="nb-field-hint"></p>
+            <p id="add-error" class="error" role="alert"></p>
+          </div>
+          <footer class="nb-dialog-foot">
+            <button type="button" class="nb-text-button" data-close>Cancel</button>
+            <button type="submit" id="source-submit" class="nb-primary">Add material</button>
+          </footer>
+        </form>
+      </dialog>
+
+      <!-- ===== Reading a material: notes as a page, PDFs in the browser's viewer ===== -->
+      <dialog id="source-viewer" class="nb-dialog nb-viewer" aria-labelledby="viewer-title">
+        <header class="viewer-head">
+          <div class="viewer-heading">
+            <span id="viewer-badge" class="type-icon"></span>
+            <div class="viewer-titles">
+              <h3 id="viewer-title"></h3>
+              <p id="viewer-meta" class="viewer-meta"></p>
+            </div>
+          </div>
+          <div class="viewer-nav">
+            <button type="button" id="viewer-prev" class="nb-icon-button" aria-label="Previous material" title="Previous (←)">‹</button>
+            <span id="viewer-position" class="viewer-position"></span>
+            <button type="button" id="viewer-next" class="nb-icon-button" aria-label="Next material" title="Next (→)">›</button>
+            <button type="button" id="viewer-close" class="nb-icon-button" aria-label="Close" title="Close (Esc)">×</button>
+          </div>
+        </header>
+        <div id="viewer-body" class="viewer-body" tabindex="0"></div>
+        <footer class="viewer-foot">
+          <div class="viewer-foot-left">
+            <label class="nb-switch">
+              <input type="checkbox" id="viewer-use">
+              <span class="nb-switch-track" aria-hidden="true"></span>
+              <span>Use in answers</span>
+            </label>
+          </div>
+          <div class="viewer-foot-actions">
+            <button type="button" id="viewer-remove" class="nb-text-button danger">Remove</button>
+            <button type="button" id="viewer-copy" class="nb-text-button">Copy</button>
+            <a id="viewer-open" class="nb-text-button" target="_blank" rel="noopener" hidden>Open in new tab ↗</a>
+            <button type="button" id="viewer-ask" class="nb-primary">Ask about this</button>
+          </div>
+        </footer>
+      </dialog>
     </div>
 
     <!-- ========== Footer: feedback, bug reports, feature ideas (public/feedback.js) ========== -->
@@ -348,15 +417,25 @@
     account.addEventListener("mouseleave", () => account.classList.remove("dismissed"));
     accountButton.addEventListener("click", () => account.classList.remove("dismissed"));
 
-    // Fill in the initial and email
+    // Fill in the name, initial and email. No name yet → a nudge to add one.
     fetch("/api/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((me) => {
         if (!me || !me.email) return;
-        document.getElementById("account-initial").textContent = me.email[0].toUpperCase();
+        const label = me.name || me.email;
+        document.getElementById("account-initial").textContent = label[0].toUpperCase();
         document.getElementById("account-email").textContent = me.email;
         document.getElementById("account-email").title = me.email; // full address, in case it's cut off
-        accountButton.setAttribute("aria-label", "Account: " + me.email);
+        accountButton.setAttribute("aria-label", "Account: " + label);
+        if (me.name) {
+          const nameLine = document.getElementById("account-name");
+          nameLine.textContent = me.name;
+          nameLine.hidden = false;
+          document.getElementById("dash-welcome").textContent = "Welcome back, " + me.name.split(" ")[0] + "!";
+        } else if (!me.demo) {
+          const welcome = document.getElementById("dash-welcome");
+          welcome.innerHTML = 'Welcome! <a href="/account#name">Add your full name</a> so your study group knows who you are.';
+        }
       })
       .catch(() => {});
   </script>

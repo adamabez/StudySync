@@ -31,6 +31,19 @@
       </nav>
     </header>
 
+    <!-- Name: what study group members see -->
+    <section class="settings-card" id="name">
+      <h2>Your name</h2>
+      <p class="hint">This is how your study groups will know you. Your email stays private.</p>
+      <form id="name-form" class="settings-form">
+        <label>Full name
+          <input id="display-name" type="text" autocomplete="name" maxlength="40" required placeholder="e.g. Alex Kim">
+        </label>
+        <p id="name-message" class="form-message" hidden></p>
+        <button type="submit">Save name</button>
+      </form>
+    </section>
+
     <!-- Appearance: per device, saved in this browser -->
     <section class="settings-card">
       <h2>Appearance</h2>

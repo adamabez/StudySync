@@ -170,6 +170,12 @@ ${PREFIX} a { color: #8ea2f5; }
 ${PREFIX} input, ${PREFIX} select, ${PREFIX} textarea { background: #1a1f33; color: #e8ebf6; border-color: #343b57; }
 ${PREFIX} input::placeholder, ${PREFIX} textarea::placeholder { color: #7d849c; }
 ${PREFIX} button { color: #fff; }
+/* The dropdown arrow (the background rule above would otherwise remove it) */
+${PREFIX} select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23aab2cc' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+/* Notebook: the question box sits inside its own bordered box, and a waiting Send button stays quiet */
+${PREFIX} .composer-box textarea { background: transparent; border: none; }
+${PREFIX} .composer-send:disabled, ${PREFIX} .composer-send:disabled:hover { background: #30364c; color: #7d849c; }
+${PREFIX} .nb-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
 /* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
    theme.js swaps the image too, for browsers that ignore content on images. */
 ${PREFIX} img.logo { content: url("/public/logo-dark.png"); }

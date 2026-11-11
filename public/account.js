@@ -1,4 +1,4 @@
-// StudySync - account settings page (runs in the browser): theme, change email,
+// StudySync - account settings page (runs in the browser): name, theme, change email,
 // change password, delete account. Every account change asks for the current password.
 
 const $ = (id) => document.getElementById(id);
@@ -50,6 +50,14 @@ for (const radio of document.querySelectorAll('input[name="theme"]')) {
 showThemeChoice();
 document.addEventListener("studysync-theme", showThemeChoice); // the sun / moon button was used
 
+// ---------- Name ----------
+handle("name-form", "name-message", async () => {
+  const data = await post("/api/profile", { displayName: $("display-name").value });
+  if (!data) return;
+  $("display-name").value = data.displayName;
+  showMessage("name-message", "Saved. Your study groups now see you as " + data.displayName + ".", true);
+});
+
 // ---------- Email ----------
 handle("email-form", "email-message", async (form) => {
   const data = await post("/api/account/email", { email: $("new-email").value, password: $("email-password").value });
@@ -85,6 +93,8 @@ fetch("/api/me")
   .then((me) => {
     if (!me || !me.email) return;
     $("current-email").textContent = me.email;
-    $("account-email-line").textContent = "Account settings for " + me.email;
+    $("account-email-line").textContent = "Account settings for " + (me.name || me.email);
+    $("display-name").value = me.name || "";
+    if (!me.name && location.hash === "#name") $("display-name").focus();
   })
   .catch(() => {});
