@@ -159,7 +159,7 @@
             <input id="canvas-url" placeholder="e.g. csus.instructure.com" autocomplete="url">
           </label>
           <label>Canvas access token
-            <input id="canvas-token" type="password" placeholder="Paste your token" autocomplete="off" spellcheck="false">
+            <input id="canvas-token" type="password" data-pw-name="token" placeholder="Paste your token" autocomplete="off" spellcheck="false">
           </label>
           <details class="hw-help">
             <summary>How do I get a token?</summary>
@@ -439,5 +439,6 @@
       })
       .catch(() => {});
   </script>
+  <script src="/public/password-toggle.js"></script>
 </body>
 </html>

@@ -72,6 +72,28 @@ button {
 }
 button:hover { background: #2240b0; }
 
+/* Show / hide password: an eye button inside the box (public/password-toggle.js) */
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { padding-right: 46px; }
+.pw-toggle {
+  position: absolute;
+  top: calc(50% + 2px); /* the input has a 4px top margin */
+  right: 6px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 6px;
+  background: none;
+  color: #667;
+}
+.pw-toggle:hover { background: #eef0f6; color: #2b4acb; }
+.pw-toggle:focus-visible { outline: 2px solid #2b4acb; outline-offset: 1px; }
+.pw-toggle[aria-pressed="true"] { color: #2b4acb; }
+
 .error { color: #c62828; font-size: 14px; margin: 0; text-align: center; }
 .notice { color: #2e7d32; font-size: 14px; }
 .switch { font-size: 14px; margin: 20px 0 0; }

@@ -29,6 +29,19 @@ html[data-theme="dark"] .field-hint {
 html[data-theme="dark"] input {
   border: 1px solid #3f3f4d;
 }
+html[data-theme="dark"] .pw-toggle {
+  color: #888899;
+}
+html[data-theme="dark"] .pw-toggle:hover {
+  background: #1c1f29;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .pw-toggle:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .pw-toggle[aria-pressed="true"] {
+  color: #8ea0e7;
+}
 html[data-theme="dark"] .error {
   color: #e78787;
 }
