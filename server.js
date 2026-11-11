@@ -487,9 +487,9 @@ async function handleRequest(req, res) {
 
     const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
-    // Meeting up (meetups.js): the spot and suggestions, RSVPs, and moving a week's session.
+    // Meeting up (meetups.js): the spot and suggestions, RSVPs, moving a week's session, session chat.
     // Every change answers with the fresh { meetup, spots, rsvps, moves } so the page just redraws.
-    const meetupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})/(meetup|spots|rsvp|slots|move)(?:/(${UUID})(/vote)?)?$`));
+    const meetupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})/(meetup|spots|rsvp|slots|move|messages)(?:/(${UUID})(/vote)?)?$`));
     if (meetupMatch) {
       const [, groupId, part, spotId, isVote] = meetupMatch;
       const group = await groups.getGroup(db, groupId, userId);
@@ -523,6 +523,23 @@ async function handleRequest(req, res) {
       if (req.method === "POST" && part === "move") return body(1_000, async (input) => reply(await meetups.moveSession(db, group, input)));
       if (req.method === "DELETE" && part === "move") {
         return run(async () => reply(await meetups.undoMove(db, group, { sessionDate: url.searchParams.get("session") })));
+      }
+
+      // Session chat: these answer with messages, not the whole meetup info
+      const answer = (result, status = 200) =>
+        result.error ? sendJson(res, { error: result.error }, 400) : sendJson(res, result.value, status);
+      if (req.method === "GET" && part === "messages" && !spotId) {
+        return run(async () => answer(await meetups.listMessages(db, group, userId, url.searchParams.get("session"), url.searchParams.get("after"))));
+      }
+      if (req.method === "POST" && part === "messages" && !spotId) {
+        const profile = await onboarding.getProfile(db, userId);
+        if (!onboarding.displayName(profile, req.user)) {
+          return sendJson(res, { error: "Add your name in Account settings first, so your group knows who's talking.", needsName: true }, 400);
+        }
+        return body(5_000, async (input) => answer(await meetups.addMessage(db, group, userId, input), 201));
+      }
+      if (req.method === "DELETE" && part === "messages" && spotId) {
+        return run(async () => { await meetups.removeMessage(db, group, spotId); sendJson(res, { ok: true }); });
       }
       return sendJson(res, { error: "Not found" }, 404);
     }

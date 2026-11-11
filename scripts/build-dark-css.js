@@ -175,6 +175,9 @@ ${PREFIX} select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http:
 /* Notebook: the question box sits inside its own bordered box, and a waiting Send button stays quiet */
 ${PREFIX} .composer-box textarea { background: transparent; border: none; }
 ${PREFIX} .composer-send:disabled, ${PREFIX} .composer-send:disabled:hover { background: #30364c; color: #7d849c; }
+${PREFIX} .sc-form input { background: transparent; border: none; }
+${PREFIX} .sc-send:disabled, ${PREFIX} .sc-send:disabled:hover { background: #30364c; color: #7d849c; }
+${PREFIX} .sc-msg.mine .sc-bubble { background: #3b56d6; border-color: #3b56d6; color: #fff; }
 ${PREFIX} .ns-person::before { background: #5a6078; }
 ${PREFIX} .ns-person.going::before { background: #3fbf7f; }
 ${PREFIX} .ns-person.late::before { background: #f0ad3a; }

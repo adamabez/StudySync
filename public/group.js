@@ -199,6 +199,7 @@ function renderNext() {
     card.innerHTML = '<p class="hint">No upcoming session found.</p>';
     return;
   }
+  openChat(session.sessionDate);
   const answers = info.rsvps.filter((r) => r.sessionDate === session.sessionDate);
   const mine = answers.find((r) => r.isYou)?.status || null;
   const now = new Date();
@@ -395,6 +396,154 @@ async function act(request) {
     showNote("next-error", e.message);
   }
 }
+
+// ----- Talk it over: a small chat for this session -----
+// Checks for new messages every few seconds while the page is open and on screen.
+const CHAT_POLL_MS = 5000;
+const chat = { sessionDate: null, messages: [], ids: new Set(), timer: null, stopped: false, sending: false };
+
+const clock = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+// Show the chat for this session (called whenever the next session is drawn)
+function openChat(sessionDate) {
+  if (chat.stopped || chat.sessionDate === sessionDate) return;
+  clearTimeout(chat.timer);
+  Object.assign(chat, { sessionDate, messages: [], ids: new Set() });
+  $("session-chat").hidden = false;
+  $("sc-log").innerHTML = '<p class="sc-empty">Loading…</p>';
+  pollChat(true);
+}
+
+function renderChat(stickToBottom) {
+  const log = $("sc-log");
+  log.innerHTML = "";
+  if (chat.messages.length === 0) {
+    log.innerHTML = '<p class="sc-empty">No messages yet. Need to change something about this session? Say so here.</p>';
+    return;
+  }
+  let prev = null;
+  for (const m of chat.messages) {
+    const continues = prev && prev.author === m.author && new Date(m.createdAt) - new Date(prev.createdAt) < 5 * 60 * 1000;
+    const row = document.createElement("div");
+    row.className = "sc-msg" + (m.isYours ? " mine" : "") + (continues ? " continues" : "");
+    if (!continues) {
+      const meta = document.createElement("div");
+      meta.className = "sc-meta";
+      meta.innerHTML = "<strong></strong><span></span>";
+      meta.querySelector("strong").textContent = m.author;
+      meta.querySelector("span").textContent = clock(m.createdAt);
+      row.appendChild(meta);
+    }
+    const bubble = document.createElement("div");
+    bubble.className = "sc-bubble";
+    bubble.textContent = m.body;
+    bubble.title = new Date(m.createdAt).toLocaleString();
+    row.appendChild(bubble);
+    if (m.isYours) {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "sc-delete";
+      remove.textContent = "Delete";
+      remove.setAttribute("aria-label", "Delete this message");
+      remove.addEventListener("click", async () => {
+        if (!confirm("Delete this message for everyone in the group?")) return;
+        const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/messages/${m.id}`, { method: "DELETE" });
+        if (!res.ok) return showNote("sc-error", "Couldn't delete that message. Try again.");
+        chat.messages = chat.messages.filter((x) => x.id !== m.id);
+        renderChat(false);
+      });
+      row.appendChild(remove);
+    }
+    log.appendChild(row);
+    prev = m;
+  }
+  if (stickToBottom) log.scrollTop = log.scrollHeight;
+}
+
+function addChatMessages(list) {
+  let added = 0;
+  for (const m of list) {
+    if (chat.ids.has(m.id)) continue;
+    chat.ids.add(m.id);
+    chat.messages.push(m);
+    added++;
+  }
+  if (added) chat.messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return added;
+}
+
+async function pollChat(first) {
+  clearTimeout(chat.timer);
+  if (chat.stopped || !chat.sessionDate) return;
+  const session = chat.sessionDate;
+  const last = chat.messages[chat.messages.length - 1];
+  try {
+    const list = await meetupRequest(`/messages?session=${session}` + (last ? "&after=" + encodeURIComponent(last.createdAt) : ""), "GET");
+    if (session !== chat.sessionDate) return; // the session changed while this was loading
+    const log = $("sc-log");
+    const nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+    if (addChatMessages(list) || first) renderChat(first || nearBottom);
+  } catch (e) {
+    if ($("next-error").textContent) { // not set up yet: hide the chat instead of retrying
+      chat.stopped = true;
+      $("session-chat").hidden = true;
+      return;
+    }
+  }
+  if (!document.hidden) chat.timer = setTimeout(() => pollChat(false), CHAT_POLL_MS);
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) clearTimeout(chat.timer);
+  else pollChat(false); // back on the tab: catch up right away
+});
+
+async function sendChat() {
+  const input = $("sc-input");
+  const body = input.value.trim();
+  if (!body || chat.sending || !chat.sessionDate) return;
+  chat.sending = true;
+  $("sc-send").disabled = true;
+  showNote("sc-error", "");
+  try {
+    const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionDate: chat.sessionDate, body }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showNote("sc-error", data.error || "Couldn't send that. Try again.");
+      if (data.needsName) {
+        const link = document.createElement("a");
+        link.href = "/account#name";
+        link.textContent = " Add your name";
+        $("sc-error").appendChild(link);
+      }
+      return;
+    }
+    input.value = "";
+    addChatMessages([data]);
+    renderChat(true);
+  } catch {
+    showNote("sc-error", "Couldn't send that. Check your connection and try again.");
+  } finally {
+    chat.sending = false;
+    $("sc-send").disabled = !input.value.trim();
+    input.focus();
+  }
+}
+
+$("sc-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  sendChat();
+});
+$("sc-input").addEventListener("input", () => { $("sc-send").disabled = chat.sending || !$("sc-input").value.trim(); });
+document.querySelectorAll(".sc-idea").forEach((chip) => chip.addEventListener("click", () => {
+  $("sc-input").value = chip.textContent;
+  $("sc-send").disabled = false;
+  $("sc-input").focus();
+}));
 
 // ----- Where we're meeting: the spot and suggestions -----
 function renderMeetup() {

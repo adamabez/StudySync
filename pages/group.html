@@ -63,6 +63,27 @@
           <p class="hint">Loading…</p>
         </div>
         <p id="next-error" class="mt-error" role="alert" hidden></p>
+        <!-- A small chat for this session only, to settle the details. Starts fresh each week. -->
+        <div id="session-chat" class="sc" hidden>
+          <div class="sc-head">
+            <h3>Talk it over</h3>
+            <span class="sc-hint">Just for this session · starts fresh each week</span>
+          </div>
+          <div id="sc-log" class="sc-log" aria-live="polite"></div>
+          <div class="sc-ideas" aria-label="Message ideas">
+            <button type="button" class="sc-idea">Can we start a bit later?</button>
+            <button type="button" class="sc-idea">Can we do another day this week?</button>
+            <button type="button" class="sc-idea">I'll be 10 minutes late</button>
+            <button type="button" class="sc-idea">What should we go over?</button>
+          </div>
+          <form id="sc-form" class="sc-form">
+            <input id="sc-input" maxlength="500" autocomplete="off" placeholder="Message your group about this session…" aria-label="Message">
+            <button type="submit" id="sc-send" class="sc-send" aria-label="Send" disabled>
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+          <p id="sc-error" class="mt-error" role="alert" hidden></p>
+        </div>
       </section>
 
       <!-- Where the group meets: suggestions, votes, and the spot they settled on (public/group.js) -->

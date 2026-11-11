@@ -2,6 +2,7 @@
 //
 //   Spots     Members suggest places and vote. Anyone can make one "the spot".
 //   RSVPs     Going / Running late / Can't make it, for each weekly session.
+//   Chat      A small chat for each week's session, to settle the details. Starts fresh weekly.
 //   Moving    Can't make it? StudySync finds times this week when every member is free
 //             (group_free_slots in the database), and one tap moves that week's session.
 //
@@ -205,16 +206,67 @@ async function undoMove(db, group, input) {
   return { value: true };
 }
 
+// ---------- Session chat ----------
+// A small chat for each week's session, mostly to settle the time. Each week starts fresh.
+const MAX_MESSAGE = 500;
+
+function messageForBrowser(row, names, userId) {
+  return {
+    id: row.id,
+    body: row.body,
+    createdAt: row.created_at,
+    author: row.user_id === userId ? "You" : names.get(row.user_id) || "A former member",
+    isYours: row.user_id === userId,
+  };
+}
+
+// Messages for one session, oldest first. With `after` (an ISO time) only newer ones, which is
+// how the page checks for new messages every few seconds.
+async function listMessages(db, group, userId, sessionDate, after) {
+  if (!isDate(sessionDate)) return { error: "That session isn't coming up." };
+  let query = db.from("group_messages").select("id, user_id, body, created_at")
+    .eq("group_id", group.id).eq("session_date", sessionDate)
+    .order("created_at", { ascending: true }).limit(100);
+  if (after && !isNaN(Date.parse(after))) query = query.gte("created_at", new Date(after).toISOString());
+  const { data, error } = await query;
+  if (error) throw error;
+  const names = new Map(group.members.map((m) => [m.userId, m.name]));
+  return { value: data.map((row) => messageForBrowser(row, names, userId)) };
+}
+
+async function addMessage(db, group, userId, input) {
+  if (!isDate(input.sessionDate) || input.sessionDate < dayOffset(-8) || input.sessionDate > dayOffset(15)) {
+    return { error: "That session isn't coming up." };
+  }
+  const body = typeof input.body === "string" ? input.body.replace(/\s+\n/g, "\n").trim() : "";
+  if (!body) return { error: "Type a message first." };
+  if (body.length > MAX_MESSAGE) return { error: `Keep it under ${MAX_MESSAGE} characters.` };
+  const problem = checkMessage(body);
+  if (problem) return problem;
+
+  const { data, error } = await db.from("group_messages")
+    .insert({ group_id: group.id, session_date: input.sessionDate, body })
+    .select("id, user_id, body, created_at").single();
+  if (error) throw error;
+  const names = new Map(group.members.map((m) => [m.userId, m.name]));
+  return { value: messageForBrowser(data, names, userId) };
+}
+
+async function removeMessage(db, group, messageId) {
+  const { error } = await db.from("group_messages").delete().eq("id", messageId).eq("group_id", group.id);
+  if (error) throw error;
+}
+
 // The tables are new: true if this error means the database hasn't been updated yet
 function isMissingTable(error) {
   if (!error) return false;
   if (["42P01", "42883", "PGRST202", "PGRST205"].includes(error.code)) return true; // no such table / function
   return /does not exist|could not find/i.test(error.message || "") &&
-    /group_spots|group_meetup|group_spot_votes|group_rsvps|group_session_moves|group_free_slots|move_group_session/.test(error.message || "");
+    /group_spots|group_meetup|group_spot_votes|group_rsvps|group_session_moves|group_messages|session_date|group_free_slots|move_group_session/.test(error.message || "");
 }
 
 module.exports = {
   getInfo, addSpot, removeSpot, setVote, setMeetup, clearMeetup,
-  setRsvp, freeSlots, moveSession, undoMove, isMissingTable,
-  cleanPlace, MAX_SPOTS, STATUSES,
+  setRsvp, freeSlots, moveSession, undoMove, listMessages, addMessage, removeMessage, isMissingTable,
+  cleanPlace, MAX_SPOTS, MAX_MESSAGE, STATUSES,
 };

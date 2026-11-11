@@ -18,6 +18,7 @@ const courses = require("./courses");
 const sections = require("./sections");
 const chats = require("./chats");
 const meetups = require("./meetups");
+const { checkMessage } = require("./namefilter");
 const ai = require("./ai");
 const planner = require("./public/planner");
 
@@ -266,6 +267,11 @@ function sampleData() {
           { sessionDate: nextDate("tue", "18:30"), name: "Jordan T.", status: "late" },
         ],
         moves: [],
+        messages: [
+          { id: uuid(), sessionDate: nextDate("tue", "18:30"), author: "Jordan T.", body: "I have a lab until 5:15 on Tuesday, so I might be a bit late", createdAt: iso(60 * 3) },
+          { id: uuid(), sessionDate: nextDate("tue", "18:30"), author: "Maya R.", body: "No worries! We'll start with the practice problems", createdAt: iso(60 * 2) },
+        ],
+        replied: false,
       },
     },
     sources,
@@ -434,12 +440,12 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
   if (m === "GET" && p === "/api/groups/classes") return sendJson(res, classGroups(data));
 
   // --- Meeting up (kept in memory): spots, RSVPs, and moving a week's session ---
-  const meetupMatch = p.match(/^\/api\/groups\/([\w-]+)\/(meetup|spots|rsvp|slots|move)(?:\/([\w-]+)(\/vote)?)?$/);
+  const meetupMatch = p.match(/^\/api\/groups\/([\w-]+)\/(meetup|spots|rsvp|slots|move|messages)(?:\/([\w-]+)(\/vote)?)?$/);
   if (meetupMatch) {
     const [, groupId, part, spotId, isVote] = meetupMatch;
     const group = myGroups(data).find((g) => g.id === groupId);
     if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
-    const state = (data.meetups[groupId] = data.meetups[groupId] || { meetup: null, spots: [], rsvps: [], moves: [] });
+    const state = (data.meetups[groupId] = data.meetups[groupId] || { meetup: null, spots: [], rsvps: [], moves: [], messages: [], replied: false });
     const info = () => ({
       meetup: state.meetup && { ...state.meetup, setBy: state.meetup.setBy === DEMO_NAME ? "You" : state.meetup.setBy },
       spots: state.spots
@@ -520,6 +526,42 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
     if (m === "DELETE" && part === "move") {
       state.moves = state.moves.filter((x) => x.sessionDate !== url.searchParams.get("session"));
       return sendJson(res, info());
+    }
+
+    // Session chat
+    const forBrowser = (x) => ({ id: x.id, body: x.body, createdAt: x.createdAt, author: x.author === DEMO_NAME ? "You" : x.author, isYours: x.author === DEMO_NAME });
+    if (m === "GET" && part === "messages" && !spotId) {
+      const session = url.searchParams.get("session");
+      const after = Date.parse(url.searchParams.get("after") || "");
+      return sendJson(res, state.messages
+        .filter((x) => x.sessionDate === session && (isNaN(after) || Date.parse(x.createdAt) >= after))
+        .map(forBrowser));
+    }
+    if (m === "POST" && part === "messages" && !spotId) {
+      return readJson(req, res, 5_000, (input) => {
+        const body = typeof input.body === "string" ? input.body.trim() : "";
+        if (!isDate(input.sessionDate)) return sendJson(res, { error: "That session isn't coming up." }, 400);
+        if (!body) return sendJson(res, { error: "Type a message first." }, 400);
+        if (body.length > meetups.MAX_MESSAGE) return sendJson(res, { error: "Keep it under " + meetups.MAX_MESSAGE + " characters." }, 400);
+        const problem = checkMessage(body);
+        if (problem) return sendJson(res, { error: problem.error }, 400);
+        if (state.messages.length >= MAX_DEMO_ITEMS) return sendJson(res, { error: "That's plenty of messages for a demo." }, 400);
+        const message = { id: uuid(), sessionDate: input.sessionDate, author: DEMO_NAME, body, createdAt: new Date().toISOString() };
+        state.messages.push(message);
+        // The first time, a classmate answers a few seconds later, so the demo shows new messages arriving
+        const mate = group.members.find((x) => !x.isYou);
+        if (mate && !state.replied) {
+          state.replied = true;
+          setTimeout(() => state.messages.push({
+            id: uuid(), sessionDate: input.sessionDate, author: mate.name, body: "Works for me 👍", createdAt: new Date().toISOString(),
+          }), 4000);
+        }
+        sendJson(res, forBrowser(message), 201);
+      });
+    }
+    if (m === "DELETE" && part === "messages" && spotId) {
+      state.messages = state.messages.filter((x) => !(x.id === spotId && x.author === DEMO_NAME));
+      return sendJson(res, { ok: true });
     }
     return sendJson(res, { error: "Not found" }, 404);
   }

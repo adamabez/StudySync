@@ -152,6 +152,7 @@ Each student who wants groups gets one group per class (up to 4 people), meeting
 Each group's page aims to get a group from matched to meeting without anyone having to message each other (`meetups.js`):
 - **Next session**: the date, time and place, plus **Going / Running late / Can't make it** for each member.
 - **Find a time that works for everyone**: if someone can't make it, StudySync lists times in the next week when every member is free (their classes, tasks and other groups are checked by `group_free_slots` in the database), and one tap moves that week's session. Everyone answers again for the new time.
+- **Talk it over**: a small chat for each week's session, to settle details like the time. It starts fresh every week, so it stays about the next session instead of becoming a group chat. The page checks for new messages every 5 seconds while it's open; messages go through a light word filter, and members need a name on their account to post.
 - **Where we're meeting**: members suggest places and vote, and anyone can make one the meeting spot.
 
 These need the latest `supabase/schema.sql`.

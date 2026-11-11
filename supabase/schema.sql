@@ -435,6 +435,7 @@ begin
         -- Moving out of a group you were alone in: bring your notes and suggested spots, then remove the empty group
         update public.group_notes set group_id = gid where group_id = alone_gid;
         update public.group_spots set group_id = gid where group_id = alone_gid;
+        update public.group_messages set group_id = gid where group_id = alone_gid;
         delete from public.group_members where group_id = alone_gid and user_id = uid;
         delete from public.study_groups where id = alone_gid;
       end if;
@@ -698,6 +699,7 @@ create policy "Own homework check-offs" on public.homework_done
 --   group_meetup                   → the place the group settled on
 --   group_rsvps                    → Going / Running late / Can't make it, per weekly session
 --   group_session_moves            → one week's session moved to another time everyone is free
+--   group_messages                 → a small chat for each week's session, to settle the details
 -- A session is named by the date it would normally happen (session_date), even if it's moved.
 
 create table if not exists public.group_spots (
@@ -870,6 +872,30 @@ begin
   insert into public.group_rsvps (group_id, user_id, session_date, status) values (gid, uid, p_session, 'going');
 end;
 $$;
+
+-- A small chat for each week's session (named by its usual date), mostly to settle the time.
+-- Each week starts fresh. Members read and post; you can delete your own messages.
+create table if not exists public.group_messages (
+  id            uuid primary key default gen_random_uuid(),
+  group_id      uuid not null references public.study_groups (id) on delete cascade,
+  user_id       uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  session_date  date not null,
+  body          text not null check (char_length(body) between 1 and 500),
+  created_at    timestamptz not null default now()
+);
+alter table public.group_messages add column if not exists session_date date;
+create index if not exists group_messages_session_idx on public.group_messages (group_id, session_date, created_at);
+alter table public.group_messages enable row level security;
+
+drop policy if exists "Members read group messages" on public.group_messages;
+create policy "Members read group messages" on public.group_messages
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members send group messages" on public.group_messages;
+create policy "Members send group messages" on public.group_messages
+  for insert to authenticated with check (user_id = (select auth.uid()) and public.is_group_member(group_id));
+drop policy if exists "Delete own group messages" on public.group_messages;
+create policy "Delete own group messages" on public.group_messages
+  for delete to authenticated using (user_id = (select auth.uid()));
 
 revoke execute on function public.group_free_slots(uuid) from public, anon;
 grant execute on function public.group_free_slots(uuid) to authenticated;

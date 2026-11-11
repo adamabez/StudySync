@@ -610,6 +610,61 @@ html[data-theme="dark"] .ns-time-option {
   border: 1px solid #313c64;
   color: #8ea0e7;
 }
+html[data-theme="dark"] .sc {
+  background: #1c2030;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .sc-head h3 {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .sc-hint {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-empty {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-meta {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-meta strong {
+  color: #9199ca;
+}
+html[data-theme="dark"] .sc-bubble {
+  background: #23262e;
+  border: 1px solid #43495c;
+  color: #8d97cd;
+}
+html[data-theme="dark"] .sc-msg.mine .sc-bubble {
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .sc-delete {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-delete:hover {
+  color: #e78787;
+}
+html[data-theme="dark"] .sc-idea {
+  border: 1px solid #40475b;
+  background: #23262e;
+  color: #8f95b5;
+}
+html[data-theme="dark"] .sc-idea:hover {
+  background: #191e30;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .sc-form {
+  background: #23262e;
+  border: 1px solid #3f465b;
+}
+html[data-theme="dark"] .sc-form:focus-within {
+  border-color: #2a3455;
+}
+html[data-theme="dark"] .sc-send:disabled {
+  background: #16181f;
+}
+html[data-theme="dark"] .sc-send:disabled:hover {
+  background: #16181f;
+}
 html[data-theme="dark"] .settings-card {
   background: #23262e;
   border: 1px solid #42485a;
@@ -1140,6 +1195,9 @@ html[data-theme="dark"] select { background-image: url("data:image/svg+xml,%3Csv
 /* Notebook: the question box sits inside its own bordered box, and a waiting Send button stays quiet */
 html[data-theme="dark"] .composer-box textarea { background: transparent; border: none; }
 html[data-theme="dark"] .composer-send:disabled, html[data-theme="dark"] .composer-send:disabled:hover { background: #30364c; color: #7d849c; }
+html[data-theme="dark"] .sc-form input { background: transparent; border: none; }
+html[data-theme="dark"] .sc-send:disabled, html[data-theme="dark"] .sc-send:disabled:hover { background: #30364c; color: #7d849c; }
+html[data-theme="dark"] .sc-msg.mine .sc-bubble { background: #3b56d6; border-color: #3b56d6; color: #fff; }
 html[data-theme="dark"] .ns-person::before { background: #5a6078; }
 html[data-theme="dark"] .ns-person.going::before { background: #3fbf7f; }
 html[data-theme="dark"] .ns-person.late::before { background: #f0ad3a; }
