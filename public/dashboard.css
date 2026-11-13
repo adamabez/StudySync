@@ -432,6 +432,14 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   .day-pick:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 }
 
+/* ---------- Dashboard: the Add form only adds one-time tasks ---------- */
+.tasks-only .repeat-picker { display: none; } /* always "one time" here; weekly items go on the schedule page */
+.tasks-hint { margin: 0 0 12px; }
+.week-title .edit-schedule-btn { padding: 5px 12px; font-size: 13px; }
+.week-title h2, .add-open { white-space: nowrap; }
+/* Phones: the bottom tab bar already has Schedule */
+@media (max-width: 600px) { .week-title .edit-schedule-btn { display: none; } }
+
 /* ---------- "Add a Class / Task / Other" dropdown ---------- */
 .kind-select {
   font: inherit;            /* looks like the other headings */

@@ -11,7 +11,9 @@ let classes = []; // everything on the calendar: classes, tasks and "other" item
 let studyTimes = []; // planned study sessions or study group meetings (from /api/study-times, read-only)
 let editingId = null; // the item being edited in the form (pencil → Edit), or null when adding
 
-// What the "Add a…" dropdown changes for each choice
+// The Add form on the dashboard only adds one-time tasks; classes and weekly items are added and
+// edited on the schedule page (/setup). The form still knows every kind, for editing a one-time
+// "other" item, and the setup page shares its look.
 const KINDS = {
   class: { nameLabel: "Class name", placeholder: "Search, e.g. CSC 20 or Biology", button: "Add class" },
   task: { nameLabel: "Task", placeholder: "e.g. Finish lab report", button: "Add task" },
@@ -271,7 +273,7 @@ const PENCIL_SVG =
   'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>' +
   '<path d="M10 3.5l2.5 2.5" stroke="currentColor" stroke-width="1.5"/></svg>';
 
-// "+" at the bottom of each day → a small menu: Class / Task / Other
+// "+" at the bottom of each day → add a one-time task on that day
 function makeDayAdd(dayKey, dayLabel) {
   const wrap = document.createElement("div");
   wrap.className = "day-add";
@@ -279,22 +281,13 @@ function makeDayAdd(dayKey, dayLabel) {
   const plus = document.createElement("button");
   plus.className = "day-add-button";
   plus.type = "button";
-  plus.title = "Add to " + dayLabel;
-  plus.setAttribute("aria-label", "Add something on " + dayLabel);
-  plus.setAttribute("aria-haspopup", "menu");
-  plus.setAttribute("aria-expanded", "false");
+  plus.title = "Add a task on " + dayLabel;
+  plus.setAttribute("aria-label", "Add a task on " + dayLabel);
   plus.textContent = "+";
   plus.onclick = (e) => {
     e.stopPropagation();
-    const wasOpen = plus.getAttribute("aria-expanded") === "true";
     closeCardMenu();
-    if (!wasOpen) {
-      openMenuIn(wrap, plus, [
-        { label: "Class", onClick: () => startAdding("class", dayKey) },
-        { label: "Task", onClick: () => startAdding("task", dayKey) },
-        { label: "Other (work, gym…)", onClick: () => startAdding("other", dayKey) },
-      ]);
-    }
+    startAdding(dayKey);
   };
 
   wrap.appendChild(plus);
@@ -329,7 +322,8 @@ function openMenuIn(container, button, items) {
 
 function openCardMenu(card, button, c) {
   openMenuIn(card, button, [
-    { label: "Edit", onClick: () => startEditing(c) },
+    // One-time items edit right here; classes and weekly items on the schedule page
+    c.date ? { label: "Edit", onClick: () => startEditing(c) } : { label: "Edit in schedule", onClick: () => { window.location.href = "/setup"; } },
     { label: "Delete", onClick: () => removeClass(c), danger: true },
   ]);
 }
@@ -356,13 +350,27 @@ function showAddForm() {
   document.getElementById("name").focus({ preventScroll: true });
 }
 
-// "+" on a day → a fresh Add form for that kind, with only that day ticked
-function startAdding(kind, dayKey) {
+// The date of a weekday in this week (Mon–Sun), e.g. "fri" → "2026-11-13"
+function dateThisWeek(dayKey) {
+  const now = new Date();
+  const index = DAYS.findIndex(([key]) => key === dayKey);
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) + index);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+// The form always adds one time items: set the date (resetting the form switches it back to
+// "every week" a moment later, so this runs after that)
+function setOnceDate(date) {
+  setTimeout(() => window.repeatPicker.set({ date: date || window.studyDates.today() }));
+}
+
+// "+ Add task", or "+" on a day → a fresh form for a one-time task on that day (today by default)
+function startAdding(dayKey) {
   if (editingId) stopEditing();
   document.getElementById("add-form").reset();
-  document.getElementById("kind").value = kind;
+  document.getElementById("kind").value = "task";
   updateFormForKind();
-  for (const [key] of DAYS) document.getElementById("day-" + key).checked = key === dayKey;
+  setOnceDate(dayKey ? dateThisWeek(dayKey) : null);
   showAddForm();
 }
 
@@ -393,7 +401,9 @@ function stopEditing() {
   editingId = null;
   document.getElementById("edit-banner").hidden = true;
   document.getElementById("add-form").reset();
-  updateFormForKind(); // back to "Add class" / "Add task" / "Add"
+  document.getElementById("kind").value = "task";
+  updateFormForKind(); // back to "Add task"
+  setOnceDate();
 }
 
 async function loadClasses() {
@@ -498,21 +508,20 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   classes.push(saved, ...extra);
   render();
   loadStudyTimes();
+  const date = window.repeatPicker.value().date; // the next task is probably on the same day
   e.target.reset();
   updateFormForAsync(); // reset() unticks async, so bring the time fields back
+  setOnceDate(date);
   document.getElementById("name").focus();
 });
 
 document.getElementById("edit-cancel").addEventListener("click", stopEditing);
 
-// "+ Add" next to "Your week" → open the Add form
-document.getElementById("add-open").addEventListener("click", () => {
-  if (editingId) stopEditing();
-  showAddForm();
-});
+// "+ Add task" next to "Your week" → a one-time task, today
+document.getElementById("add-open").addEventListener("click", () => startAdding());
 
-document.getElementById("kind").addEventListener("change", updateFormForKind);
 document.getElementById("async").addEventListener("change", updateFormForAsync);
 updateFormForKind();
+setOnceDate();
 paintColorKey();
 loadClasses();
