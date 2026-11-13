@@ -45,8 +45,10 @@ function formatLength(min) {
 // calm-times algorithm in public/planner.js.
 
 async function loadStudyPlan() {
-  $("study-total").textContent = "Planning your week…";
-  const [res] = await Promise.all([fetch("/api/study-plan"), window.studyLog.load()]);
+  $("study-total").textContent = "";
+  $("study-loading").hidden = false;
+  showPlanLoading();
+  const [res] = await Promise.all([fetch("/api/study-plan"), window.studyLog.load()]).finally(() => { $("study-loading").hidden = true; });
   if (!res.ok) return showLoadError();
   renderStudyTimes(await res.json());
 }
@@ -55,19 +57,44 @@ async function loadStudyPlan() {
 // Its sessions are the group meetings when in a group, otherwise the solo plan.
 let shownSessions = [];
 window.studyLog.progress.mount($("week-progress"));
+let soloLeft = null; // solo minutes still to plan after group meetings (null until the plan loads)
 function updatePlanned() {
+  // Group meetings (when in a group) plus the solo sessions
   const meetings = preference === "group" && groups.length
-    ? groups.flatMap((g) => (g.days || []).map((day) => ({ day, start: g.start, end: g.end }))).filter((s) => s.start && s.end)
-    : shownSessions;
-  window.studyLog.progress.setPlanned(meetings);
+    ? groups.flatMap((g) => (g.days || []).map((day) => ({ day, start: g.start, end: g.end, kind: "group" }))).filter((s) => s.start && s.end)
+    : [];
+  window.studyLog.progress.setPlanned([...meetings, ...shownSessions]);
+}
+
+// While the plan loads: each day gets a shimmering placeholder, so it doesn't look empty
+function showPlanLoading() {
+  const week = $("study-times");
+  if (week.querySelector(".study-block")) { week.classList.add("refreshing"); return; } // keep the old plan, dimmed
+  week.innerHTML = "";
+  for (const [, label] of DAYS) {
+    const col = document.createElement("div");
+    col.className = "study-day";
+    const title = document.createElement("h3");
+    title.textContent = label;
+    const ghost = document.createElement("div");
+    ghost.className = "study-ghost";
+    ghost.setAttribute("aria-hidden", "true");
+    col.append(title, ghost);
+    week.appendChild(col);
+  }
+  week.setAttribute("aria-busy", "true");
 }
 
 function renderStudyTimes(plan) {
   const week = $("study-times");
   week.innerHTML = "";
+  week.classList.remove("refreshing");
+  week.removeAttribute("aria-busy");
   window.studyLog.clearButtons();
   shownSessions = plan.sessions;
-  window.studyLog.progress.setGoal(plan.goalMinutes);
+  soloLeft = plan.goalMinutes;
+  // The bar counts toward the whole weekly goal (group meetings + solo)
+  window.studyLog.progress.setGoal(plan.weeklyGoalMinutes || plan.goalMinutes);
   updatePlanned();
   const todayKey = DAYS[(new Date().getDay() + 6) % 7][0]; // JS weeks start on Sunday
 
@@ -81,7 +108,7 @@ function renderStudyTimes(plan) {
     const sessions = plan.sessions.filter((s) => s.day === key);
     if (sessions.length === 0) {
       // No study time this day: say why (classes, the gym) or that it's a rest day (day-emoji.js)
-      const { classes, workout } = window.dayEmoji.of(calendar, key);
+      const { classes, workout } = window.dayEmoji.of(window.studyDates.thisWeek(calendar), key);
       const [icon, text] = classes && workout ? ["📚 🏋️", "Classes + gym"]
         : classes ? ["📚", "Class day"]
         : workout ? ["🏋️", "Gym day"]
@@ -116,16 +143,65 @@ function renderStudyTimes(plan) {
         card.appendChild(reason);
       }
       if (window.studyLog.ready) card.appendChild(window.studyLog.button(session));
+      // ✎: move, change length or skip this week (study-edit.js)
+      if (plan.editable && session.key) {
+        card.classList.add("has-edit");
+        card.appendChild(window.studyEdit.button(session, loadStudyPlan));
+      }
+      if (session.edited) {
+        card.classList.add("edited");
+        card.title = "You changed this one";
+      }
       col.appendChild(card);
     }
     week.appendChild(col);
   }
 
-  const goal = plan.goalMinutes;
-  $("study-total").textContent = plan.found >= goal
-    ? "Here's your " + formatLength(goal) + " for the week" + (plan.source === "ai" ? ", planned around your notes." : ", in the calmest times you're free.")
-    : "Your week is pretty full: we could only find " + (plan.found ? formatLength(plan.found) : "no free time") +
-      " of your " + formatLength(goal) + " goal. Try a smaller goal, or check your schedule.";
+  updateViews();
+  showSplit(plan);
+  window.studyEdit.skippedNote($("skipped-note"), plan.skipped || [], loadStudyPlan);
+}
+
+// The weekly goal as a little bar: group meetings (blue) + solo sessions (teal) + anything
+// that didn't fit (striped). A short note only when the week was too full.
+function showSplit(plan) {
+  const weekly = plan.weeklyGoalMinutes || plan.goalMinutes;
+  const group = Math.min(plan.groupMinutes || 0, weekly);
+  const solo = Math.min(plan.found || 0, Math.max(0, weekly - group));
+  // Time the planner couldn't place vs time the student skipped or shortened with ✎
+  const suggested = Math.min(plan.suggestedFound ?? plan.found ?? 0, Math.max(0, weekly - group));
+  const missing = Math.max(0, weekly - group - Math.max(suggested, solo));
+  const skipped = Math.max(0, weekly - group - solo - missing);
+  const box = $("plan-split");
+  box.hidden = !weekly;
+  if (!weekly) return;
+  const pct = (min) => (min / weekly) * 100 + "%";
+  box.querySelector(".seg-group").style.width = pct(group);
+  box.querySelector(".seg-solo").style.width = pct(solo);
+  box.querySelector(".seg-skipped").style.width = pct(skipped);
+  box.querySelector(".seg-missing").style.width = pct(missing);
+
+  const key = box.querySelector(".plan-split-key");
+  key.innerHTML = "";
+  const item = (cls, text) => {
+    const span = document.createElement("span");
+    span.className = "key " + cls;
+    span.textContent = text;
+    key.appendChild(span);
+  };
+  if (group) item("key-group", "Group " + formatLength(group));
+  if (solo) item("key-solo", "Solo " + formatLength(solo));
+  if (skipped) item("key-skipped", "Skipped " + formatLength(skipped));
+  if (missing) item("key-missing", "Didn't fit " + formatLength(missing));
+  const total = document.createElement("span");
+  total.className = "key-total";
+  total.textContent = formatLength(weekly) + " goal";
+  key.appendChild(total);
+
+  $("study-total").textContent = missing
+    ? "Your week is pretty full. Try a smaller goal, or check your schedule."
+    : "";
+  $("study-total").hidden = !missing;
 }
 
 // Session length dropdown: short sessions spread out more, long ones are fewer and deeper
@@ -219,22 +295,6 @@ function groupCard(group) {
     card.appendChild(note);
   }
 
-  // "This week: [Tue · Already studied?] [Thu · Studied]" (study-log.js)
-  if (window.studyLog.ready && Array.isArray(group.days) && group.days.length && group.start && group.end) {
-    const week = document.createElement("div");
-    week.className = "group-week";
-    const label = document.createElement("span");
-    label.className = "group-week-label";
-    label.textContent = "This week:";
-    week.appendChild(label);
-    const dayName = Object.fromEntries(DAYS.map(([key, name]) => [key, name.slice(0, 3)]));
-    for (const day of DAYS.map(([key]) => key).filter((key) => group.days.includes(key))) {
-      const session = { day, start: group.start, end: group.end, kind: "group", groupId: group.id };
-      week.appendChild(window.studyLog.button(session, { off: dayName[day] + " · Already studied?", on: dayName[day] + " · Studied" }));
-    }
-    card.appendChild(week);
-  }
-
   const open = document.createElement("span");
   open.className = "group-open";
   open.textContent = "Open group notes →";
@@ -291,11 +351,13 @@ function updateViews() {
   $("group-view").hidden = preference !== "group";
   $("my-groups").hidden = waiting;
   $("group-waiting").hidden = !waiting;
-  // Solo study times: for "alone", and for "group" while waiting for a match
-  $("alone-view").hidden = preference === "group" && !waiting;
-  $("alone-heading").textContent = preference === "group"
-    ? "In the meantime: times to study on your own"
-    : "Times to set aside for studying";
+  // Solo study times: always for Solo; for Group, the rest of the weekly goal after the
+  // group meetings (or all of it while waiting for a match)
+  const fillGoal = preference === "group" && !waiting;
+  $("alone-view").hidden = fillGoal && soloLeft === 0;
+  $("alone-heading").textContent = preference !== "group" ? "Times to set aside for studying"
+    : fillGoal ? "Solo time to round out your week"
+    : "In the meantime: times to study on your own";
   $("solo-hero").hidden = preference === "group";
   // Session length is a solo feature: group meetings are set for the whole group
   $("length-picker").hidden = preference === "group";
@@ -328,6 +390,7 @@ for (const radio of document.querySelectorAll('input[name="preference"]')) {
     }).then((res) => res.ok).catch(() => false);
     if (saved) flashSaved();
     await loadGroups();
+    await loadStudyPlan(); // group meetings count toward the goal, so the solo part changes
   });
 }
 

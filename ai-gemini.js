@@ -203,7 +203,7 @@ async function planStudyWeek({ system, schema, prompt }) {
     system,
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     schema,
-    timeoutMs: 45_000, // the page falls back to the algorithm rather than wait forever
+    timeoutMs: 14_000, // the page waits on this: fall back to the algorithm rather than keep it blank
   });
   if (finishReason === "MAX_TOKENS") throw new Error("The AI's plan was cut off.");
   if (!text) throw new Error("The AI declined to plan this week (" + finishReason + ").");

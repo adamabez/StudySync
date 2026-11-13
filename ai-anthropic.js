@@ -111,7 +111,7 @@ async function planStudyWeek({ system, schema, prompt }) {
       fallbacks: "default",
       messages: [{ role: "user", content: prompt }],
     },
-    { timeout: 45_000, maxRetries: 1 }, // the page falls back to the algorithm rather than wait forever
+    { timeout: 14_000, maxRetries: 0 }, // the page waits on this: fall back to the algorithm rather than keep it blank
   );
 
   if (message.stop_reason === "refusal") throw new Error("The AI declined to plan this week.");

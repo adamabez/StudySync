@@ -109,7 +109,8 @@
     container.hidden = true;
     container.innerHTML =
       '<div class="study-progress-text"><strong class="study-progress-title">This week</strong><span class="study-progress-detail"></span></div>' +
-      '<div class="study-progress-track" role="progressbar" aria-label="Weekly study goal" aria-valuemin="0" aria-valuemax="100"><div class="study-progress-fill"></div></div>';
+      '<div class="study-progress-track" role="progressbar" aria-label="Weekly study goal" aria-valuemin="0" aria-valuemax="100">' +
+      '<div class="study-progress-fill fill-group"></div><div class="study-progress-fill fill-solo"></div></div>';
     drawProgress();
   }
 
@@ -124,16 +125,28 @@
     progressBox.hidden = !ready || (!goalMinutes && planned.length === 0);
     if (progressBox.hidden) return;
     const thisWeek = Object.values(weekDates());
-    const studied = [...done.entries()].filter(([key]) => thisWeek.includes(key.split("|")[0])).reduce((sum, [, min]) => sum + min, 0);
+    // Studied time split by group meetings vs solo (a checked session that's a planned group meeting counts as group)
+    const groupKeys = new Set(planned.filter((s) => s.kind === "group").map((s) => keyFor(s.day, s.start)));
+    let studiedGroup = 0;
+    let studiedSolo = 0;
+    for (const [key, min] of done.entries()) {
+      if (!thisWeek.includes(key.split("|")[0])) continue;
+      if (groupKeys.has(key)) studiedGroup += min;
+      else studiedSolo += min;
+    }
+    const studied = studiedGroup + studiedSolo;
     const goal = goalMinutes || planned.reduce((sum, s) => sum + toMinutes(s.end) - toMinutes(s.start), 0);
     const percent = goal ? Math.min(100, Math.round((studied / goal) * 100)) : 0;
+    const share = (min) => (goal ? Math.min(100, (min / goal) * 100) : 0);
     const reached = goal > 0 && studied >= goal;
     const doneCount = planned.filter(isDone).length;
     progressBox.classList.toggle("reached", reached);
     progressBox.querySelector(".study-progress-title").textContent = reached ? "🎉 Weekly goal reached!" : "This week's study goal";
     progressBox.querySelector(".study-progress-detail").textContent = formatLength(studied) + " of " + formatLength(goal) + " studied" +
       (planned.length ? " · " + doneCount + " of " + planned.length + (planned.length === 1 ? " session" : " sessions") : "");
-    progressBox.querySelector(".study-progress-fill").style.width = percent + "%";
+    const groupWidth = share(studiedGroup);
+    progressBox.querySelector(".fill-group").style.width = groupWidth + "%";
+    progressBox.querySelector(".fill-solo").style.width = Math.min(100 - groupWidth, share(studiedSolo)) + "%";
     progressBox.querySelector(".study-progress-track").setAttribute("aria-valuenow", String(percent));
   }
 

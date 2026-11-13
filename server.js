@@ -418,9 +418,37 @@ async function handleRequest(req, res) {
     }
 
     // --- Weekly study plan (studyplan.js) ---
-    if (req.method === "GET" && url.pathname === "/api/study-plan") {
+    // In a study group: its meetings count toward the weekly goal, and this is solo time for the rest
+    // Everything the plan depends on: schedule, profile, and group meetings when in a group
+    const planInputs = async () => {
       const [calendar, profile] = await Promise.all([schedule.loadClasses(db), onboarding.getProfile(db, userId)]);
-      return sendJson(res, await studyplan.getStudyPlan(db, userId, calendar, profile));
+      const meetings = profile.preference === "group" ? await groups.listMyGroups(db, userId) : [];
+      return { calendar, profile, meetings };
+    };
+    if (req.method === "GET" && url.pathname === "/api/study-plan") {
+      const { calendar, profile, meetings } = await planInputs();
+      const { plan } = await studyplan.editedPlan(db, userId, calendar, profile, meetings);
+      return sendJson(res, plan);
+    }
+
+    // --- Quick edits to this week's solo sessions: the ✎ menu (studyplan.js) ---
+    if (req.method === "GET" && url.pathname === "/api/study-edits/options") {
+      const { calendar, profile, meetings } = await planInputs();
+      const { plan, calendar: busy } = await studyplan.editedPlan(db, userId, calendar, profile, meetings);
+      const options = studyplan.editOptions(busy, plan.sessions, url.searchParams.get("key"));
+      if (!options) return sendJson(res, { error: "That study session isn't in this week's plan anymore. Refresh the page." }, 404);
+      return sendJson(res, options);
+    }
+    if (req.method === "POST" && url.pathname === "/api/study-edits") {
+      return readJson(req, res, 2_000, async (input) => {
+        const { calendar, profile, meetings } = await planInputs();
+        const { plan, calendar: busy, edits } = await studyplan.editedPlan(db, userId, calendar, profile, meetings);
+        const checked = studyplan.checkEdit(busy, plan.sessions, plan.skipped, input);
+        if (checked.error) return sendJson(res, { error: checked.error }, 400);
+        const saved = await studyplan.saveEdit(db, userId, edits, input.key, checked.value);
+        if (saved.error) return sendJson(res, { error: saved.error }, saved.status || 400);
+        sendJson(res, { ok: true });
+      });
     }
 
     // --- "I studied" checkmarks on solo study sessions (studylog.js) ---
@@ -454,34 +482,36 @@ async function handleRequest(req, res) {
     }
 
     // --- Study times for the dashboard calendar ---
-    // In a study group → its weekly meeting. Otherwise (alone, or still waiting for a
-    // group) → the weekly study plan, same as the landing page shows.
+    // The weekly study plan, same as the landing page shows. In a study group: its weekly
+    // meetings, plus solo sessions for the rest of the weekly goal.
     if (req.method === "GET" && url.pathname === "/api/study-times") {
       const [calendar, profile, myGroups] = await Promise.all([
         schedule.loadClasses(db),
         onboarding.getProfile(db, userId),
         groups.listMyGroups(db, userId),
       ]);
-      if (profile.preference === "group" && myGroups.length) {
-        return sendJson(res, myGroups.map((g) => ({
-          type: "group",
-          id: g.id,
-          name: g.name,
-          days: g.days,
-          start: g.start,
-          end: g.end,
-          note: g.members.length + (g.members.length === 1 ? " member" : " members"),
-        })));
-      }
-      const plan = await studyplan.getStudyPlan(db, userId, calendar, profile);
-      return sendJson(res, plan.sessions.map((s) => ({
+      const inGroups = profile.preference === "group" ? myGroups : [];
+      const meetings = inGroups.map((g) => ({
+        type: "group",
+        id: g.id,
+        name: g.name,
+        days: g.days,
+        start: g.start,
+        end: g.end,
+        note: g.members.length + (g.members.length === 1 ? " member" : " members"),
+      }));
+      const { plan } = await studyplan.editedPlan(db, userId, calendar, profile, inGroups);
+      return sendJson(res, [...meetings, ...plan.sessions.map((s) => ({
         type: "study",
         name: "Study time",
         days: [s.day],
         start: s.start,
         end: s.end,
         note: s.reason || s.label,
-      })));
+        key: s.key,        // for the ✎ menu
+        edited: s.edited,
+        editable: plan.editable,
+      }))]);
     }
 
     // --- Study groups (groups.js): matched automatically, students never pick one ---

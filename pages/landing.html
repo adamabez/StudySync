@@ -174,7 +174,10 @@
         </ul>
       </div>
       <div class="alone-head">
-        <h2 id="alone-heading">Times to set aside for studying</h2>
+        <div class="alone-title">
+          <h2 id="alone-heading">Times to set aside for studying</h2>
+          <span class="study-loading" id="study-loading" role="status" hidden><span class="study-loading-dot" aria-hidden="true"></span>Planning your week…</span>
+        </div>
         <div class="plan-pickers">
           <label class="goal-picker">Weekly goal
             <select id="goal-select"></select>
@@ -193,7 +196,16 @@
         We leave 15 minutes before and after each class or shift to get there and back.
         <a href="/setup">Change your schedule or study notes</a></p>
       <p id="length-error" class="error" hidden></p>
+      <!-- How the weekly goal splits: group meetings (blue) + solo sessions (teal), and any time that didn't fit -->
+      <div id="plan-split" class="plan-split" hidden>
+        <div class="plan-split-bar" aria-hidden="true">
+          <span class="seg seg-group"></span><span class="seg seg-solo"></span><span class="seg seg-skipped"></span><span class="seg seg-missing"></span>
+        </div>
+        <div class="plan-split-key"></div>
+      </div>
       <p id="study-total" class="study-total"></p>
+      <!-- Sessions skipped this week with the ✎ menu, each with Undo (public/study-edit.js) -->
+      <div id="skipped-note" class="se-skipped-row" hidden></div>
 
       <div id="study-times" class="study-week"></div>
     </section>
@@ -201,8 +213,10 @@
     <p id="load-error" class="error" hidden></p>
   </div>
 
+  <script src="/public/repeat-picker.js"></script>
   <script src="/public/day-emoji.js"></script>
   <script src="/public/study-log.js"></script>
+  <script src="/public/study-edit.js"></script>
   <script src="/public/landing.js"></script>
   <script src="/public/feedback.js"></script>
 </body>

@@ -22,6 +22,7 @@ const groups = require("./groups");
 const { checkMessage } = require("./namefilter");
 const ai = require("./ai");
 const planner = require("./public/planner");
+const studyplan = require("./studyplan");
 
 const COOKIE = "ss_demo";
 const DEMO_HOURS = 3;               // a demo visitor's data is forgotten after this long without a visit
@@ -190,7 +191,7 @@ function sampleData() {
     { id: ENGL_ID, kind: "class", category: "", name: "ENGL 20", courseCode: "ENGL 20", section: null, location: "Online", days: [], start: null, end: null },
     { id: uuid(), kind: "other", category: "Work", name: "Library shift", courseCode: null, section: null, location: "", days: ["mon", "wed"], start: "14:00", end: "18:00" },
     { id: uuid(), kind: "other", category: "Gym", name: "Climbing gym", courseCode: null, section: null, location: "", days: ["fri"], start: "17:00", end: "18:00" },
-    { id: uuid(), kind: "task", category: "", name: "Calc problem set", courseCode: null, section: null, location: "", days: ["sun"], start: "13:00", end: "14:30" },
+    { id: uuid(), kind: "task", category: "", name: "Calc problem set", courseCode: null, section: null, location: "", days: ["sun"], start: "13:00", end: "14:30", date: thisSunday() },
   ];
 
   const csGroupId = uuid();
@@ -287,6 +288,14 @@ function sampleData() {
 // ---------- Course catalog (from supabase/courses.sql, so the demo needs no login) ----------
 
 let catalog = null;
+// This week's Sunday as "2026-11-15" (the demo's one-time task)
+function thisSunday() {
+  const now = new Date();
+  const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (7 - ((now.getDay() + 6) % 7) - 1));
+  const pad = (n) => String(n).padStart(2, "0");
+  return sunday.getFullYear() + "-" + pad(sunday.getMonth() + 1) + "-" + pad(sunday.getDate());
+}
+
 function loadCatalog() {
   if (catalog) return catalog;
   catalog = [];
@@ -333,12 +342,29 @@ function linkName(item) {
 
 // ---------- Study plan and groups ----------
 
+// The plan with this week's quick edits (✎ menu) applied, plus what editing needs
+function editedDemoPlan(data) {
+  const meetings = data.profile.preference === "group" ? myGroups(data) : [];
+  return { plan: { ...studyplan.applyEdits(studyPlan(data), data.studyEdits), editable: true }, calendar: studyplan.planCalendar(data.classes, meetings) };
+}
+
+// Same as studyplan.getStudyPlan: in a group, its meetings count toward the goal and the
+// plan is solo time for the rest, around them
 function studyPlan(data) {
-  const goalMinutes = data.profile.weeklyHours * 60;
-  const plan = planner.planStudyTimes(data.classes, goalMinutes, data.profile.sessionLength);
+  const meetings = data.profile.preference === "group" ? myGroups(data) : [];
+  const groupMinutes = meetings.reduce((sum, g) => sum + g.days.length * (planner.toMinutes(g.end) - planner.toMinutes(g.start)), 0);
+  const weeklyGoalMinutes = data.profile.weeklyHours * 60;
+  const goalMinutes = Math.max(0, weeklyGoalMinutes - groupMinutes);
+  const calendar = [
+    ...planner.thisWeek(data.classes),
+    ...meetings.map((g) => ({ name: "Study group", kind: "other", days: g.days, start: g.start, end: g.end })),
+  ];
+  const plan = goalMinutes ? planner.planStudyTimes(calendar, goalMinutes, data.profile.sessionLength) : { sessions: [], found: 0 };
   return {
     source: "algorithm",
     goalMinutes,
+    weeklyGoalMinutes,
+    groupMinutes,
     found: plan.found,
     sessions: plan.sessions.map((s) => ({ ...s, label: planner.labelFor(s.start, s.end) })),
   };
@@ -428,7 +454,26 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
       sendJson(res, data.profile);
     });
   }
-  if (m === "GET" && p === "/api/study-plan") return sendJson(res, studyPlan(data));
+  if (m === "GET" && p === "/api/study-plan") return sendJson(res, editedDemoPlan(data).plan);
+  // Quick edits to this week's solo sessions (✎ menu), kept in memory
+  if (m === "GET" && p === "/api/study-edits/options") {
+    const { plan, calendar } = editedDemoPlan(data);
+    const options = studyplan.editOptions(calendar, plan.sessions, url.searchParams.get("key"));
+    return options ? sendJson(res, options) : sendJson(res, { error: "That study session isn't in this week's plan anymore. Refresh the page." }, 404);
+  }
+  if (m === "POST" && p === "/api/study-edits") {
+    return readJson(req, res, 2_000, (input) => {
+      const { plan, calendar } = editedDemoPlan(data);
+      const checked = studyplan.checkEdit(calendar, plan.sessions, plan.skipped, input);
+      if (checked.error) return sendJson(res, { error: checked.error }, 400);
+      const week = planner.weekStart();
+      const items = data.studyEdits && data.studyEdits.week === week ? { ...data.studyEdits.items } : {};
+      if (checked.value) items[input.key] = checked.value;
+      else delete items[input.key];
+      data.studyEdits = { week, items };
+      sendJson(res, { ok: true });
+    });
+  }
   // "I studied" checkmarks: { "2026-11-09|13:00": { date, start, end } }
   if (p === "/api/study-log") {
     const log = (data.studyLog = data.studyLog || {});
@@ -450,11 +495,10 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
     }
   }
   if (m === "GET" && p === "/api/study-times") {
-    const mine = myGroups(data);
-    if (data.profile.preference === "group" && mine.length) {
-      return sendJson(res, mine.map((g) => ({ type: "group", id: g.id, name: g.name, days: g.days, start: g.start, end: g.end, note: g.members.length + " members" })));
-    }
-    return sendJson(res, studyPlan(data).sessions.map((s) => ({ type: "study", name: "Study time", days: [s.day], start: s.start, end: s.end, note: s.label })));
+    // Group meetings (when in a group) plus solo sessions for the rest of the weekly goal
+    const meetings = data.profile.preference === "group" ? myGroups(data).map((g) => ({ type: "group", id: g.id, name: g.name, days: g.days, start: g.start, end: g.end, note: g.members.length + " members" })) : [];
+    const { plan } = editedDemoPlan(data);
+    return sendJson(res, [...meetings, ...plan.sessions.map((s) => ({ type: "study", name: "Study time", days: [s.day], start: s.start, end: s.end, note: s.label, key: s.key, edited: s.edited, editable: true }))]);
   }
 
   // --- Groups ---
@@ -650,7 +694,7 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
       const result = schedule.validateClass(input);
       if (result.error) return sendJson(res, { error: result.error }, 400);
       const v = result.value;
-      const item = linkName({ id: uuid(), kind: v.kind, category: v.category, name: v.name, section: null, location: v.location, days: v.days, start: v.start_time, end: v.end_time });
+      const item = linkName({ id: uuid(), kind: v.kind, category: v.category, name: v.name, section: null, location: v.location, days: v.days, start: v.start_time, end: v.end_time, date: v.on_date || null });
       data.classes.push(item);
       sendJson(res, { ...item, extra: [] }, 201);
     });
@@ -663,7 +707,7 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
       const result = schedule.validateClass(input);
       if (result.error) return sendJson(res, { error: result.error }, 400);
       const v = result.value;
-      data.classes[index] = linkName({ ...data.classes[index], kind: v.kind, category: v.category, name: v.name, location: v.location, days: v.days, start: v.start_time, end: v.end_time });
+      data.classes[index] = linkName({ ...data.classes[index], kind: v.kind, category: v.category, name: v.name, location: v.location, days: v.days, start: v.start_time, end: v.end_time, date: v.on_date || null });
       sendJson(res, data.classes[index]);
     });
   }

@@ -40,6 +40,8 @@ create index if not exists courses_match_key_idx on public.courses (match_key);
 alter table public.classes add column if not exists course_code text references public.courses (code) on update cascade on delete set null;
 -- Which section ("02"), when picked from Sac State's class schedule
 alter table public.classes add column if not exists section text check (char_length(section) <= 10);
+-- One-time items (tasks and "other"): the date it happens. null = every week on `days`.
+alter table public.classes add column if not exists on_date date;
 
 -- ---------- Virtual Notebook sources ----------
 -- Pasted text and .txt/.md files are stored in text_content.
@@ -109,6 +111,8 @@ alter table public.profiles add column if not exists study_plan jsonb;
 alter table public.profiles add column if not exists study_plan_key text;
 -- How long study sessions are: short (30-45 min), medium (45-90) or long (90-120). null = medium
 alter table public.profiles add column if not exists study_session_length text check (study_session_length in ('short', 'medium', 'long'));
+-- This week's quick edits to solo study sessions (move / length / skip): { week, items }
+alter table public.profiles add column if not exists study_edits jsonb;
 
 -- ---------- "I studied" checkmarks (studylog.js) ----------
 -- One row per study session a student checked off, by date (so each week starts fresh)
@@ -270,6 +274,7 @@ as $$
     select 1 from public.classes c
     where c.user_id = p_user
       and c.start_time is not null
+      and c.on_date is null      -- one-time items don't block a weekly group time
       and c.days && p_days
       and c.start_time < p_end
       and p_start < c.end_time

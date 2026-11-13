@@ -9,10 +9,14 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// "relation does not exist" (42P01) / PostgREST "not in the schema cache" (PGRST205):
+// "relation does not exist" (42P01) / PostgREST "table not in the schema cache" (PGRST205):
 // supabase/study-log.sql hasn't been run yet
 function isMissingTable(error) {
-  return error && (error.code === "42P01" || error.code === "PGRST205" || /study_log/.test(error.message || ""));
+  return error && (error.code === "42P01" || error.code === "PGRST205");
+}
+// The first version of study_log had no kind / group_id columns (PGRST204 / 42703)
+function isMissingKindColumns(error) {
+  return error && (error.code === "PGRST204" || error.code === "42703") && /kind|group_id/.test(error.message || "");
 }
 
 // Sessions marked done between two dates (inclusive): { ready, done: [{ date, start, end }] }
@@ -35,13 +39,16 @@ async function setDone(db, userId, input) {
   if (!DATE.test(date || "") || !TIME.test(start || "") || !TIME.test(end || "") || end <= start) {
     return { error: "That study session doesn't look right." };
   }
-  const result = input.done
-    ? await db.from("study_log").upsert({
-      user_id: userId, date, start_time: start, end_time: end,
-      kind: input.kind === "group" ? "group" : "solo",
-      group_id: input.kind === "group" && UUID.test(input.groupId || "") ? input.groupId : null,
-    }, { onConflict: "user_id,date,start_time" })
-    : await db.from("study_log").delete().eq("date", date).eq("start_time", start);
+  const basic = { user_id: userId, date, start_time: start, end_time: end };
+  const full = {
+    ...basic,
+    kind: input.kind === "group" ? "group" : "solo",
+    group_id: input.kind === "group" && UUID.test(input.groupId || "") ? input.groupId : null,
+  };
+  const save = (row) => db.from("study_log").upsert(row, { onConflict: "user_id,date,start_time" });
+  let result = input.done ? await save(full) : await db.from("study_log").delete().eq("date", date).eq("start_time", start);
+  // Older study_log without kind / group_id (re-run supabase/study-log.sql to add them): save without
+  if (input.done && isMissingKindColumns(result.error)) result = await save(basic);
   if (isMissingTable(result.error)) return { error: "Checking off study sessions isn't set up yet.", status: 503 };
   if (result.error) throw result.error;
   return { value: { date, start, end, done: Boolean(input.done) } };

@@ -310,6 +310,26 @@ function renderNext() {
   const now = new Date();
   const live = session.startsAt <= now && now < session.endsAt;
 
+  // Which class and group it's for: "CSC 130 · Group A" (names look like "CSC 130 | Group A")
+  if (currentGroup) {
+    const [beforeBar, afterBar] = currentGroup.name.split(" | ");
+    const course = currentGroup.course || (afterBar ? beforeBar : "");
+    const groupLabel = afterBar || currentGroup.name;
+    const forLine = document.createElement("div");
+    forLine.className = "ns-for";
+    if (course) {
+      const cls = document.createElement("span");
+      cls.className = "ns-class";
+      cls.textContent = course;
+      forLine.appendChild(cls);
+    }
+    const grp = document.createElement("span");
+    grp.className = "ns-group";
+    grp.textContent = groupLabel;
+    forLine.appendChild(grp);
+    card.appendChild(forLine);
+  }
+
   // When + where
   const head = document.createElement("div");
   head.className = "ns-head";

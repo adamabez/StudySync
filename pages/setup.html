@@ -16,8 +16,13 @@
   <div class="box wide">
     <header class="page-head">
       <div>
-        <h1>Welcome to StudySync!</h1>
-        <p>Two quick steps and we'll plan your study time around your week.</p>
+        <!-- Editing later (not first-time setup): back to the study plan / dashboard, asking first if anything changed -->
+        <button type="button" class="back-link" id="back-top" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+          <span>Back</span>
+        </button>
+        <h1 id="setup-title">Welcome to StudySync!</h1>
+        <p id="setup-intro">Two quick steps and we'll plan your study time around your week.</p>
       </div>
       <!-- First time only: leave setup and go to the dashboard (public/setup.js) -->
       <button type="button" class="skip-link" id="skip-top" hidden>Skip for now</button>
@@ -32,9 +37,9 @@
       <h2><span class="step-number">1</span> Add your schedule</h2>
       <p class="hint">Add your classes, plus work, practice or anything else that fills your week. You can change these any time.</p>
 
-      <div class="segmented" role="radiogroup" aria-label="What are you adding?">
-        <label><input type="radio" name="kind" value="class" checked> Class</label>
-        <label><input type="radio" name="kind" value="other"> Work, club or other</label>
+      <div class="segmented kind-picker" role="radiogroup" aria-label="What are you adding?">
+        <label><input type="radio" name="kind" value="class" checked><span class="kind-icon" aria-hidden="true">📚</span> Class</label>
+        <label><input type="radio" name="kind" value="other"><span class="kind-icon" aria-hidden="true">🗓️</span> Work, club or other</label>
       </div>
 
       <p class="catalog-note">
@@ -135,10 +140,25 @@
     <div class="setup-actions">
       <p id="finish-error" class="error"></p>
       <button type="button" class="skip-button" id="skip-bottom" hidden>Skip for now</button>
+      <button type="button" class="skip-button" id="cancel-bottom" hidden>Cancel</button>
       <button type="button" id="finish">Finish</button>
     </div>
   </div>
 
+  <!-- Leaving with changes: keep editing, revert them, or save (public/setup.js) -->
+  <dialog class="leave-dialog" id="leave-dialog" aria-labelledby="leave-title">
+    <h2 id="leave-title">Leave without saving?</h2>
+    <p id="leave-summary"></p>
+    <div class="leave-actions">
+      <button type="button" class="leave-keep" id="leave-keep">Keep editing</button>
+      <button type="button" class="leave-revert" id="leave-revert">Revert changes</button>
+      <button type="button" class="leave-save" id="leave-save">Save &amp; go back</button>
+    </div>
+    <p class="error" id="leave-error"></p>
+  </dialog>
+
+  <script src="/public/colors.js"></script>
+  <script src="/public/repeat-picker.js"></script>
   <script src="/public/setup.js"></script>
   <script src="/public/course-picker.js"></script>
   <script src="/public/feedback.js"></script>
