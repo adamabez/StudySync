@@ -1,10 +1,10 @@
 // StudySync - the header on every logged-in page (runs in the browser).
 //
-// Logo · Study plan | Dashboard tabs · light/dark switch (theme.js puts it next to the
+// Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan tabs · light/dark switch (theme.js puts it next to the
 // account circle) · account circle. The circle opens a menu: who's logged in, Edit schedule,
 // Account settings, Log out. In the demo it offers sign-up and "Exit demo" instead.
 //
-// Each page has <nav id="app-nav" data-page="plan|dashboard|..."></nav> where the header
+// Each page has <nav id="app-nav" data-page="dashboard|plan|..."></nav> where the header
 // goes; data-page picks which tab is highlighted (none for other pages). Load this script
 // right after that element, before theme.js adds the switch.
 //
@@ -17,8 +17,8 @@
   const current = holder.dataset.page || "";
 
   const TABS = [
-    { page: "plan", href: "/landing", label: "Study plan" },
     { page: "dashboard", href: "/dashboard", label: "Dashboard" },
+    { page: "plan", href: "/landing", label: "Study plan" },
   ];
 
   const el = (tag, attrs = {}, text) => {
@@ -32,7 +32,7 @@
   holder.classList.add("app-nav");
   holder.setAttribute("aria-label", "StudySync");
 
-  const logo = el("a", { href: "/landing", class: "logo-link app-logo", "aria-label": "StudySync: go to your study plan" });
+  const logo = el("a", { href: "/dashboard", class: "logo-link app-logo", "aria-label": "StudySync: go to your dashboard" });
   logo.append(el("img", { src: "/public/logo.png", alt: "StudySync", class: "logo" }));
 
   const tabs = el("div", { class: "app-tabs" });

@@ -1,7 +1,7 @@
 /* StudySync - dashboard and weekly calendar */
 
 /* ---------- Header on every logged-in page (public/nav.js) ----------
-   Logo · Study plan | Dashboard tabs · light/dark switch · account circle */
+   Logo · Dashboard | Study plan tabs · light/dark switch · account circle */
 .app-nav {
   display: flex;
   align-items: center;
