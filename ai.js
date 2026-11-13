@@ -77,8 +77,9 @@ You get the student's weekly study goal in minutes, the free windows in their we
 
 Choose study sessions that add up to the goal:
 - Every session must fit completely inside one free window. Never go outside the windows.
-- Each session is 60 to 120 minutes (it can be shorter only if less than 60 minutes of the goal is left). Start sessions on the hour or half hour.
-- Leave at least 30 minutes between two sessions on the same day, and put at most 3 sessions on one day.
+- Each session is between session_minutes.min and session_minutes.max minutes, the length the student picked (shorter only if less than session_minutes.min of the goal is left). Start sessions on the hour or half hour.
+- Leave at least 30 minutes between two sessions on the same day, and put at most max_sessions_per_day sessions on one day. With short sessions, spread them over as many days as possible.
+- The free windows already leave time to travel to and from each class or commitment, so a session may start or end right at a window's edge.
 - Total within 30 minutes of the goal. If the free windows can't fit the whole goal, plan as much as fits.
 - Unless the student's notes say otherwise, prefer calm times: afternoons (1-5 PM) first, then evenings and mornings, and avoid lunchtime and the very start or end of the day. Spread sessions across the week instead of piling them onto a few days.
 - Follow the student's notes whenever the windows allow it. They matter more than the default preferences above.
@@ -110,9 +111,11 @@ const PLAN_SCHEMA = {
 
 // Returns [{ day, start, end, reason }] as the AI suggested them (not yet checked),
 // or throws if the AI couldn't answer.
-function planStudyWeek({ goalMinutes, windows, calendar, notes }) {
+function planStudyWeek({ goalMinutes, windows, calendar, notes, length }) {
   const details = {
     weekly_goal_minutes: goalMinutes,
+    session_minutes: { min: length.min, max: length.max },
+    max_sessions_per_day: length.maxPerDay,
     free_windows: windows,
     schedule: calendar
       .filter((item) => item.start)

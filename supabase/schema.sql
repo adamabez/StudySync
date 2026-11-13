@@ -107,6 +107,33 @@ alter table public.profiles add column if not exists weekly_study_hours integer 
 alter table public.profiles add column if not exists study_notes text check (char_length(study_notes) <= 300);
 alter table public.profiles add column if not exists study_plan jsonb;
 alter table public.profiles add column if not exists study_plan_key text;
+-- How long study sessions are: short (30-45 min), medium (45-90) or long (90-120). null = medium
+alter table public.profiles add column if not exists study_session_length text check (study_session_length in ('short', 'medium', 'long'));
+
+-- ---------- "I studied" checkmarks (studylog.js) ----------
+-- One row per study session a student checked off, by date (so each week starts fresh)
+create table if not exists public.study_log (
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  date        date not null,
+  start_time  text not null check (start_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+  end_time    text not null check (end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+  kind        text not null default 'solo' check (kind in ('solo', 'group')),  -- own study time, or a study group meeting
+  group_id    uuid,                                                          -- which study group (kind = 'group')
+  created_at  timestamptz not null default now(),
+  primary key (user_id, date, start_time)
+);
+-- (for projects that made study_log before group check-offs existed)
+alter table public.study_log add column if not exists kind text not null default 'solo' check (kind in ('solo', 'group'));
+alter table public.study_log add column if not exists group_id uuid;
+
+-- Everyone sees and changes only their own checkmarks
+alter table public.study_log enable row level security;
+drop policy if exists "Own study log" on public.study_log;
+create policy "Own study log" on public.study_log
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+grant select, insert, update, delete on public.study_log to authenticated;
 
 -- ---------- Study groups ----------
 -- Students who'd rather study in a group are matched automatically (see
@@ -550,6 +577,63 @@ as $$
 $$;
 revoke execute on function public.group_member_names(uuid) from public, anon;
 grant execute on function public.group_member_names(uuid) to authenticated;
+
+-- ---------- Class Discord server ----------
+-- One Discord server per class (course key, e.g. 'CSC 130'), shared by every study group
+-- in it. Anyone taking the class can add, change or remove the invite link; the app checks
+-- it's a real Discord invite (groups.js) and shows the server's icon and name on group pages.
+
+-- Is the logged-in student taking this class? (course = a course key, like study_groups.course)
+create or replace function public.takes_course(p_course text)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.classes c
+    where c.user_id = (select auth.uid()) and c.kind = 'class'
+      and public.course_key(c.course_code, c.name) = p_course
+  );
+$$;
+revoke execute on function public.takes_course(text) from public, anon;
+grant execute on function public.takes_course(text) to authenticated;
+
+create table if not exists public.course_discord (
+  course      text primary key,                  -- course key, e.g. 'CSC 130'
+  invite_url  text not null check (char_length(invite_url) <= 200),
+  set_by      uuid default auth.uid() references auth.users (id) on delete set null,
+  updated_at  timestamptz not null default now()
+);
+alter table public.course_discord enable row level security;
+
+drop policy if exists "Classmates read the class Discord" on public.course_discord;
+create policy "Classmates read the class Discord" on public.course_discord
+  for select to authenticated using (public.takes_course(course));
+drop policy if exists "Classmates add the class Discord" on public.course_discord;
+create policy "Classmates add the class Discord" on public.course_discord
+  for insert to authenticated with check (public.takes_course(course));
+drop policy if exists "Classmates change the class Discord" on public.course_discord;
+create policy "Classmates change the class Discord" on public.course_discord
+  for update to authenticated using (public.takes_course(course)) with check (public.takes_course(course));
+drop policy if exists "Classmates remove the class Discord" on public.course_discord;
+create policy "Classmates remove the class Discord" on public.course_discord
+  for delete to authenticated using (public.takes_course(course));
+
+-- A short-lived version stored one Discord link per group. Move any of those to their class
+-- (first one wins), then remove the old column and function.
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'study_groups' and column_name = 'discord_url') then
+    insert into public.course_discord (course, invite_url, set_by)
+      select distinct on (course) course, discord_url, null
+      from public.study_groups
+      where discord_url is not null and course <> ''
+      order by course, created_at
+    on conflict (course) do nothing;
+    alter table public.study_groups drop column discord_url;
+  end if;
+end $$;
+drop function if exists public.set_group_discord(uuid, text);
 
 -- ---------- Delete my account ----------
 -- The app's key can't delete logins, so this runs with the owner's rights, and only ever

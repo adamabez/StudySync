@@ -42,15 +42,22 @@ function tidyCapitals(name) {
 }
 
 // The name classmates see: the one set in StudySync, else the one from sign-up
+// How long study sessions are (public/planner.js SESSION_LENGTHS)
+const SESSION_LENGTHS = ["short", "medium", "long"];
+const DEFAULT_SESSION_LENGTH = "medium";
+const PROFILE_COLUMNS = "onboarded_at, study_preference, weekly_study_hours, study_notes, display_name";
+
 function displayName(profile, user) {
   return profile?.displayName || (user?.user_metadata?.name || "").trim().slice(0, MAX_NAME) || "";
 }
 
-// { onboarded, preference, weeklyHours, studyNotes, displayName } for the logged-in user.
+// { onboarded, preference, weeklyHours, studyNotes, displayName, sessionLength } for the logged-in user.
 // People who signed up before this screen existed and already have calendar items
 // count as done, so they never see it.
 async function getProfile(db, userId) {
-  const { data, error } = await db.from("profiles").select("onboarded_at, study_preference, weekly_study_hours, study_notes, display_name").maybeSingle();
+  let { data, error } = await db.from("profiles").select(PROFILE_COLUMNS + ", study_session_length").maybeSingle();
+  // Database without the session length column yet (supabase/session-length.sql): carry on without it
+  if (error && isMissingColumn(error)) ({ data, error } = await db.from("profiles").select(PROFILE_COLUMNS).maybeSingle());
   if (error) throw error;
   const profile = {
     onboarded: Boolean(data?.onboarded_at),
@@ -58,6 +65,7 @@ async function getProfile(db, userId) {
     weeklyHours: data?.weekly_study_hours || DEFAULT_WEEKLY_HOURS,
     studyNotes: data?.study_notes || "",
     displayName: data?.display_name || "",
+    sessionLength: SESSION_LENGTHS.includes(data?.study_session_length) ? data.study_session_length : DEFAULT_SESSION_LENGTH,
   };
   if (profile.onboarded) return profile;
 
@@ -72,7 +80,17 @@ async function getProfile(db, userId) {
 
 async function saveProfile(db, userId, fields) {
   const { error } = await db.from("profiles").upsert({ user_id: userId, ...fields }, { onConflict: "user_id" });
+  if (error && "study_session_length" in fields && isMissingColumn(error)) {
+    const missing = new Error("Session length needs supabase/session-length.sql run in Supabase first.");
+    missing.code = "SESSION_LENGTH_COLUMN";
+    throw missing;
+  }
   if (error) throw error;
+}
+
+// Postgres "column does not exist" (42703) or PostgREST's "not in the schema cache" (PGRST204)
+function isMissingColumn(error) {
+  return error.code === "42703" || error.code === "PGRST204" || /study_session_length/.test(error.message || "");
 }
 
 // Finish setup, or change the preference / weekly goal / study notes / name later. Send any of them.
@@ -96,6 +114,10 @@ async function updateProfile(db, userId, input) {
       return { error: `Pick between 1 and ${MAX_WEEKLY_HOURS} hours a week.` };
     }
     fields.weekly_study_hours = hours;
+  }
+  if (input.sessionLength !== undefined) {
+    if (!SESSION_LENGTHS.includes(input.sessionLength)) return { error: "Pick short, medium or long study sessions." };
+    fields.study_session_length = input.sessionLength;
   }
   if (input.studyNotes !== undefined) {
     const notes = typeof input.studyNotes === "string" ? input.studyNotes.trim() : "";

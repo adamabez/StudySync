@@ -52,4 +52,45 @@ async function findCourse(db, name) {
   return data ? forBrowser(data) : null;
 }
 
-module.exports = { normalizeCourse, searchCourses, findCourse };
+// ---------- Browse by subject (the class picker's A-Z list) ----------
+// Read from supabase/courses.sql, the same file that fills the "courses" table, once per run:
+// listing all ~5,000 rows through Supabase would take several requests.
+const fs = require("fs");
+const path = require("path");
+let catalog = null;
+function loadCatalog() {
+  if (catalog) return catalog;
+  catalog = [];
+  try {
+    const sql = fs.readFileSync(path.join(__dirname, "supabase", "courses.sql"), "utf8");
+    const row = /\('((?:[^']|'')*)', '((?:[^']|'')*)', '((?:[^']|'')*)', '((?:[^']|'')*)', '((?:[^']|'')*)'/g;
+    const un = (s) => s.replace(/''/g, "'");
+    for (const m of sql.matchAll(row)) {
+      catalog.push({ code: un(m[1]), subject: un(m[2]), number: un(m[3]), title: un(m[4]), units: un(m[5]) });
+    }
+  } catch (error) {
+    console.error("Couldn't read supabase/courses.sql for browsing by subject:", error.message);
+  }
+  return catalog;
+}
+
+// Every subject A-Z with how many classes it has: [{ subject: "ACCY", count: 40 }, ...]
+let subjects = null;
+function listSubjects() {
+  if (subjects) return subjects;
+  const counts = new Map();
+  for (const row of loadCatalog()) counts.set(row.subject, (counts.get(row.subject) || 0) + 1);
+  subjects = [...counts].map(([subject, count]) => ({ subject, count })).sort((a, b) => a.subject.localeCompare(b.subject));
+  return subjects;
+}
+
+// All classes in one subject, by number (MATH 1, MATH 9, MATH 10, ... MATH 230)
+function coursesInSubject(subject) {
+  const want = String(subject || "").trim().toUpperCase();
+  return loadCatalog()
+    .filter((row) => row.subject === want)
+    .sort((a, b) => parseInt(a.number, 10) - parseInt(b.number, 10) || a.number.localeCompare(b.number))
+    .map(forBrowser);
+}
+
+module.exports = { normalizeCourse, searchCourses, findCourse, loadCatalog, listSubjects, coursesInSubject };

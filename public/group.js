@@ -22,6 +22,111 @@ function showError(message) {
   $("load-error").hidden = false;
 }
 
+// ---------- Discord server link ----------
+// From the server: { url, name, iconUrl, members, online, expired }, or null for no link
+let discord = null;
+
+// Read the server's answer. Older servers sent just { discordUrl }; treat that as a link
+// with no server details, so the Join button still shows.
+function discordFrom(data) {
+  if (data && data.discord !== undefined) return data.discord || null;
+  const url = data && data.discordUrl;
+  return url ? { url, name: "", iconUrl: "", members: null, online: null, expired: false } : null;
+}
+
+// "Study Buddies CSC" → "SB" (shown when the server has no icon, like Discord does)
+function initials(name) {
+  const words = (name || "").trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).map((w) => [...w][0]).join("").toUpperCase() || "?";
+}
+
+function renderDiscordCard() {
+  const name = discord.name || "Class chat on Discord";
+  $("discord-name").textContent = name;
+  $("discord-link").href = discord.url;
+  // Only when we know the server's ID (from Discord's invite lookup) and the invite still works
+  const canOpen = /^\d{5,25}$/.test(discord.guildId || "") && !discord.expired;
+  $("discord-open").hidden = !canOpen;
+  if (canOpen) $("discord-open").href = "https://discord.com/channels/" + discord.guildId;
+
+  const icon = $("discord-icon");
+  icon.hidden = !discord.iconUrl;
+  $("discord-initials").hidden = Boolean(discord.iconUrl);
+  // Initials if we know the name; otherwise Discord's logo (better than a "?")
+  const badge = $("discord-initials");
+  badge.textContent = discord.name ? initials(discord.name) : "";
+  if (!discord.name) {
+    const mark = document.createElement("img");
+    mark.src = "/public/discord-mark-white.svg";
+    mark.alt = "";
+    mark.className = "discord-initials-mark";
+    badge.appendChild(mark);
+  }
+  if (discord.iconUrl) {
+    icon.src = discord.iconUrl;
+    icon.onerror = () => { icon.hidden = true; $("discord-initials").hidden = false; };
+  }
+
+  const counts = [];
+  if (discord.members != null) counts.push(discord.members.toLocaleString() + (discord.members === 1 ? " member" : " members"));
+  if (discord.online != null) counts.push(discord.online.toLocaleString() + " online");
+  $("discord-counts").innerHTML = "";
+  if (discord.online != null) {
+    const dot = document.createElement("span");
+    dot.className = "discord-online-dot";
+    $("discord-counts").appendChild(dot);
+  }
+  $("discord-counts").append(counts.join(" · "));
+  $("discord-counts").hidden = counts.length === 0;
+  $("discord-expired").hidden = !discord.expired;
+}
+
+function renderDiscord(editing = false) {
+  const has = Boolean(discord);
+  $("discord-view").hidden = !has || editing;
+  $("discord-empty").hidden = has || editing;
+  $("discord-form").hidden = has && !editing;
+  $("discord-cancel").hidden = !has;
+  $("discord-save").textContent = has ? "Save" : "Add link";
+  if (has) renderDiscordCard();
+  $("discord-error").hidden = true;
+}
+
+async function saveDiscord(value) {
+  $("discord-error").hidden = true;
+  const res = await fetch("/api/groups/" + groupId + "/discord", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ discordUrl: value }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    $("discord-error").textContent = data.error || "Couldn't save the link. Try again.";
+    $("discord-error").hidden = false;
+    return;
+  }
+  discord = discordFrom(data);
+  $("discord-input").value = "";
+  renderDiscord();
+}
+
+$("discord-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!$("discord-input").value.trim()) return;
+  $("discord-save").disabled = true;
+  try { await saveDiscord($("discord-input").value); } finally { $("discord-save").disabled = false; }
+});
+$("discord-edit").addEventListener("click", () => {
+  $("discord-input").value = discord ? discord.url : "";
+  renderDiscord(true);
+  $("discord-input").focus();
+});
+$("discord-cancel").addEventListener("click", () => renderDiscord());
+$("discord-remove").addEventListener("click", async () => {
+  if (!confirm("Remove the class chat link for everyone in this class? (The Discord server itself stays.)")) return;
+  await saveDiscord("");
+});
+
 function renderGroup(group) {
   document.title = "StudySync – " + group.name;
   $("group-name").textContent = group.name;
@@ -671,6 +776,13 @@ async function load() {
   if (!res.ok) return showError("Couldn't load this group. Refresh the page to try again.");
   const { group, notes } = await res.json();
   renderGroup(group);
+  $("discord-section").hidden = !group.discordEnabled; // class Discord is paused for now
+  if (group.course) {
+    $("discord-title").textContent = "Chat with your " + group.course + " class";
+    $("discord-hint").querySelector("strong").textContent = "everyone taking " + group.course;
+  }
+  discord = discordFrom(group);
+  renderDiscord();
   for (const note of notes) $("notes").appendChild(noteCard(note));
   updateEmpty();
   $("group-body").hidden = false;

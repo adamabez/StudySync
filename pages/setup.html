@@ -39,7 +39,7 @@
 
       <p class="catalog-note">
         <span aria-hidden="true">🎓</span>
-        <span><strong>Every Sac State class is built in.</strong> Start typing a course (like CSC 20), pick your section,
+        <span><strong>Every Sac State class is built in.</strong> Click the box to browse by subject or start typing a course (like CSC 20), pick your section,
           and the days, times and room fill in for you. More schools are coming soon.</span>
       </p>
 
@@ -81,15 +81,19 @@
     <section class="step">
       <h2><span class="step-number">2</span> How do you like to study?</h2>
       <div class="choice-cards" role="radiogroup" aria-label="How do you like to study?">
-        <label class="choice-card">
-          <input type="radio" name="preference" value="alone">
-          <strong>On my own</strong>
-          <span>We'll find the free times in your week to set aside for studying.</span>
-        </label>
-        <label class="choice-card">
+<label class="choice-card choice-group">
           <input type="radio" name="preference" value="group">
-          <strong>With a group</strong>
-          <span>We'll automatically put you in a study group with students who are free when you are.</span>
+          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="choice-text"><strong>Group</strong>
+            <span>Skip the back-and-forth over when to meet. We'll match you with classmates and pick a weekly time when everyone's free. You just show up.</span></span>
+          <span class="choice-check" aria-hidden="true"></span>
+        </label>
+        <label class="choice-card choice-solo">
+          <input type="radio" name="preference" value="alone">
+          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
+          <span class="choice-text"><strong>Solo</strong>
+            <span>We'll find the free times in your week and set aside study sessions, as short or long as you like.</span></span>
+          <span class="choice-check" aria-hidden="true"></span>
         </label>
       </div>
     </section>
@@ -109,6 +113,17 @@
         <label class="hours-custom" id="hours-custom" hidden>
           <input id="weekly-hours" type="number" min="1" max="40" step="1" inputmode="numeric" aria-label="Hours a week"> hours a week
         </label>
+      </div>
+      <!-- How long each session is: short ones get spread over more days.
+           Solo only (shown once "Solo" is picked): group meetings are set for the whole group. -->
+      <div id="length-step" hidden>
+      <p class="length-question">How long do you like to study at a time?</p>
+      <div class="hours-options" role="radiogroup" aria-label="Study session length">
+        <span class="day-chip"><input type="radio" name="length" id="length-short" value="short"><label for="length-short">Short bursts · 30–45 min</label></span>
+        <span class="day-chip"><input type="radio" name="length" id="length-medium" value="medium" checked><label for="length-medium">Medium · 45–90 min</label></span>
+        <span class="day-chip"><input type="radio" name="length" id="length-long" value="long"><label for="length-long">Long, focused · 1.5–2 hours</label></span>
+      </div>
+      <p class="hint">Shorter sessions get spread over more days. We always leave time to get to and from your classes.</p>
       </div>
       <!-- Only shown when AI planning is on (there's an Anthropic API key) -->
       <label class="notes-field" id="notes-field" hidden>Anything we should know about when you like to study? (optional)

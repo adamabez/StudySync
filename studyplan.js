@@ -11,16 +11,17 @@ const crypto = require("crypto");
 const planner = require("./public/planner");
 const ai = require("./ai");
 
-const PLAN_VERSION = 1; // bump to throw away every saved AI plan (e.g. after changing the prompt)
+const PLAN_VERSION = 2; // bump to throw away every saved AI plan (e.g. after changing the prompt)
 
 // Returns { source: "ai" | "algorithm", goalMinutes, found, sessions: [{ day, start, end, label, reason? }] }
 async function getStudyPlan(db, userId, calendar, profile) {
   const goalMinutes = profile.weeklyHours * 60;
-  const algorithm = () => withLabels({ source: "algorithm", goalMinutes, ...planner.planStudyTimes(calendar, goalMinutes) });
+  const sessionLength = profile.sessionLength;
+  const algorithm = () => withLabels({ source: "algorithm", goalMinutes, ...planner.planStudyTimes(calendar, goalMinutes, sessionLength) });
   if (!ai.aiEnabled()) return algorithm();
 
-  // Same schedule, goal and notes as last time? Reuse the saved AI plan.
-  const key = planKey(calendar, goalMinutes, profile.studyNotes);
+  // Same schedule, goal, session length and notes as last time? Reuse the saved AI plan.
+  const key = planKey(calendar, goalMinutes, profile.studyNotes, sessionLength);
   const saved = await loadSavedPlan(db);
   if (saved && saved.key === key) return withLabels(saved.plan);
 
@@ -30,8 +31,9 @@ async function getStudyPlan(db, userId, calendar, profile) {
       windows: planner.freeWindows(calendar),
       calendar,
       notes: profile.studyNotes,
+      length: planner.lengthFor(sessionLength),
     });
-    const problem = planner.checkPlan(calendar, sessions, goalMinutes);
+    const problem = planner.checkPlan(calendar, sessions, goalMinutes, sessionLength);
     if (problem) throw new Error("AI plan didn't fit: " + problem);
 
     const plan = {
@@ -49,12 +51,12 @@ async function getStudyPlan(db, userId, calendar, profile) {
 }
 
 // A fingerprint of everything the plan depends on
-function planKey(calendar, goalMinutes, notes) {
+function planKey(calendar, goalMinutes, notes, sessionLength) {
   const timed = calendar
     .filter((item) => item.start)
     .map((item) => [item.name, [...item.days].sort().join(","), item.start, item.end].join("|"))
     .sort();
-  const text = JSON.stringify({ v: PLAN_VERSION, timed, goalMinutes, notes: notes || "" });
+  const text = JSON.stringify({ v: PLAN_VERSION, timed, goalMinutes, notes: notes || "", length: sessionLength || "" });
   return crypto.createHash("sha256").update(text).digest("hex");
 }
 

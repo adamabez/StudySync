@@ -43,6 +43,7 @@ const onboarding = require("./onboarding");
 const groups = require("./groups");
 const meetups = require("./meetups");
 const courses = require("./courses");
+const studylog = require("./studylog");
 const sections = require("./sections");
 const studyplan = require("./studyplan");
 const demo = require("./demo");
@@ -87,6 +88,7 @@ const FILE_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".png": "image/png",
+  ".svg": "image/svg+xml",
 };
 
 function sendPublicFile(res, urlPath) {
@@ -179,8 +181,11 @@ async function handleRequest(req, res) {
   // Trying the demo (demo.js): no account, sample data. A real login always wins.
   const inDemo = !loggedIn && demo.hasDemo(req);
   // Logging in, signing up or logging out also ends the demo
-  // The login page's live preview: the demo without its banner
-  const demoMode = inDemo && url.searchParams.get("embed") === "1" ? "embed" : inDemo;
+  // The login page's live demo box: the demo without its banner. It starts at ?embed=1;
+  // pages visitors click to inside the box stay embedded (browsers mark frame loads with
+  // Sec-Fetch-Dest: iframe), so the banner never shows up inside it.
+  const inFrame = url.searchParams.get("embed") === "1" || req.headers["sec-fetch-dest"] === "iframe";
+  const demoMode = inDemo && inFrame ? "embed" : inDemo;
   const endDemo = (cookies) => (demo.hasDemo(req) ? [...[].concat(cookies), demo.clearCookie()] : cookies);
 
   // "Try the demo" (the login page's button, or a QR code pointing here): straight to the
@@ -227,7 +232,7 @@ async function handleRequest(req, res) {
       const form = new URLSearchParams(body);
       const name = onboarding.cleanName(form.get("name"));
       if (name.error) return redirect(res, `/signup?error=${name.code}`);
-      const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value);
+      const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value, `${siteUrl(req)}/?confirmed=1`);
       if (result.error) return redirect(res, `/signup?error=${result.error}`);
       if (result.confirmEmail) return redirect(res, "/?checkEmail=1");
       redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
@@ -281,7 +286,7 @@ async function handleRequest(req, res) {
   // One study group's page: /group?id=<group id>
   if (req.method === "GET" && url.pathname === "/group") {
     if (!loggedIn && !inDemo) return redirect(res, "/");
-    return sendPage(res, "group.html", 200, inDemo);
+    return sendPage(res, "group.html", 200, demoMode);
   }
 
   // Log out
@@ -340,7 +345,7 @@ async function handleRequest(req, res) {
         if (result.error) return sendJson(res, { error: result.error }, 400);
       } catch (error) {
         // Without an account this needs the newest supabase/schema.sql (feedback without a user)
-        console.error("Feedback failed" + (loggedIn ? "" : " (no account: run supabase/schema.sql again?)") + ":", error.message || error);
+        console.error("Feedback failed" + (loggedIn ? "" : " (no account: run supabase/feedback-anonymous.sql in Supabase)") + ":", error.message || error);
         return sendJson(res, { error: "Couldn't send that right now. Try again in a bit." }, 502);
       }
       sendJson(res, { ok: true }, 201);
@@ -418,9 +423,30 @@ async function handleRequest(req, res) {
       return sendJson(res, await studyplan.getStudyPlan(db, userId, calendar, profile));
     }
 
+    // --- "I studied" checkmarks on solo study sessions (studylog.js) ---
+    if (req.method === "GET" && url.pathname === "/api/study-log") {
+      const result = await studylog.listDone(db, url.searchParams.get("from"), url.searchParams.get("to"));
+      if (result.error) return sendJson(res, { error: result.error }, 400);
+      return sendJson(res, result.value);
+    }
+    if (req.method === "POST" && url.pathname === "/api/study-log") {
+      return readJson(req, res, 2_000, async (input) => {
+        const result = await studylog.setDone(db, userId, input);
+        if (result.error) return sendJson(res, { error: result.error }, result.status || 400);
+        sendJson(res, result.value);
+      });
+    }
+
     if (req.method === "POST" && url.pathname === "/api/profile") {
       return readJson(req, res, 10_000, async (input) => {
-        const result = await onboarding.updateProfile(db, userId, input);
+        let result;
+        try {
+          result = await onboarding.updateProfile(db, userId, input);
+        } catch (error) {
+          if (error.code !== "SESSION_LENGTH_COLUMN") throw error;
+          console.error(error.message);
+          return sendJson(res, { error: "Session length can't be saved yet. Try again later." }, 503);
+        }
         if (result.error) return sendJson(res, { error: result.error }, 400);
         await groups.matchQuietly(db); // wants a group now → find one; prefers alone → leave theirs
         sendJson(res, result.value);
@@ -439,6 +465,7 @@ async function handleRequest(req, res) {
       if (profile.preference === "group" && myGroups.length) {
         return sendJson(res, myGroups.map((g) => ({
           type: "group",
+          id: g.id,
           name: g.name,
           days: g.days,
           start: g.start,
@@ -471,7 +498,12 @@ async function handleRequest(req, res) {
 
     // --- Course catalog (courses.js): the class picker's suggestions ---
     if (req.method === "GET" && url.pathname === "/api/courses") {
+      if (url.searchParams.has("subject")) return sendJson(res, courses.coursesInSubject(url.searchParams.get("subject")));
       return sendJson(res, await courses.searchCourses(db, url.searchParams.get("q")));
+    }
+    // Every subject A-Z, for browsing (MATH → its classes)
+    if (req.method === "GET" && url.pathname === "/api/courses/subjects") {
+      return sendJson(res, courses.listSubjects());
     }
 
     // Sections of one course this term, from Sac State's class schedule (sections.js)
@@ -545,18 +577,33 @@ async function handleRequest(req, res) {
     }
 
     // One group + its shared notes (only members can see it)
-    const groupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})(?:/notes(?:/(${UUID}))?)?$`));
+    const groupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})(?:/notes(?:/(${UUID}))?|/(discord))?$`));
     if (groupMatch) {
-      const [, groupId, noteId] = groupMatch;
+      const [, groupId, noteId, isDiscord] = groupMatch;
       const isNotes = url.pathname.includes("/notes");
       const group = await groups.getGroup(db, groupId, userId);
       if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
 
-      if (req.method === "GET" && !isNotes) {
-        const notes = await groups.listNotes(db, group, userId);
+      // The class's Discord server (shared by every group in the class): anyone in it can set,
+      // change or remove the invite link
+      // (Paused for now: groups.DISCORD_ENABLED)
+      if (req.method === "PUT" && isDiscord && groups.DISCORD_ENABLED) {
+        return readJson(req, res, 2_000, async (input) => {
+          const result = await groups.setDiscord(db, group, input);
+          if (result.error) return sendJson(res, { error: result.error }, 400);
+          sendJson(res, result.value);
+        });
+      }
+
+      if (req.method === "GET" && !isNotes && !isDiscord) {
+        // A missing Discord table (schema.sql not re-run yet) shouldn't break the group page
+        const classDiscord = !groups.DISCORD_ENABLED ? null : groups.getClassDiscordLink(db, group)
+          .then((link) => groups.discordForBrowser(link))
+          .catch((error) => { console.error("Class Discord lookup failed (run supabase/schema.sql again?):", error.message || error); return null; });
+        const [notes, discord] = await Promise.all([groups.listNotes(db, group, userId), classDiscord]);
         const { members, ...details } = group;
         return sendJson(res, {
-          group: { ...details, members: members.map(groups.memberForBrowser) },
+          group: { ...details, discord, discordEnabled: groups.DISCORD_ENABLED, members: members.map(groups.memberForBrowser) },
           notes,
         });
       }

@@ -138,7 +138,7 @@
     $(".fb-email-field").hidden = who.loggedIn;
     $(".fb-note").textContent = who.loggedIn
       ? "We'll include your email and browser so we can follow up."
-      : "We'll include your browser and the page you're on, nothing else.";
+      : "Sent anonymously: just your browser and the page you're on (plus your email, only if you add one).";
     return who;
   }
 

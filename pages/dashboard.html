@@ -37,6 +37,9 @@
       </div>
     </div>
 
+    <!-- Weekly study goal progress: time checked off this week (public/study-log.js) -->
+    <div id="week-progress" hidden></div>
+
     <div class="week-heading">
       <div class="week-title">
         <h2>Your week</h2>
@@ -75,7 +78,7 @@
     </p>
     <p class="catalog-note">
       <span aria-hidden="true">🎓</span>
-      <span><strong>Every Sac State class is built in.</strong> Start typing a course (like CSC 20), pick your section,
+      <span><strong>Every Sac State class is built in.</strong> Click the box to browse by subject or start typing a course (like CSC 20), pick your section,
         and the days, times and room fill in for you. More schools are coming soon.</span>
     </p>
     <form id="add-form" class="add-form">
@@ -379,6 +382,8 @@
   </div>
 
 
+  <script src="/public/day-emoji.js"></script>
+  <script src="/public/study-log.js"></script>
   <script src="/public/dashboard.js"></script>
   <script src="/public/course-picker.js"></script>
   <script src="/public/ai-notice.js"></script>

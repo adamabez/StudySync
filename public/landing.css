@@ -85,23 +85,62 @@
 .added-item strong { display: block; color: #222; }
 .added-item span { color: #666; font-size: 13px; }
 
-.choice-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.choice-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+/* Group / Solo: icon, title + line, and a check circle that fills in when picked */
 .choice-card {
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
   border: 2px solid #e3e6f0;
-  border-radius: 10px;
+  border-radius: 14px;
+  background: #fff;
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 .choice-card input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
-.choice-card strong { font-size: 16px; color: #222; }
-.choice-card span { color: #666; }
-.choice-card:hover { border-color: #b9c3ea; }
-.choice-card:has(input:checked) { border-color: #2b4acb; background: #f3f5fd; }
+.choice-card:hover { border-color: #b9c3ea; box-shadow: 0 4px 14px rgba(43, 74, 203, 0.1); transform: translateY(-1px); }
 .choice-card:has(input:focus-visible) { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.choice-card .choice-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #eef1fd;
+  color: #2b4acb;
+  transition: background 0.15s, color 0.15s;
+}
+.choice-card .choice-text { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.choice-card .choice-text strong { font-size: 20px; line-height: 1.2; color: #1d2a5c; }
+.choice-card .choice-text span { font-size: 14.5px; line-height: 1.4; color: #5b6275; }
+.choice-card .choice-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  border: 2px solid #c9d0e6;
+  border-radius: 50%;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.choice-card:has(input:checked) { border-color: #2b4acb; background: #f3f5fd; }
+.choice-card:has(input:checked) .choice-icon { background: #2b4acb; color: #fff; }
+.choice-card:has(input:checked) .choice-check {
+  border-color: #2b4acb;
+  background: #2b4acb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2.5 6.5 5 9 9.5 3.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+/* Solo in teal, like its banner */
+.choice-solo .choice-icon { background: #e3f4f2; color: #0f766e; }
+.choice-solo:hover { border-color: #9fd6cf; box-shadow: 0 4px 14px rgba(15, 118, 110, 0.1); }
+.choice-solo:has(input:checked) { border-color: #0f766e; background: #f0faf9; }
+.choice-solo:has(input:checked) .choice-icon { background: #0f766e; color: #fff; }
+.choice-solo:has(input:checked) .choice-check { border-color: #0f766e; background-color: #0f766e; }
+/* On the home page: side by side, a bit tighter */
+.pref-cards { max-width: 680px; margin-bottom: 10px; }
+.pref-cards .choice-card { padding: 16px 18px; }
+@media (prefers-reduced-motion: reduce) { .choice-card, .choice-card:hover { transition: none; transform: none; } }
 
 .setup-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; }
 .setup-actions button { padding: 12px 32px; }
@@ -125,6 +164,8 @@
 
 /* Weekly study goal options (reuse the day-chip pill look) */
 .hours-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.length-question { margin: 18px 0 8px; font-weight: 600; color: #222; }
+.length-question ~ .hours-options + .hint { margin-top: 8px; }
 .hours-custom { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
 .hours-custom[hidden] { display: none; }
 .hours-custom input { width: 80px; margin: 0; }
@@ -157,6 +198,8 @@
 .alone-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 28px 0 12px; }
 .alone-head h2 { margin: 0; }
 .goal-picker { display: inline-flex; align-items: center; gap: 8px; }
+.plan-pickers { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.goal-picker[hidden] { display: none; }
 .goal-picker select { font: inherit; padding: 6px 8px; border: 1px solid #ccd; border-radius: 8px; background: white; }
 .study-total { margin: 0 0 12px; color: #2b4acb; font-weight: 600; }
 .study-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
@@ -220,6 +263,10 @@
 .group-name { font-size: 16px; color: #222; }
 .group-card .meta { color: #666; }
 .group-card .hint { margin: 4px 0 0; font-size: 13px; }
+/* "This week: Tue · Already studied?" on a group card (study-log.js buttons) */
+.group-week { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 4px; }
+.group-week-label { font-size: 13px; color: #666; }
+.group-week .study-check { margin-top: 0; }
 .member-list { margin: 6px 0 0; padding-left: 18px; color: #444; font-size: 13px; }
 
 /* Group cards open the group's page */
@@ -444,6 +491,185 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
   .mt-place { font-size: 17px; }
 }
 
+/* Study plan page: the study groups feature banner (auto matching + auto scheduling) */
+.groups-hero {
+  margin: 4px 0 18px;
+  padding: 28px 28px 24px;
+  background: linear-gradient(135deg, #2b4acb 0%, #3b3fd0 55%, #5a34c9 100%);
+  border-radius: 18px;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(43, 74, 203, 0.25);
+}
+.groups-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #cdd6ff;
+}
+.groups-hero-title {
+  margin: 0 0 10px;
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #fff;
+}
+.groups-hero-title span { color: #8ff0c0; }
+.groups-hero-sub { max-width: 640px; margin: 0 0 22px; font-size: 16px; line-height: 1.5; color: #e4e9ff; }
+.groups-hero-sub strong { color: #fff; font-weight: 700; }
+.groups-hero-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.groups-hero-features li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: rgba(10, 16, 60, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+}
+.groups-hero-features strong { font-size: 16px; color: #fff; }
+.groups-hero-features li > span:last-child { font-size: 13.5px; line-height: 1.4; color: #d5dcff; }
+.groups-hero-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: #8ff0c0;
+  color: #13235f;
+}
+/* "On my own" banner: same layout, teal instead of blue-purple so the two read as different modes */
+.solo-hero {
+  background: linear-gradient(135deg, #0f766e 0%, #0e7490 55%, #1e5bb8 100%);
+  box-shadow: 0 10px 30px rgba(14, 116, 144, 0.25);
+}
+.solo-hero .groups-hero-title span { color: #fde68a; }
+.solo-hero .groups-hero-icon { background: #fde68a; color: #134e4a; }
+.solo-hero .groups-hero-eyebrow { color: #c5f1ee; }
+.solo-hero .groups-hero-sub { color: #e2f7f5; }
+.solo-hero .groups-hero-features li { background: rgba(4, 40, 48, 0.28); }
+.solo-hero .groups-hero-features li > span:last-child { color: #d3f0ee; }
+.solo-hero[hidden] { display: none; }
+
+/* Study preference: a label above the switch, and what it does under it */
+.pref-picker { margin-top: 24px; margin-bottom: 14px; }
+.pref-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #2b4acb; }
+.pref-label-hint { font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: none; color: #666; }
+.pref-picker .segmented.big { margin-top: 0; margin-bottom: 8px; }
+.pref-result { margin: 0; font-size: 15px; color: #444; }
+.pref-saved { margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: #e7f6ea; color: #2e7d32; font-size: 13px; font-weight: 600; }
+.pref-saved[hidden] { display: none; }
+
+@media (max-width: 600px) {
+  .groups-hero { padding: 22px 18px 18px; }
+  .groups-hero-title { font-size: 25px; }
+  .groups-hero-sub { font-size: 15px; }
+}
+
+/* Group page: "Auto-scheduled for you" — a compact version of the study groups banner */
+.group-why {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #2b4acb 0%, #3b3fd0 55%, #5a34c9 100%);
+  border-radius: 14px;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(43, 74, 203, 0.2);
+}
+.group-why .groups-hero-icon { margin: 0; flex: none; }
+.group-why-title { display: block; margin-bottom: 2px; font-size: 17px; color: #fff; }
+.group-why p { margin: 0; font-size: 14px; line-height: 1.45; color: #e4e9ff; }
+
+/* Group page: Discord server card (icon, name and counts come from Discord's invite lookup) */
+.discord-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  margin-bottom: 8px;
+  padding: 14px 16px;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-left: 4px solid #5865f2;
+  border-radius: 12px;
+}
+.discord-server { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.discord-icon { width: 56px; height: 56px; flex: none; border-radius: 16px; object-fit: cover; background: #eef0fb; }
+.discord-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #5865f2;
+  color: #fff;
+  font-weight: 700;
+  font-size: 19px;
+}
+.discord-initials-mark { width: 30px; height: auto; }
+.discord-icon[hidden], .discord-initials[hidden] { display: none; }
+.discord-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.discord-info strong { font-size: 16px; color: #222; overflow-wrap: anywhere; }
+.discord-counts { display: flex; align-items: center; gap: 6px; color: #666; font-size: 13px; }
+.discord-counts[hidden] { display: none; }
+.discord-online-dot { width: 8px; height: 8px; border-radius: 50%; background: #23a55a; flex: none; }
+.discord-expired { flex-basis: 100%; order: 3; margin: 0; color: #c62828; font-size: 13px; }
+.discord-expired[hidden] { display: none; }
+.discord-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* Discord's official white mark (public/discord-mark-white.svg, from discord.com/branding,
+   used unmodified) on their blurple, per their brand guidelines */
+.discord-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #5865f2;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.discord-button:hover { background: #4752c4; box-shadow: 0 3px 10px rgba(88, 101, 242, 0.35); transform: translateY(-1px); }
+.discord-button:focus-visible { outline: 2px solid #5865f2; outline-offset: 3px; }
+.discord-button img { width: 22px; height: auto; flex: none; }
+/* "Open in Discord": a quieter outlined button next to Join, for students already in the server */
+.discord-open {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  border: 1px solid #5865f2;
+  border-radius: 8px;
+  color: #4752c4;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.discord-open:hover { background: #eef0fe; }
+.discord-open:focus-visible { outline: 2px solid #5865f2; outline-offset: 3px; }
+.discord-open[hidden] { display: none; }
+/* Same row layout as the "Suggest a place" form (style.css stacks forms in a column by default) */
+.discord-form { flex-direction: row; align-items: stretch; gap: 8px; margin: 10px 0 8px; }
+.discord-form input { flex: 1; margin: 0; min-width: 0; }
+.discord-form button[type="submit"] { flex: none; padding: 0 18px; }
+.discord-form .link-button { flex: none; align-self: center; }
+.discord-card[hidden], .discord-form[hidden] { display: none; }
+
 /* Account settings page (pages/account.html) */
 .account-page { max-width: 720px; }
 .settings-card { margin-top: 18px; padding: 16px 18px; background: #fff; border: 1px solid #e3e6f0; border-radius: 12px; }
@@ -475,7 +701,11 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 .waiting-box strong { color: #2b4acb; font-size: 16px; }
 .waiting-box p { margin: 6px 0 0; color: #444; }
 
+/* Same as the dashboard's week: days side by side as many as fit, two per row on phones */
 @media (max-width: 900px) {
-  .study-week { grid-template-columns: 1fr; }
+  .study-week { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .study-day { min-height: 0; }
+}
+@media (max-width: 600px) {
+  .study-week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

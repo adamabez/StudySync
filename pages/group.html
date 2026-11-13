@@ -51,6 +51,18 @@
     <p id="load-error" class="error" hidden></p>
 
     <div id="group-body" hidden>
+      <!-- Why this time: StudySync scheduled it, nobody had to coordinate -->
+      <div class="group-why">
+        <span class="groups-hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+        </span>
+        <div>
+          <strong class="group-why-title">Auto-scheduled for you</strong>
+          <p>We picked this time because everyone in your group is free then. Nobody has to coordinate.
+            Something came up? Move this week's session below in one tap.</p>
+        </div>
+      </div>
+
       <section>
         <h2>Members</h2>
         <ul id="group-members" class="member-list"></ul>
@@ -104,6 +116,38 @@
           </form>
         </div>
         <p id="meet-error" class="mt-error" role="alert" hidden></p>
+      </section>
+
+      <!-- The class's Discord server, shared by every study group in the class: anyone taking it can add, change or remove the invite link (public/group.js) -->
+      <!-- Paused for now: hidden unless the server says it's on (groups.js DISCORD_ENABLED) -->
+      <section id="discord-section" hidden>
+        <h2 id="discord-title">Chat with your class</h2>
+        <p id="discord-hint" class="hint">A Discord server to chat with <strong>everyone taking this class</strong>, not just your study group: ask questions, share notes, find more study partners.</p>
+        <div id="discord-view" class="discord-card" hidden>
+          <div class="discord-server">
+            <img id="discord-icon" class="discord-icon" alt="" width="56" height="56" hidden>
+            <span id="discord-initials" class="discord-icon discord-initials" aria-hidden="true"></span>
+            <div class="discord-info">
+              <strong id="discord-name">Class chat on Discord</strong>
+              <span id="discord-counts" class="discord-counts"></span>
+            </div>
+          </div>
+          <p id="discord-expired" class="discord-expired" hidden>This invite has expired. Change the link to a new one.</p>
+          <div class="discord-actions">
+            <a id="discord-link" class="discord-button" href="#" target="_blank" rel="noopener noreferrer"><img src="/public/discord-mark-white.svg" alt="" width="22" height="17"><span>Join the class chat</span></a>
+            <!-- Already in the server? Opens it straight away (discord.com/channels/<server ID>) -->
+            <a id="discord-open" class="discord-open" href="#" target="_blank" rel="noopener noreferrer" title="Already joined? Open the class chat in Discord" hidden>Open chat</a>
+            <button type="button" id="discord-edit" class="link-button">Change link</button>
+            <button type="button" id="discord-remove" class="link-button danger">Remove</button>
+          </div>
+        </div>
+        <p id="discord-empty" class="hint" hidden>No class chat yet. Made a Discord server for this class? Paste its invite link so all your classmates can join the chat.</p>
+        <form id="discord-form" class="discord-form" hidden>
+          <input id="discord-input" type="text" maxlength="200" autocomplete="off" placeholder="https://discord.gg/abc123" aria-label="Discord invite link">
+          <button type="submit" id="discord-save">Save</button>
+          <button type="button" id="discord-cancel" class="link-button">Cancel</button>
+        </form>
+        <p id="discord-error" class="error" role="alert" hidden></p>
       </section>
 
       <section>

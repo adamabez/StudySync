@@ -18,6 +18,7 @@ const courses = require("./courses");
 const sections = require("./sections");
 const chats = require("./chats");
 const meetups = require("./meetups");
+const groups = require("./groups");
 const { checkMessage } = require("./namefilter");
 const ai = require("./ai");
 const planner = require("./public/planner");
@@ -251,7 +252,7 @@ function sampleData() {
   ].map((a) => ({ ...a, url: null }));
 
   return {
-    profile: { onboarded: true, preference: "group", weeklyHours: 6, studyNotes: "" },
+    profile: { onboarded: true, preference: "group", weeklyHours: 6, studyNotes: "", sessionLength: "medium" },
     classes,
     groups,
     notes,
@@ -334,7 +335,7 @@ function linkName(item) {
 
 function studyPlan(data) {
   const goalMinutes = data.profile.weeklyHours * 60;
-  const plan = planner.planStudyTimes(data.classes, goalMinutes);
+  const plan = planner.planStudyTimes(data.classes, goalMinutes, data.profile.sessionLength);
   return {
     source: "algorithm",
     goalMinutes,
@@ -423,14 +424,35 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
         data.profile.weeklyHours = hours;
       }
       if (typeof input.studyNotes === "string") data.profile.studyNotes = input.studyNotes.trim().slice(0, 300);
+      if (planner.SESSION_LENGTHS[input.sessionLength]) data.profile.sessionLength = input.sessionLength;
       sendJson(res, data.profile);
     });
   }
   if (m === "GET" && p === "/api/study-plan") return sendJson(res, studyPlan(data));
+  // "I studied" checkmarks: { "2026-11-09|13:00": { date, start, end } }
+  if (p === "/api/study-log") {
+    const log = (data.studyLog = data.studyLog || {});
+    if (m === "GET") {
+      const from = url.searchParams.get("from") || "";
+      const to = url.searchParams.get("to") || "";
+      return sendJson(res, { ready: true, done: Object.values(log).filter((row) => row.date >= from && row.date <= to) });
+    }
+    if (m === "POST") {
+      return readJson(req, res, 2_000, (input) => {
+        const { date, start, end } = input || {};
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "") || !planner.isTime(start) || !planner.isTime(end)) {
+          return sendJson(res, { error: "That study session doesn't look right." }, 400);
+        }
+        if (input.done) log[date + "|" + start] = { date, start, end };
+        else delete log[date + "|" + start];
+        sendJson(res, { date, start, end, done: Boolean(input.done) });
+      });
+    }
+  }
   if (m === "GET" && p === "/api/study-times") {
     const mine = myGroups(data);
     if (data.profile.preference === "group" && mine.length) {
-      return sendJson(res, mine.map((g) => ({ type: "group", name: g.name, days: g.days, start: g.start, end: g.end, note: g.members.length + " members" })));
+      return sendJson(res, mine.map((g) => ({ type: "group", id: g.id, name: g.name, days: g.days, start: g.start, end: g.end, note: g.members.length + " members" })));
     }
     return sendJson(res, studyPlan(data).sessions.map((s) => ({ type: "study", name: "Study time", days: [s.day], start: s.start, end: s.end, note: s.label })));
   }
@@ -566,15 +588,27 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
     return sendJson(res, { error: "Not found" }, 404);
   }
 
-  const groupMatch = p.match(/^\/api\/groups\/([\w-]+)(?:\/notes(?:\/([\w-]+))?)?$/);
+  const groupMatch = p.match(/^\/api\/groups\/([\w-]+)(?:\/notes(?:\/([\w-]+))?|\/(discord))?$/);
   if (groupMatch && !["match", "classes"].includes(groupMatch[1])) {
-    const [, groupId, noteId] = groupMatch;
+    const [, groupId, noteId, isDiscord] = groupMatch;
     const group = myGroups(data).find((g) => g.id === groupId);
     if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
     const notes = (data.notes[groupId] = data.notes[groupId] || []);
     const isNotes = p.includes("/notes");
+    const discordLinks = (data.discordLinks = data.discordLinks || {}); // by class, kept in memory like everything in the demo
 
-    if (m === "GET" && !isNotes) return sendJson(res, { group, notes });
+    if (m === "PUT" && isDiscord && groups.DISCORD_ENABLED) { // paused for now
+      return readJson(req, res, 2_000, async (input) => {
+        const checked = await groups.checkDiscordInput(input);
+        if (checked.error) return sendJson(res, { error: checked.error }, 400);
+        discordLinks[group.course] = checked.link;
+        sendJson(res, { discord: await groups.discordForBrowser(checked.link) });
+      });
+    }
+    if (m === "GET" && !isNotes && !isDiscord) {
+      const discord = groups.DISCORD_ENABLED ? await groups.discordForBrowser(discordLinks[group.course] || "") : null;
+      return sendJson(res, { group: { ...group, discord, discordEnabled: groups.DISCORD_ENABLED }, notes });
+    }
     if (m === "POST" && isNotes && !noteId) {
       return readJson(req, res, 50_000, (input) => {
         const title = typeof input.title === "string" ? input.title.trim() : "";
@@ -595,7 +629,9 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
   }
 
   // --- Course catalog and sections ---
+  if (m === "GET" && p === "/api/courses" && url.searchParams.has("subject")) return sendJson(res, courses.coursesInSubject(url.searchParams.get("subject")));
   if (m === "GET" && p === "/api/courses") return sendJson(res, searchCatalog(url.searchParams.get("q")));
+  if (m === "GET" && p === "/api/courses/subjects") return sendJson(res, courses.listSubjects());
   if (m === "GET" && p === "/api/courses/sections") {
     try {
       return sendJson(res, await sections.getSections(courses.normalizeCourse(url.searchParams.get("code"))));
@@ -778,13 +814,25 @@ function withBanner(html) {
 
 // The login page's live preview shows a page inside a frame: no banner, pop-ups or scrollbars.
 // The login page scrolls it from outside, so it doesn't need to be clickable.
+// The login page's live demo box: visitors scroll and click around the real demo inside it.
+// Links that leave the demo (sign up, log in, log out, exit) open in the whole window instead.
 const PREVIEW_STYLE = `
   <style>
-    html { scrollbar-width: none; }
-    html::-webkit-scrollbar { display: none; }
+    html { scrollbar-width: thin; }
     .ai-notice, .ai-disclaimer, .theme-toggle, .dash-footer, .fb-fab { display: none !important; }
-    body { pointer-events: none; align-items: flex-start !important; } /* page at the top, not centered */
-  </style>`;
+    body { align-items: flex-start !important; } /* page at the top, not centered */
+  </style>
+  <script>
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest && event.target.closest("a[href]");
+      if (!link || link.target === "_blank") return;
+      const url = new URL(link.href, location.href);
+      // Off-site, the login page itself ("/"), or anything about accounts
+      const leaves = url.origin !== location.origin || url.pathname === "/" ||
+        /^\\/(signup|login|logout|forgot|reset-password|account)\\b/.test(url.pathname);
+      if (leaves) { event.preventDefault(); window.top.location.href = url.href; }
+    }, true);
+  </script>`;
 
 function forPreview(html) {
   return html.replace("</head>", `${PREVIEW_STYLE}\n</head>`);
