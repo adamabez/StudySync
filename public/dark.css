@@ -1872,3 +1872,10 @@ html[data-theme="dark"] .page-title {
 html[data-theme="dark"] .page-sub {
   color: #a9b0c8;
 }
+html[data-theme="dark"] .edit-schedule-btn {
+  border-color: #8ea0e7;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .edit-schedule-btn:hover {
+  background: #262d45;
+}

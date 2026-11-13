@@ -16,7 +16,14 @@
   <div class="box wide">
     <nav id="app-nav" data-page="plan"></nav>
     <script src="/public/nav.js"></script>
-    <p id="greeting" class="page-sub">Your study plan for the week</p>
+    <!-- The plan is built from the schedule, so changing it is right here (also in the account menu) -->
+    <div class="page-sub-row">
+      <p id="greeting" class="page-sub">Your study plan for the week, built around your schedule</p>
+      <a href="/setup" class="edit-schedule-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M14.5 13.5l2 2-4 4h-2v-2z"/></svg>
+        <span>Edit schedule</span>
+      </a>
+    </div>
 
     <!-- Weekly study goal progress: time checked off this week (public/study-log.js) -->
     <div id="week-progress" hidden></div>

@@ -33,6 +33,25 @@
 .page-sub { margin: 0 0 16px; color: #666; }
 a.back-link { text-decoration: none; }
 
+/* Subtitle with a button beside it (study plan page: "Edit schedule") */
+.page-sub-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+.page-sub-row .page-sub { margin: 0; }
+.edit-schedule-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid #2b4acb;
+  border-radius: 999px;
+  color: #2b4acb;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.edit-schedule-btn:hover { background: #eef1fb; }
+.edit-schedule-btn:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
 /* Phones: the logo on its own row, the tabs and account underneath */
 @media (max-width: 600px) {
   .app-nav { flex-wrap: wrap; }
