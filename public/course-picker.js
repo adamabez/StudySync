@@ -47,7 +47,7 @@
 
   // ---- Section dropdown: appears once the name is a catalog course with sections this term ----
   const form = input.form;
-  const DAY_SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+  const { DAY_SHORT, formatTime } = window.studyFormat; // public/format.js
   const sectionField = document.createElement("label");
   sectionField.className = "section-field";
   sectionField.hidden = true;
@@ -87,13 +87,6 @@
     return m ? m[1] + " " + m[2] : s;
   }
 
-  // "14:30" → "2:30 PM"
-  function formatTime(t) {
-    let [h, m] = t.split(":").map(Number);
-    const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12 || 12;
-    return h + ":" + String(m).padStart(2, "0") + " " + ampm;
-  }
   const describeBlock = (b) => b.days.map((d) => DAY_SHORT[d]).join(", ") + " " + formatTime(b.start) + "–" + formatTime(b.end);
 
   function sectionLabel(s) {

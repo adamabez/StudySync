@@ -5,15 +5,9 @@
 // Edits only apply to this week (studyplan.js on the server checks and saves them).
 
 (function () {
-  const DAY_SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+  const { DAY_SHORT, formatTime } = window.studyFormat; // public/format.js
   const PENCIL = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M11.2 2.3a1.5 1.5 0 0 1 2.1 0l.4.4a1.5 1.5 0 0 1 0 2.1L5.6 12.9 2.5 13.5l.6-3.1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 3.5l2.5 2.5" stroke="currentColor" stroke-width="1.5"/></svg>';
 
-  function formatTime(t) {
-    let [h, m] = t.split(":").map(Number);
-    const ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12 || 12;
-    return h + ":" + String(m).padStart(2, "0") + " " + ampm;
-  }
   const formatLength = (min) => { const h = Math.floor(min / 60); const m = min % 60; return h && m ? h + "h " + m + "m" : h ? h + "h" : m + "m"; };
   const el = (tag, className, text) => { const n = document.createElement(tag); if (className) n.className = className; if (text) n.textContent = text; return n; };
 

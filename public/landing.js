@@ -6,7 +6,7 @@ const DAYS = [
   ["mon", "Monday"], ["tue", "Tuesday"], ["wed", "Wednesday"], ["thu", "Thursday"],
   ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"],
 ];
-const DAY_SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+const { DAY_SHORT, formatTime } = window.studyFormat; // public/format.js
 
 const GOAL_OPTIONS = [2, 4, 6, 8, 10, 15]; // hours a week to pick from (same as the setup screen)
 
@@ -25,14 +25,6 @@ const $ = (id) => document.getElementById(id);
 
 // ---------- Time helpers ----------
 const toMinutes = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-
-// Turn "14:30" into "2:30 PM"
-function formatTime(t) {
-  let [h, m] = t.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return h + ":" + String(m).padStart(2, "0") + " " + ampm;
-}
 
 function formatLength(min) {
   const h = Math.floor(min / 60);

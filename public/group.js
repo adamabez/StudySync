@@ -1,17 +1,9 @@
 // StudySync - one study group's page (runs in the browser): who's in it, when it meets,
 // the next session (who's coming, moving it, where), and the notes members share with each other.
 
-const DAY_SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+const { DAY_SHORT, formatTime } = window.studyFormat; // public/format.js
 const $ = (id) => document.getElementById(id);
 const groupId = new URLSearchParams(location.search).get("id") || "";
-
-// Turn "14:30" into "2:30 PM"
-function formatTime(t) {
-  let [h, m] = t.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return h + ":" + String(m).padStart(2, "0") + " " + ampm;
-}
 
 function formatDate(iso) {
   return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });

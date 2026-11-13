@@ -2,20 +2,12 @@
 // Step 1: add classes and other commitments (saved with the same /api/classes routes
 // as the dashboard). Step 2: study alone or in a group? Step 3: hours a week. Finish → /landing.
 
-const DAY_LABELS = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+const { DAY_SHORT: DAY_LABELS, formatTime } = window.studyFormat; // public/format.js
 let items = []; // what's on the user's calendar so far
 
 const $ = (id) => document.getElementById(id);
 const chosenKind = () => document.querySelector('input[name="kind"]:checked').value;
 const isAsyncChosen = () => chosenKind() === "class" && $("async").checked;
-
-// Turn "14:30" into "2:30 PM"
-function formatTime(t) {
-  let [h, m] = t.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return h + ":" + String(m).padStart(2, "0") + " " + ampm;
-}
 
 function describe(item) {
   const days = item.days.map((d) => DAY_LABELS[d]).join(", ");

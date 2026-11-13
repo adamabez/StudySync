@@ -1,6 +1,8 @@
 // StudySync - dashboard calendar (runs in the browser, not on the server).
 // Talks to the server's /api/classes routes to load, add, edit and remove classes.
 
+const { formatTime } = window.studyFormat; // public/format.js
+
 const DAYS = [
   ["mon", "Monday"], ["tue", "Tuesday"], ["wed", "Wednesday"], ["thu", "Thursday"],
   ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"],
@@ -51,14 +53,6 @@ function updateFormForAsync() {
 
 // Async classes have no start time
 const isAsyncItem = (item) => !item.start;
-
-// Turn "14:30" into "2:30 PM"
-function formatTime(t) {
-  let [h, m] = t.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return h + ":" + String(m).padStart(2, "0") + " " + ampm;
-}
 
 // Each class / task / other item's color: public/colors.js (shared with the setup page)
 const { COLOR_FAMILIES, familyColor, colorFor } = window.studyColors;
