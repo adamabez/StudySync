@@ -738,9 +738,9 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 .study-check span:not(.study-check-box) { color: inherit; } /* beats the study plan's gray card text */
 .study-check.on { border-color: #2e7d32; background: #e7f6ea; color: #1b5e20; }
 .study-check.on:hover { background: #d8f0dd; }
-/* Done: the circle turns into a little green star */
+/* Done: the circle fills in green with a white checkmark */
 .study-check.on .study-check-box { border: none; background: none; color: #2e9d48; }
-@keyframes star-pop { 0% { transform: scale(0.4) rotate(-30deg); } 70% { transform: scale(1.25) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes check-pop { 0% { transform: scale(0.4); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .study-check.pop .study-check-box { animation: none; } }
 /* Weekly study goal progress bar, top of the study plan and the dashboard (study-log.js) */
 .study-progress { margin: 18px 0 4px; padding: 12px 14px; border: 1px solid #e3e7f5; border-radius: 12px; background: #f7f8fd; }
@@ -758,8 +758,8 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 /* Goal reached: the colors stay, the box turns green */
 @media (prefers-reduced-motion: reduce) { .study-progress-fill { transition: none; } }
 
-/* Done: the star pops in only on the one just clicked */
-.study-check.pop .study-check-box { animation: star-pop 0.3s ease-out; }
+/* Done: the check pops in only on the one just clicked */
+.study-check.pop .study-check-box { animation: check-pop 0.3s ease-out; }
 /* In the narrow schedule columns: as wide as the card, label wraps instead of spilling out */
 .class-card .study-check, .study-block .study-check { width: 100%; justify-content: center; gap: 5px; padding: 4px 6px; white-space: normal; overflow-wrap: normal; word-break: normal; text-align: left; line-height: 1.15; }
 .class-card .study-check span, .study-block .study-check span { overflow-wrap: normal; word-break: keep-all; hyphens: none; }
