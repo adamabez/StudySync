@@ -133,6 +133,9 @@ button:hover { background: #2240b0; }
 .add-form .section-field { grid-column: 1 / -1; grid-row: 2; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .add-form .section-field[hidden] { display: none; }
 .add-form.has-sections .days { grid-row: 3; }
+/* Room for the class picker's hint hanging under the name box (set by course-picker.js):
+   on whatever is in the second row, the sections or the day buttons */
+.add-form > .section-field:not([hidden]), .add-form:not(.has-sections) > .days { margin-top: var(--hint-room, 0px); }
 .add-form .section-field select { width: 100%; height: 42px; padding: 0 10px; border: 1px solid #ccc; border-radius: 8px; background: white; font-size: 14px; }
 .section-note { font-size: 12.5px; color: #2e7d32; }
 .section-note:empty { display: none; }
@@ -141,6 +144,144 @@ button:hover { background: #2240b0; }
 }
 .course-hint.ok { color: #2e7d32; }
 .course-hint.warn { color: #8a5a00; }
+.course-hint:not(.ok) { font-size: 13.5px; }
+
+/* ---- Class picker dropdown (course-picker.js): subjects A-Z, a subject's classes, or matches ---- */
+.cp-menu {
+  position: absolute;
+  left: 0;
+  z-index: 40;
+  width: max(100%, min(580px, calc(100vw - 32px)));
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #d5d9e6;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(20, 30, 70, 0.18);
+  text-align: left;
+}
+.cp-menu[hidden] { display: none; }
+/* Phones: exactly as wide as the box, so it never runs off the screen */
+@media (max-width: 600px) {
+  .cp-menu { width: 100%; max-height: 60vh; }
+  .cp-option { gap: 10px; padding: 10px 8px; }
+  .cp-code { min-width: 0; font-size: 14px; }
+  .cp-title { font-size: 15px; }
+  .cp-units { display: none; }
+  .cp-subjects { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+}
+.cp-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 8px 10px 10px; }
+.cp-head-title { font-size: 15px; font-weight: 700; color: #1d2a5c; }
+.cp-head-hint { font-size: 13px; color: #6b7280; }
+.cp-back {
+  height: auto;
+  padding: 5px 12px;
+  border: 1px solid #d5d9e6;
+  border-radius: 999px;
+  background: #f4f6fc;
+  color: #2b4acb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cp-back:hover { background: #e8ecfb; }
+
+/* One class: a code pill, its name, units on the right */
+.cp-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.cp-option.active { background: #eef1fd; box-shadow: inset 3px 0 0 #2b4acb; }
+.cp-code {
+  flex: none;
+  min-width: 86px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #e8ecfb;
+  color: #2b4acb;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+.cp-title { flex: 1; min-width: 0; font-size: 16px; color: #1f2937; line-height: 1.3; }
+.cp-units { flex: none; font-size: 13px; color: #6b7280; white-space: nowrap; }
+.cp-empty, .cp-more { padding: 12px; font-size: 15px; color: #4b5563; }
+.cp-more { font-size: 13.5px; color: #6b7280; text-align: center; }
+
+/* Subjects A-Z: a grid of buttons with a letter before each group */
+.cp-subjects { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; padding: 0 4px 6px; }
+.cp-letter { grid-column: 1 / -1; padding: 8px 4px 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8a93ad; }
+.cp-subject {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid #dfe3f0;
+  border-radius: 10px;
+  background: #f8f9fd;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, transform 0.1s;
+}
+.cp-subject strong { font-size: 16px; color: #1d2a5c; }
+.cp-count { font-size: 12px; color: #8a93ad; }
+.cp-subject.active { background: #2b4acb; border-color: #2b4acb; transform: translateY(-1px); }
+.cp-subject.active strong, .cp-subject.active .cp-count { color: #fff; }
+
+/* Picked: "✓ CSC 130  Data Structures" as a chip */
+.cp-picked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin-top: 2px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 999px;
+  background: #e7f6ea;
+  color: #1b5e20;
+  font-size: 14px;
+}
+.cp-picked strong { white-space: nowrap; }
+.cp-picked-check { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #2e7d32; color: #fff; font-size: 12px; font-weight: 700; flex: none; }
+.cp-picked-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-picked-note { display: block; margin-top: 4px; font-size: 13px; color: #4b5563; }
+
+/* Sections: clickable cards instead of a long dropdown */
+.add-form .section-label, .section-field .section-label { font-size: 15px; font-weight: 600; color: #1d2a5c; }
+.cp-sections { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding: 2px; }
+.cp-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  height: auto;
+  padding: 10px 12px;
+  border: 1.5px solid #dfe3f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #1f2937;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.1s, background 0.1s, transform 0.1s;
+}
+.cp-section:hover { border-color: #9fb0ee; background: #f8f9fd; transform: translateY(-1px); }
+.cp-section:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.cp-section.selected { border-color: #2b4acb; background: #eef1fd; box-shadow: 0 0 0 1px #2b4acb; }
+/* (beats ".add-form button", which puts the form's Add button in the last column) */
+.add-form .cp-section { grid-column: auto; grid-row: auto; }
+.cp-section-top { display: flex; align-items: center; gap: 8px; width: 100%; }
+.cp-section-id { font-size: 13px; font-weight: 700; color: #2b4acb; }
+.cp-section-kind { font-size: 12px; color: #6b7280; }
+.cp-section.selected .cp-section-top::after { content: "✓"; margin-left: auto; color: #2b4acb; font-weight: 700; }
+.cp-section-time { font-size: 15px; font-weight: 600; color: #1f2937; }
+.cp-section-meta { font-size: 13px; color: #6b7280; }
 
 /* "Early access" note on login and sign-up (Gemini free tier, see public/ai-notice.js) */
 .ai-notice {

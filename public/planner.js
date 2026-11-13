@@ -14,13 +14,21 @@
   const SETTINGS = {
     dayStart: "08:00",   // don't suggest anything earlier than this
     dayEnd: "22:00",     // ...or later than this
-    minSession: 60,      // shortest study session (minutes), unless less is left of the goal
-    maxSession: 120,     // longest study session (minutes)
-    breakAfter: 15,      // breather after a class before studying (minutes)
+    travelBefore: 15,    // time to get to a class / shift / practice before it starts (minutes)
+    breakAfter: 15,      // time to get away from it (and breathe) after it ends (minutes)
     studySpacing: 30,    // at least this long between two study sessions on the same day (minutes)
-    maxPerDay: 3,        // at most this many sessions per day (one per day first, then a second...)
     spreadBonus: 0.25,   // extra credit per day away from other study days (spreads sessions out)
   };
+
+  // How long each study session is: the student picks one (profile "sessionLength").
+  // Shorter sessions mean more of them, spread over more days.
+  const SESSION_LENGTHS = {
+    short: { min: 30, max: 45, maxPerDay: 4, label: "Short bursts", detail: "30–45 min" },
+    medium: { min: 45, max: 90, maxPerDay: 2, label: "Medium", detail: "45–90 min" },
+    long: { min: 90, max: 120, maxPerDay: 2, label: "Long, focused", detail: "1.5–2 hours" },
+  };
+  const DEFAULT_LENGTH = "medium";
+  const lengthFor = (name) => SESSION_LENGTHS[name] || SESSION_LENGTHS[DEFAULT_LENGTH];
 
   // How calm each part of the day usually is (higher = better time to study).
   // Afternoons first, then evenings and mornings; lunch and the edges of the day last.
@@ -55,11 +63,12 @@
   }
 
   // Free gaps on one day (in minutes), around everything on the calendar with a set time
-  // (plus a break after each) and around study sessions already picked ([start, end] pairs)
+  // (plus time to get there before and away after) and around study sessions already
+  // picked ([start, end] pairs)
   function freeGaps(calendar, dayKey, picked = []) {
     const busy = calendar
       .filter((item) => item.start && item.end && item.days.includes(dayKey))
-      .map((item) => ({ from: toMinutes(item.start), to: toMinutes(item.end) + SETTINGS.breakAfter }))
+      .map((item) => ({ from: toMinutes(item.start) - SETTINGS.travelBefore, to: toMinutes(item.end) + SETTINGS.breakAfter }))
       .concat(picked.map(([start, end]) => ({ from: start - SETTINGS.studySpacing, to: end + SETTINGS.studySpacing })))
       .sort((a, b) => a.from - b.from);
 
@@ -87,9 +96,9 @@
 
   // The best session to add next: the calmest free time on a day that has fewer than
   // `perDay` sessions so far. Sessions start on the hour or half hour.
-  function bestSession(calendar, remaining, perDay, picked) {
-    const want = Math.min(SETTINGS.maxSession, remaining);
-    const shortest = Math.min(SETTINGS.minSession, remaining);
+  function bestSession(calendar, remaining, perDay, picked, length) {
+    const want = Math.min(length.max, remaining);
+    const shortest = Math.min(length.min, remaining);
     const studyDays = DAY_KEYS.map((key, i) => (picked[key].length ? i : null)).filter((i) => i !== null);
     let best = null;
     DAY_KEYS.forEach((day, index) => {
@@ -100,7 +109,7 @@
         for (let start = Math.ceil(gap.from / 30) * 30; start + shortest <= gap.to; start += 30) {
           const end = start + Math.min(want, gap.to - start);
           const score = calmScore(start, end)
-            + (end - start) / SETTINGS.maxSession   // a bit of credit for longer sessions
+            + (end - start) / length.max            // a bit of credit for using the full length
             + distance * SETTINGS.spreadBonus;      // ...and for spreading them out
           if (!best || score > best.score) best = { day, start, end, score };
         }
@@ -110,14 +119,16 @@
   }
 
   // Plan sessions that add up to the weekly goal: one per day first (spread across the
-  // week), then a second per day, and so on. Returns { sessions, found } where sessions
-  // are { day, start, end } sorted by day and time, and found is the minutes planned.
-  function planStudyTimes(calendar, goalMinutes) {
+  // week), then a second per day, and so on. `sessionLength` is "short", "medium" or "long".
+  // Returns { sessions, found } where sessions are { day, start, end } sorted by day and
+  // time, and found is the minutes planned.
+  function planStudyTimes(calendar, goalMinutes, sessionLength) {
+    const length = lengthFor(sessionLength);
     const picked = Object.fromEntries(DAY_KEYS.map((key) => [key, []]));
     let remaining = goalMinutes;
-    for (let perDay = 1; perDay <= SETTINGS.maxPerDay && remaining > 0; perDay++) {
+    for (let perDay = 1; perDay <= length.maxPerDay && remaining > 0; perDay++) {
       while (remaining > 0) {
-        const session = bestSession(calendar, remaining, perDay, picked);
+        const session = bestSession(calendar, remaining, perDay, picked, length);
         if (!session) break;
         picked[session.day].push([session.start, session.end]);
         remaining -= session.end - session.start;
@@ -134,7 +145,8 @@
 
   // Check a plan from somewhere else (the AI) against the real schedule.
   // Returns null if it's fine, or a short reason it isn't.
-  function checkPlan(calendar, sessions, goalMinutes) {
+  function checkPlan(calendar, sessions, goalMinutes, sessionLength) {
+    const length = lengthFor(sessionLength);
     if (!Array.isArray(sessions)) return "no sessions";
     const byDay = Object.fromEntries(DAY_KEYS.map((key) => [key, []]));
     let total = 0;
@@ -142,7 +154,7 @@
       if (!s || !DAY_KEYS.includes(s.day) || !isTime(s.start) || !isTime(s.end)) return "bad day or time";
       const start = toMinutes(s.start);
       const end = toMinutes(s.end);
-      if (end - start < 30 || end - start > SETTINGS.maxSession) return "session too short or too long";
+      if (end - start < Math.min(30, length.min) || end - start > length.max) return "session too short or too long";
       const fits = freeGaps(calendar, s.day).some((g) => start >= g.from && end <= g.to);
       if (!fits) return "clashes with the schedule (" + s.day + " " + s.start + ")";
       byDay[s.day].push([start, end]);
@@ -150,19 +162,19 @@
     }
     for (const day of DAY_KEYS) {
       const list = byDay[day].sort((a, b) => a[0] - b[0]);
-      if (list.length > SETTINGS.maxPerDay) return "too many sessions on " + day;
+      if (list.length > length.maxPerDay) return "too many sessions on " + day;
       for (let i = 1; i < list.length; i++) {
         if (list[i][0] < list[i - 1][1] + SETTINGS.studySpacing) return "sessions too close together on " + day;
       }
     }
     // Must reach the goal (or as close as the algorithm can get), without overshooting by much
-    const reachable = Math.min(goalMinutes, planStudyTimes(calendar, goalMinutes).found);
+    const reachable = Math.min(goalMinutes, planStudyTimes(calendar, goalMinutes, sessionLength).found);
     if (total < reachable - 30) return "doesn't reach the weekly goal";
     if (total > goalMinutes + 30) return "goes well over the weekly goal";
     return null;
   }
 
-  const api = { DAY_KEYS, SETTINGS, CALM_TIMES, isTime, toMinutes, toTime, labelFor, freeWindows, planStudyTimes, checkPlan };
+  const api = { DAY_KEYS, SETTINGS, SESSION_LENGTHS, DEFAULT_LENGTH, lengthFor, CALM_TIMES, isTime, toMinutes, toTime, labelFor, freeWindows, planStudyTimes, checkPlan };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.StudyPlanner = api;
 })(this);

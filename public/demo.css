@@ -85,10 +85,13 @@ body.is-demo > .box { margin: 0 auto; }
   border: 1px solid #dde2f0;
   box-shadow: 0 18px 50px rgba(30, 45, 110, 0.18);
 }
-.preview-chrome { display: flex; gap: 6px; padding: 9px 12px; background: #eef0f6; border-bottom: 1px solid #dde2f0; }
+.preview-chrome { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #eef0f6; border-bottom: 1px solid #dde2f0; }
 .preview-chrome span { width: 10px; height: 10px; border-radius: 50%; background: #cfd4e2; }
+.preview-full { margin-left: auto; font-size: 13px; font-weight: 600; text-decoration: none; }
+.preview-full:hover { text-decoration: underline; }
 
-.preview-viewport { position: relative; display: block; aspect-ratio: 16 / 10.5; overflow: hidden; background: #f4f6fb; }
+/* Tall enough to scroll around in comfortably */
+.preview-viewport { position: relative; display: block; height: min(680px, 72vh); min-height: 460px; overflow: hidden; background: #f4f6fb; }
 .preview-viewport iframe {
   position: absolute;
   top: 0;
@@ -101,47 +104,27 @@ body.is-demo > .box { margin: 0 auto; }
 .preview-viewport iframe.active { opacity: 1; }
 .preview-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; font-size: 14px; color: #888; }
 
-/* Clicking anywhere on the screen opens the full demo */
-.preview-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 18px; text-decoration: none; }
-.preview-overlay span {
-  padding: 8px 16px;
+/* Tabs above the live demo: jump to each part (or just scroll inside it) */
+.preview-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.preview-tabs button {
+  padding: 7px 14px;
+  border: 1px solid #d6dcf6;
   border-radius: 999px;
-  background: rgba(29, 42, 92, 0.88);
-  color: white;
+  background: white;
+  color: #33406e;
   font-size: 14px;
   font-weight: 600;
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.2s, transform 0.2s;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.preview-overlay:hover span, .preview-overlay:focus-visible span { opacity: 1; transform: none; }
-/* Swipes go to preview.js; up-and-down still scrolls the page */
-.preview-overlay { touch-action: pan-y; }
-.preview-overlay-touch { display: none; }
-@media (hover: none) {
-  .preview-overlay-desktop { display: none; }
-  .preview-overlay-touch { display: inline-block; }
-}
+.preview-tabs button:hover { border-color: #9aa6d6; }
+.preview-tabs button[aria-current="true"] { background: #2b4acb; border-color: #2b4acb; color: white; }
+.preview-tabs button:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
 /* The problem StudySync solves, above "See how it works" */
-.preview-pitch {
-  margin: 0 0 4px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: #eef1fd;
-  border: 1px solid #d6dcf6;
-  color: #33406e;
-  font-size: 15px;
-  line-height: 1.5;
-}
-.preview-pitch strong { color: #1d2a5c; }
-.preview-overlay:focus-visible { outline: 3px solid #2b4acb; outline-offset: -3px; border-radius: 14px; }
 
-.preview-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.preview-dots { display: flex; gap: 8px; }
-.preview-dot { width: 9px; height: 9px; padding: 0; border-radius: 999px; background: #c9d0e6; transition: width 0.25s, background 0.25s; }
-.preview-dot:hover { background: #9aa6d6; }
-.preview-dot[aria-current="true"] { width: 26px; background: #2b4acb; }
+.preview-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.preview-hint { font-size: 13px; color: #777; }
 .preview-try { font-size: 15px; font-weight: 600; text-decoration: none; }
 .preview-try:hover { text-decoration: underline; }
 
@@ -151,21 +134,23 @@ body.is-demo > .box { margin: 0 auto; }
   .preview { width: 100%; max-width: 440px; flex: none; }
   .preview-head { text-align: center; }
   .preview-head h2 { font-size: 20px; }
-  .preview-viewport { aspect-ratio: 4 / 5; }
-  .preview-overlay span { opacity: 1; transform: none; } /* no hover on phones: always show it */
+  .preview-tabs { justify-content: center; }
+  .preview-viewport { height: 70vh; min-height: 420px; }
+  .preview-foot { justify-content: center; text-align: center; }
 }
 
 /* Dark mode */
 html[data-theme="dark"] .preview-head h2 { color: #e3e7f7; }
-html[data-theme="dark"] .preview-pitch { background: #232a42; border-color: #343d5e; color: #c3cae6; }
-html[data-theme="dark"] .preview-pitch strong { color: #e3e7f7; }
 html[data-theme="dark"] .preview-eyebrow { color: #8ea0e7; }
 html[data-theme="dark"] .preview-screen { background: #23262e; border-color: #343a4d; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); }
 html[data-theme="dark"] .preview-chrome { background: #2b2f3a; border-color: #343a4d; }
 html[data-theme="dark"] .preview-chrome span { background: #4a5063; }
 html[data-theme="dark"] .preview-viewport { background: #1b212f; }
-html[data-theme="dark"] .preview-dot { background: #3f4660; }
-html[data-theme="dark"] .preview-dot[aria-current="true"] { background: #8ea0e7; }
+html[data-theme="dark"] .preview-tabs button { background: #232a42; border-color: #343d5e; color: #c3cae6; }
+html[data-theme="dark"] .preview-tabs button:hover { border-color: #5a668f; }
+html[data-theme="dark"] .preview-tabs button[aria-current="true"] { background: #3b56d6; border-color: #3b56d6; color: white; }
+html[data-theme="dark"] .preview-full { color: #8ea2f5; }
+html[data-theme="dark"] .preview-hint { color: #8d94ab; }
 html[data-theme="dark"] .demo-banner { background: #262d45; border-color: #3a4570; color: #d6dcf5; }
 html[data-theme="dark"] .demo-banner-cta { background: #4a63d6; }
 html[data-theme="dark"] .demo-banner-cta:hover { background: #5871dc; }

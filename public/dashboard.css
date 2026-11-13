@@ -252,6 +252,8 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   text-align: center;
 }
 .empty-icon { font-size: 20px; opacity: 0.85; }
+/* 📚 / 🏋️ after a day's name (day-emoji.js) */
+.day-badges { font-size: 14px; letter-spacing: 1px; }
 
 /* One class on the calendar */
 .class-card {
@@ -326,8 +328,13 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   .add-form .name, .add-form .location { grid-column: 1 / -1; }
   .add-form button { grid-column: 1 / -1; grid-row: auto; }
   .add-form .days { grid-row: auto; }
-  .week { grid-template-columns: 1fr; }
+  /* Days side by side as many as fit (3 in a half-width window), not one huge column each */
+  .week { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .day-col { min-height: 0; }
+}
+/* Phones: two days per row */
+@media (max-width: 600px) {
+  .week { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 }
 
 /* ---------- "Add a Class / Task / Other" dropdown ---------- */
@@ -441,6 +448,71 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   box-shadow: 0 2px 8px rgba(240, 160, 32, 0.25);
 }
 .class-card.study-time .kind-tag { color: #8a5a00; background: #fde3a7; }
+
+/* "Mark studied" checkmark on solo study sessions (study-log.js), here and on the study plan */
+.study-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px 4px 5px;
+  border: 1px solid #e6c98a;
+  border-radius: 999px;
+  background: #fff;
+  color: #8a5a00;
+  font: inherit;            /* the page's font, not the browser's default button font */
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.study-check:hover { background: #fff6e0; }
+.study-check:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.study-check .study-check-box {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 2px solid #d9a441;
+  border-radius: 50%;
+  background: #fff;
+  color: #fff;
+}
+.study-check .study-check-box svg { display: block; width: 18px; height: 18px; }
+.study-check span:not(.study-check-box) { color: inherit; } /* beats the study plan's gray card text */
+.study-check.on { border-color: #2e7d32; background: #e7f6ea; color: #1b5e20; }
+.study-check.on:hover { background: #d8f0dd; }
+/* Done: the circle turns into a little green star */
+.study-check.on .study-check-box { border: none; background: none; color: #2e9d48; }
+@keyframes star-pop { 0% { transform: scale(0.4) rotate(-30deg); } 70% { transform: scale(1.25) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .study-check.pop .study-check-box { animation: none; } }
+/* Weekly study goal progress bar, top of the study plan and the dashboard (study-log.js) */
+.study-progress { margin: 18px 0 4px; padding: 12px 14px; border: 1px solid #e3e7f5; border-radius: 12px; background: #f7f8fd; }
+.study-progress[hidden] { display: none; }
+.study-progress-text { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; margin-bottom: 8px; font-size: 14px; }
+.study-progress-text strong { color: #2b4acb; font-size: 15px; }
+.study-progress-text span { color: #555; }
+.study-progress-track { height: 10px; border-radius: 999px; background: #e3e7f5; overflow: hidden; }
+.study-progress-fill { width: 0; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2b4acb, #5a7cf0); transition: width 0.4s ease; }
+.study-progress.reached { border-color: #b7e0c0; background: #f1faf3; }
+.study-progress.reached .study-progress-text strong { color: #1b5e20; }
+.study-progress.reached .study-progress-fill { background: linear-gradient(90deg, #2e9d48, #5cc472); }
+@media (prefers-reduced-motion: reduce) { .study-progress-fill { transition: none; } }
+
+/* Done: the star pops in only on the one just clicked */
+.study-check.pop .study-check-box { animation: star-pop 0.3s ease-out; }
+/* In the narrow schedule columns: as wide as the card, label wraps instead of spilling out */
+.class-card .study-check, .study-block .study-check { width: 100%; justify-content: center; gap: 5px; padding: 4px 6px; white-space: normal; overflow-wrap: normal; word-break: normal; text-align: left; line-height: 1.15; }
+.class-card .study-check span, .study-block .study-check span { overflow-wrap: normal; word-break: keep-all; hyphens: none; }
+
+/* A studied session goes calm green */
+.studied { border-color: #b7e0c0 !important; background: #f1faf3 !important; }
+.studied strong { text-decoration: line-through; text-decoration-color: rgba(46, 125, 50, 0.6); }
 .study-sparkle {
   position: absolute;
   top: 4px;

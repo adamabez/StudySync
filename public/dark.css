@@ -75,6 +75,100 @@ html[data-theme="dark"] .course-hint.ok {
 html[data-theme="dark"] .course-hint.warn {
   color: #ffc65c;
 }
+html[data-theme="dark"] .cp-menu {
+  background: #23262e;
+  border: 1px solid #404453;
+}
+html[data-theme="dark"] .cp-head-title {
+  color: #8394d8;
+}
+html[data-theme="dark"] .cp-head-hint {
+  color: #828997;
+}
+html[data-theme="dark"] .cp-back {
+  border: 1px solid #404453;
+  background: #191f32;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .cp-back:hover {
+  background: #141a30;
+}
+html[data-theme="dark"] .cp-option.active {
+  background: #131a35;
+}
+html[data-theme="dark"] .cp-code {
+  background: #141a30;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .cp-title {
+  color: #c8d2e0;
+}
+html[data-theme="dark"] .cp-units {
+  color: #828997;
+}
+html[data-theme="dark"] .cp-empty, html[data-theme="dark"] .cp-more {
+  color: #9ca6b4;
+}
+html[data-theme="dark"] .cp-more {
+  color: #828997;
+}
+html[data-theme="dark"] .cp-letter {
+  color: #7882a0;
+}
+html[data-theme="dark"] .cp-subject {
+  border: 1px solid #3f465b;
+  background: #1a1f33;
+}
+html[data-theme="dark"] .cp-subject strong {
+  color: #8394d8;
+}
+html[data-theme="dark"] .cp-count {
+  color: #7882a0;
+}
+html[data-theme="dark"] .cp-subject.active {
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .cp-picked {
+  background: #18291b;
+  color: #80db87;
+}
+html[data-theme="dark"] .cp-picked-note {
+  color: #9ca6b4;
+}
+html[data-theme="dark"] .add-form .section-label, html[data-theme="dark"] .section-field .section-label {
+  color: #8394d8;
+}
+html[data-theme="dark"] .cp-section {
+  border: 1.5px solid #3f465b;
+  background: #23262e;
+  color: #c8d2e0;
+}
+html[data-theme="dark"] .cp-section:hover {
+  border-color: #2a3357;
+  background: #1a1f33;
+}
+html[data-theme="dark"] .cp-section:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .cp-section.selected {
+  border-color: #5871dc;
+  background: #131a35;
+}
+html[data-theme="dark"] .cp-section-id {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .cp-section-kind {
+  color: #828997;
+}
+html[data-theme="dark"] .cp-section.selected .cp-section-top::after {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .cp-section-time {
+  color: #c8d2e0;
+}
+html[data-theme="dark"] .cp-section-meta {
+  color: #828997;
+}
 html[data-theme="dark"] .ai-notice {
   background: #372c0e;
   border: 1px solid #5c4f29;
@@ -274,6 +368,59 @@ html[data-theme="dark"] .class-card.study-time .kind-tag {
   color: #ffc65c;
   background: #1d1608;
 }
+html[data-theme="dark"] .study-check {
+  border: 1px solid #4d4127;
+  background: #23262e;
+  color: #ffc65c;
+}
+html[data-theme="dark"] .study-check:hover {
+  background: #35290d;
+}
+html[data-theme="dark"] .study-check:focus-visible {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .study-check .study-check-box {
+  border: 2px solid #e3bc74;
+  background: #23262e;
+}
+html[data-theme="dark"] .study-check.on {
+  border-color: #45ba4b;
+  background: #18291b;
+  color: #80db87;
+}
+html[data-theme="dark"] .study-check.on:hover {
+  background: #142317;
+}
+html[data-theme="dark"] .study-check.on .study-check-box {
+  color: #81da96;
+}
+html[data-theme="dark"] .study-progress {
+  border: 1px solid #3c4562;
+  background: #191d34;
+}
+html[data-theme="dark"] .study-progress-text strong {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .study-progress-text span {
+  color: #aaaaaa;
+}
+html[data-theme="dark"] .study-progress-track {
+  background: #161a28;
+}
+html[data-theme="dark"] .study-progress.reached {
+  border-color: #354f3b;
+  background: #1a2e1e;
+}
+html[data-theme="dark"] .study-progress.reached .study-progress-text strong {
+  color: #80db87;
+}
+html[data-theme="dark"] .studied {
+  border-color: #354f3b !important;
+  background: #1a2e1e !important;
+}
+html[data-theme="dark"] .studied strong {
+  text-decoration-color: rgba(136, 211, 140, 0.6);
+}
 html[data-theme="dark"] .study-sparkle {
   color: #f8d397;
   text-shadow: 0 0 6px rgba(24, 15, 2, 0.6);
@@ -330,22 +477,48 @@ html[data-theme="dark"] .added-item span {
 }
 html[data-theme="dark"] .choice-card {
   border: 2px solid #42485a;
-}
-html[data-theme="dark"] .choice-card strong {
-  color: #dddddd;
-}
-html[data-theme="dark"] .choice-card span {
-  color: #999999;
+  background: #23262e;
 }
 html[data-theme="dark"] .choice-card:hover {
   border-color: #323a57;
+}
+html[data-theme="dark"] .choice-card:has(input:focus-visible) {
+  outline: 2px solid #5871dc;
+}
+html[data-theme="dark"] .choice-card .choice-icon {
+  background: #131a35;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .choice-card .choice-text strong {
+  color: #8394d8;
+}
+html[data-theme="dark"] .choice-card .choice-text span {
+  color: #8a91a4;
+}
+html[data-theme="dark"] .choice-card .choice-check {
+  border: 2px solid #3a4054;
 }
 html[data-theme="dark"] .choice-card:has(input:checked) {
   border-color: #5871dc;
   background: #151c35;
 }
-html[data-theme="dark"] .choice-card:has(input:focus-visible) {
-  outline: 2px solid #5871dc;
+html[data-theme="dark"] .choice-card:has(input:checked) .choice-check {
+  border-color: #5871dc;
+  background: #2b4acb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2.5 6.5 5 9 9.5 3.5' fill='none' stroke='#23262e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+html[data-theme="dark"] .choice-solo .choice-icon {
+  background: #172725;
+  color: #6eede3;
+}
+html[data-theme="dark"] .choice-solo:hover {
+  border-color: #2f4744;
+}
+html[data-theme="dark"] .choice-solo:has(input:checked) {
+  border-color: #1de2d3;
+  background: #192f2c;
+}
+html[data-theme="dark"] .choice-solo:has(input:checked) .choice-check {
+  border-color: #1de2d3;
 }
 html[data-theme="dark"] .page-head .skip-link {
   color: #8ea0e7;
@@ -360,6 +533,9 @@ html[data-theme="dark"] .setup-actions .skip-button {
 }
 html[data-theme="dark"] .setup-actions .skip-button:hover {
   background: #161c31;
+}
+html[data-theme="dark"] .length-question {
+  color: #dddddd;
 }
 html[data-theme="dark"] .notes-field textarea {
   border: 1px solid #3f3f4d;
@@ -422,6 +598,9 @@ html[data-theme="dark"] .group-name {
 html[data-theme="dark"] .group-card .meta {
   color: #999999;
 }
+html[data-theme="dark"] .group-week-label {
+  color: #999999;
+}
 html[data-theme="dark"] .member-list {
   color: #bbbbbb;
 }
@@ -444,6 +623,318 @@ html[data-theme="dark"] .note-card .meta {
 }
 html[data-theme="dark"] .note-body {
   color: #cccccc;
+}
+html[data-theme="dark"] .mt-card {
+  background: linear-gradient(135deg, #131a35, #1d0f3c);
+  border: 1px solid #343d65;
+}
+html[data-theme="dark"] .mt-card-empty {
+  background: #1c2030;
+  border-color: #3a425c;
+}
+html[data-theme="dark"] .mt-label {
+  color: #aeb6d4;
+}
+html[data-theme="dark"] .mt-place {
+  color: #8394d8;
+}
+html[data-theme="dark"] .mt-when {
+  color: #7f86a4;
+}
+html[data-theme="dark"] .mt-card-empty strong {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .mt-card-empty span {
+  color: #7b819d;
+}
+html[data-theme="dark"] .mt-flash {
+  color: #7ddeab;
+}
+html[data-theme="dark"] .mt-error {
+  color: #e78787;
+}
+html[data-theme="dark"] .mt-ideas-head h3 {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .spot {
+  background: #23262e;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .spot.is-the-spot {
+  border-color: #2a3455;
+  background: #10153e;
+}
+html[data-theme="dark"] .spot-empty {
+  color: #7b829d;
+  border: 1px dashed #3a425c;
+}
+html[data-theme="dark"] .spot-vote {
+  border: 1px solid #3c445f;
+  background: #23262e;
+  color: #8f95b5;
+}
+html[data-theme="dark"] .spot-vote:hover {
+  background: #191e30;
+}
+html[data-theme="dark"] .spot-vote[aria-pressed="true"] {
+  background: #131a32;
+  border-color: #2a3455;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .spot-text strong {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .spot-text span {
+  color: #7b829d;
+}
+html[data-theme="dark"] .spot-choose {
+  border: 1px solid #313c64;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .spot-choose:hover {
+  background: #131a35;
+}
+html[data-theme="dark"] .spot-remove {
+  color: #7880a0;
+}
+html[data-theme="dark"] .spot-remove:hover {
+  background: #351212;
+  color: #e78787;
+}
+html[data-theme="dark"] .ns-card {
+  background: #23262e;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .ns-soon {
+  color: #aeb6d4;
+}
+html[data-theme="dark"] .ns-soon.live {
+  color: #7ddeab;
+}
+html[data-theme="dark"] .ns-date {
+  color: #8394d8;
+}
+html[data-theme="dark"] .ns-time {
+  color: #8f95b5;
+}
+html[data-theme="dark"] .ns-where {
+  background: #131a35;
+  color: #8394d8;
+}
+html[data-theme="dark"] .ns-place.none {
+  color: #7b829d;
+}
+html[data-theme="dark"] .ns-moved {
+  background: #372c0e;
+  color: #e6c774;
+}
+html[data-theme="dark"] .ns-choice {
+  border: 1.5px solid #3c445f;
+  background: #23262e;
+  color: #9199ca;
+}
+html[data-theme="dark"] .ns-choice:hover {
+  background: #1b212f;
+}
+html[data-theme="dark"] .ns-choice.going[aria-pressed="true"] {
+  background: #182920;
+  border-color: #46ca8a;
+  color: #7be0ab;
+}
+html[data-theme="dark"] .ns-choice.late[aria-pressed="true"] {
+  background: #35280d;
+  border-color: #eab34d;
+  color: #ffc55c;
+}
+html[data-theme="dark"] .ns-choice.cant[aria-pressed="true"] {
+  background: #351212;
+  border-color: #e48481;
+  color: #e37b78;
+}
+html[data-theme="dark"] .ns-summary {
+  color: #7b819d;
+}
+html[data-theme="dark"] .ns-person {
+  background: #1b212f;
+}
+html[data-theme="dark"] .ns-person::before {
+  background: #0e1013;
+}
+html[data-theme="dark"] .ns-name {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .ns-status {
+  color: #7d839b;
+}
+html[data-theme="dark"] .ns-move {
+  border-top: 1px solid #454b5e;
+}
+html[data-theme="dark"] .ns-move p {
+  color: #8f95b5;
+}
+html[data-theme="dark"] .ns-move.needed p {
+  color: #e37b78;
+}
+html[data-theme="dark"] .ns-find {
+  border: 1px solid #313c64;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .ns-find:hover {
+  background: #131a35;
+}
+html[data-theme="dark"] .ns-find.primary {
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .ns-times {
+  background: #1c2030;
+}
+html[data-theme="dark"] .ns-times-title {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .ns-day + .ns-day {
+  border-top: 1px solid #42495e;
+}
+html[data-theme="dark"] .ns-day-label {
+  color: #8f95b5;
+}
+html[data-theme="dark"] .ns-time-option {
+  background: #23262e;
+  border: 1px solid #313c64;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .sc {
+  background: #1c2030;
+  border: 1px solid #42485a;
+}
+html[data-theme="dark"] .sc-head h3 {
+  color: #8d97cd;
+}
+html[data-theme="dark"] .sc-hint {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-empty {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-meta {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-meta strong {
+  color: #9199ca;
+}
+html[data-theme="dark"] .sc-bubble {
+  background: #23262e;
+  border: 1px solid #43495c;
+  color: #8d97cd;
+}
+html[data-theme="dark"] .sc-msg.mine .sc-bubble {
+  border-color: #5871dc;
+}
+html[data-theme="dark"] .sc-delete {
+  color: #7b829d;
+}
+html[data-theme="dark"] .sc-delete:hover {
+  color: #e78787;
+}
+html[data-theme="dark"] .sc-idea {
+  border: 1px solid #40475b;
+  background: #23262e;
+  color: #8f95b5;
+}
+html[data-theme="dark"] .sc-idea:hover {
+  background: #191e30;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .sc-form {
+  background: #23262e;
+  border: 1px solid #3f465b;
+}
+html[data-theme="dark"] .sc-form:focus-within {
+  border-color: #2a3455;
+}
+html[data-theme="dark"] .sc-send:disabled {
+  background: #16181f;
+}
+html[data-theme="dark"] .sc-send:disabled:hover {
+  background: #16181f;
+}
+html[data-theme="dark"] .groups-hero-eyebrow {
+  color: #1a43ff;
+}
+html[data-theme="dark"] .groups-hero-title span {
+  color: #aef4d1;
+}
+html[data-theme="dark"] .groups-hero-features li {
+  border: 1px solid rgba(77, 81, 96, 0.18);
+}
+html[data-theme="dark"] .groups-hero-features li > span:last-child {
+  color: #1a40ff;
+}
+html[data-theme="dark"] .groups-hero-icon {
+  color: #778ee4;
+}
+html[data-theme="dark"] .solo-hero .groups-hero-title span {
+  color: #fdeca5;
+}
+html[data-theme="dark"] .solo-hero .groups-hero-icon {
+  color: #7cdfd8;
+}
+html[data-theme="dark"] .solo-hero .groups-hero-eyebrow {
+  color: #b5ede9;
+}
+html[data-theme="dark"] .solo-hero .groups-hero-sub {
+  color: #4bcdc1;
+}
+html[data-theme="dark"] .solo-hero .groups-hero-features li {
+  background: rgba(207, 243, 251, 0.28);
+}
+html[data-theme="dark"] .solo-hero .groups-hero-features li > span:last-child {
+  color: #54c5bd;
+}
+html[data-theme="dark"] .pref-label {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .pref-label-hint {
+  color: #999999;
+}
+html[data-theme="dark"] .pref-result {
+  color: #bbbbbb;
+}
+html[data-theme="dark"] .pref-saved {
+  background: #18291b;
+  color: #88d38c;
+}
+html[data-theme="dark"] .discord-card {
+  background: #23262e;
+  border: 1px solid #42485a;
+  border-left: 4px solid #8992f6;
+}
+html[data-theme="dark"] .discord-icon {
+  background: #161a31;
+}
+html[data-theme="dark"] .discord-info strong {
+  color: #dddddd;
+}
+html[data-theme="dark"] .discord-counts {
+  color: #999999;
+}
+html[data-theme="dark"] .discord-expired {
+  color: #e78787;
+}
+html[data-theme="dark"] .discord-button:hover {
+  box-shadow: 0 3px 10px rgba(2, 4, 24, 0.35);
+}
+html[data-theme="dark"] .discord-button:focus-visible {
+  outline: 2px solid #8992f6;
+}
+html[data-theme="dark"] .discord-open {
+  border: 1px solid #8992f6;
+  color: #a8ade3;
+}
+html[data-theme="dark"] .discord-open:hover {
+  background: #111638;
+}
+html[data-theme="dark"] .discord-open:focus-visible {
+  outline: 2px solid #8992f6;
 }
 html[data-theme="dark"] .settings-card {
   background: #23262e;
@@ -975,7 +1466,52 @@ html[data-theme="dark"] select { background-image: url("data:image/svg+xml,%3Csv
 /* Notebook: the question box sits inside its own bordered box, and a waiting Send button stays quiet */
 html[data-theme="dark"] .composer-box textarea { background: transparent; border: none; }
 html[data-theme="dark"] .composer-send:disabled, html[data-theme="dark"] .composer-send:disabled:hover { background: #30364c; color: #7d849c; }
+html[data-theme="dark"] .sc-form input { background: transparent; border: none; }
+html[data-theme="dark"] .sc-send:disabled, html[data-theme="dark"] .sc-send:disabled:hover { background: #30364c; color: #7d849c; }
+html[data-theme="dark"] .sc-msg.mine .sc-bubble { background: #3b56d6; border-color: #3b56d6; color: #fff; }
+html[data-theme="dark"] .ns-person::before { background: #5a6078; }
+html[data-theme="dark"] .ns-person.going::before { background: #3fbf7f; }
+html[data-theme="dark"] .ns-person.late::before { background: #f0ad3a; }
+html[data-theme="dark"] .ns-person.cant::before { background: #ef6b67; }
 html[data-theme="dark"] .nb-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+/* Discord button: white text on blurple, like in light mode (the link color above would dim it) */
+html[data-theme="dark"] a.discord-button, html[data-theme="dark"] a.discord-button:hover { color: #fff; }
+html[data-theme="dark"] .discord-icon.discord-initials { background: #5865f2; color: #fff; }
+/* The group page's "Auto-scheduled for you" banner: same gradient, keep its light-mode colors */
+html[data-theme="dark"] .group-why { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); }
+html[data-theme="dark"] .group-why .group-why-title { color: #fff; }
+html[data-theme="dark"] .group-why p { color: #e4e9ff; }
+/* Study groups banner: it's already a dark gradient, so keep its light-mode colors
+   (the automatic flips above would turn its text blue-on-blue) */
+html[data-theme="dark"] .groups-hero { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+html[data-theme="dark"] .groups-hero-eyebrow { color: #cdd6ff; }
+html[data-theme="dark"] .groups-hero-title { color: #fff; }
+html[data-theme="dark"] .groups-hero-title span { color: #8ff0c0; }
+html[data-theme="dark"] .groups-hero-sub { color: #e4e9ff; }
+html[data-theme="dark"] .groups-hero-features li { border: 1px solid rgba(255, 255, 255, 0.18); }
+html[data-theme="dark"] .groups-hero-features strong { color: #fff; }
+html[data-theme="dark"] .groups-hero-features li > span:last-child { color: #d5dcff; }
+html[data-theme="dark"] .groups-hero-icon { background: #8ff0c0; color: #13235f; }
+/* "On my own" banner: teal, also kept as in light mode */
+html[data-theme="dark"] .solo-hero .groups-hero-title span { color: #fde68a; }
+html[data-theme="dark"] .solo-hero .groups-hero-icon { background: #fde68a; color: #134e4a; }
+html[data-theme="dark"] .solo-hero .groups-hero-eyebrow { color: #c5f1ee; }
+html[data-theme="dark"] .solo-hero .groups-hero-sub { color: #e2f7f5; }
+html[data-theme="dark"] .solo-hero .groups-hero-features li > span:last-child { color: #d3f0ee; }
+html[data-theme="dark"] .solo-hero .groups-hero-features li { background: rgba(4, 40, 48, 0.28); border: 1px solid rgba(255, 255, 255, 0.18); }
+/* Ticked "Studied" checkmark: keep the filled green circle */
+html[data-theme="dark"] .study-check.on .study-check-box { border: none; background: none; color: #4cc46a; }
+html[data-theme="dark"] .study-check span:not(.study-check-box) { color: inherit; }
+/* Group / Solo option cards: picked icon fills in, white tick in the circle, softer teal */
+html[data-theme="dark"] .choice-card .choice-text strong { color: #e3e7f7; }
+html[data-theme="dark"] .choice-card:has(input:checked) .choice-icon { background: #3b56d6; color: #fff; }
+html[data-theme="dark"] .choice-card:has(input:checked) .choice-check {
+  border-color: #3b56d6;
+  background: #3b56d6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2.5 6.5 5 9 9.5 3.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+html[data-theme="dark"] .choice-solo:has(input:checked) { border-color: #2a9d92; background: #16302d; }
+html[data-theme="dark"] .choice-solo:has(input:checked) .choice-icon { background: #0f766e; color: #fff; }
+html[data-theme="dark"] .choice-solo:has(input:checked) .choice-check { border-color: #2a9d92; background-color: #0f766e; }
 /* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
    theme.js swaps the image too, for browsers that ignore content on images. */
 html[data-theme="dark"] img.logo { content: url("/public/logo-dark.png"); }

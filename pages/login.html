@@ -42,35 +42,33 @@
     </p>
   </div>
 
-  <!-- Live preview: the real demo, scaled down, playing through the main features (public/preview.js) -->
+  <!-- Live demo: the real demo in a box, to scroll and click around (public/preview.js) -->
   <section class="preview" id="preview" aria-labelledby="preview-title">
-    <!-- The problem StudySync solves, before showing how -->
-    <p class="preview-pitch">
-      <strong>No more phone tag.</strong> Finding a time to study together usually means days of
-      "when are you free?" texts. StudySync checks everyone's class schedules and makes your
-      study groups for you, automatically.
-    </p>
     <div class="preview-head">
-      <span class="preview-eyebrow">See how it works</span>
-      <h2 id="preview-title">Get matched with classmates</h2>
-      <p id="preview-text">A study group for each class, meeting when everyone's free.</p>
+      <span class="preview-eyebrow">Live demo</span>
+      <h2 id="preview-title">Try StudySync right here</h2>
+      <p id="preview-text">A sample student's week. Scroll and click around: nothing you change is saved.</p>
     </div>
+    <!-- Jump to a part of the demo (or just scroll inside it) -->
+    <nav class="preview-tabs" id="preview-tabs" aria-label="Parts of the demo">
+      <button type="button" data-page="landing" aria-current="true">Study groups</button>
+      <button type="button" data-page="dashboard" data-target=".week-heading">Schedule</button>
+      <button type="button" data-page="dashboard" data-target=".hw-head">Homework</button>
+      <button type="button" data-page="dashboard" data-target=".nb-heading">AI notebook</button>
+    </nav>
     <div class="preview-screen">
-      <div class="preview-chrome" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="preview-chrome">
+        <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+        <a href="/demo" class="preview-full">Open full screen ↗</a>
+      </div>
       <div class="preview-viewport" id="preview-viewport">
         <p class="preview-loading" id="preview-loading">Loading a sample week…</p>
-        <iframe id="preview-landing" title="StudySync study groups preview" tabindex="-1" aria-hidden="true"></iframe>
-        <iframe id="preview-dashboard" title="StudySync dashboard preview" tabindex="-1" aria-hidden="true"></iframe>
+        <iframe id="preview-frame" title="StudySync live demo"></iframe>
       </div>
-      <!-- The whole screen opens the demo -->
-      <a href="/demo" class="preview-overlay" aria-label="Open the demo and try it yourself">
-        <span class="preview-overlay-desktop">Click to try it</span>
-        <span class="preview-overlay-touch">Swipe to explore · tap to try it</span>
-      </a>
     </div>
     <div class="preview-foot">
-      <div class="preview-dots" id="preview-dots" aria-label="Preview steps"></div>
-      <a href="/demo" class="preview-try">Try it yourself →</a>
+      <span class="preview-hint">It's the real app with sample data.</span>
+      <a href="/signup" class="preview-try">Make it yours: create a free account →</a>
     </div>
   </section>
   </main>
@@ -87,8 +85,10 @@
       config: "Login isn't set up yet: SUPABASE_URL and SUPABASE_KEY in .env are missing or still the example values.",
       unknown: "Something went wrong. Try again.",
     };
-    // If Supabase sent a password reset link here instead of to /reset-password, pass it along
-    if (location.hash.includes("type=recovery") || location.hash.includes("error_description")) {
+    // If Supabase sent a password reset link here instead of to /reset-password, pass it along.
+    // (Not email confirmation links: those come back to /?confirmed=1 and are handled below.)
+    const fromConfirmLink = new URLSearchParams(location.search).has("confirmed");
+    if (location.hash.includes("type=recovery") || (location.hash.includes("error_description") && !fromConfirmLink)) {
       location.replace("/reset-password" + location.hash);
     }
 
@@ -112,6 +112,25 @@
       const notice = document.getElementById("login-notice");
       notice.textContent = "Check your email for a confirmation link, then log in.";
       notice.hidden = false;
+    }
+
+    // Back from the email's confirmation link (auth.signUp sends it to /?confirmed=1).
+    // Supabase adds the result after "#": login details we don't use (people log in here
+    // instead), or an error if the link expired. Either way, clear it from the address bar.
+    if (params.has("confirmed")) {
+      const hash = new URLSearchParams(location.hash.slice(1));
+      if (hash.has("error_code") || hash.has("error")) {
+        const error = document.getElementById("login-error");
+        error.textContent = hash.get("error_code") === "otp_expired"
+          ? "That confirmation link expired. Try logging in, or sign up again to get a new link."
+          : "That confirmation link didn't work. Try logging in, or sign up again to get a new link.";
+        error.hidden = false;
+      } else {
+        const notice = document.getElementById("login-notice");
+        notice.textContent = "Email confirmed! Log in to get started.";
+        notice.hidden = false;
+      }
+      history.replaceState(null, "", "/");
     }
   </script>
   <script src="/public/feedback.js"></script>

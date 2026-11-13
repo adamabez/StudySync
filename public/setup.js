@@ -124,10 +124,17 @@ $("add-form").addEventListener("submit", async (event) => {
 for (const radio of document.querySelectorAll('input[name="kind"]')) radio.addEventListener("change", updateForm);
 $("async").addEventListener("change", updateForm);
 
+// Session length only matters for Solo
+function showLengthStep() {
+  const picked = document.querySelector('input[name="preference"]:checked');
+  $("length-step").hidden = !picked || picked.value !== "alone";
+}
+for (const radio of document.querySelectorAll('input[name="preference"]')) radio.addEventListener("change", showLengthStep);
+
 $("finish").addEventListener("click", async () => {
   const picked = document.querySelector('input[name="preference"]:checked');
   if (!picked) {
-    $("finish-error").textContent = "Pick whether you'd rather study on your own or with a group.";
+    $("finish-error").textContent = "Pick Solo or Group.";
     return;
   }
   const weeklyHours = chosenHours();
@@ -136,11 +143,18 @@ $("finish").addEventListener("click", async () => {
     return;
   }
   $("finish").disabled = true;
-  const res = await fetch("/api/profile", {
+  const body = { preference: picked.value, weeklyHours, studyNotes: $("study-notes").value };
+  if (picked.value === "alone") body.sessionLength = (document.querySelector('input[name="length"]:checked') || {}).value || "medium";
+  let res = await fetch("/api/profile", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ preference: picked.value, weeklyHours, studyNotes: $("study-notes").value }),
+    body: JSON.stringify(body),
   });
+  // Database not updated for session length yet: still finish setup without it
+  if (res.status === 503) {
+    delete body.sessionLength;
+    res = await fetch("/api/profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     $("finish-error").textContent = data.error || "Couldn't save. Try again.";
@@ -211,6 +225,9 @@ async function load() {
     const radio = document.querySelector('input[name="preference"][value="' + profile.preference + '"]');
     if (radio) radio.checked = true;
     setHours(profile.weeklyHours);
+    const length = document.querySelector('input[name="length"][value="' + (profile.sessionLength || "medium") + '"]');
+    if (length) length.checked = true;
+    showLengthStep();
     // Study notes only matter when the AI plans study times
     $("notes-field").hidden = !profile.aiScheduling;
     $("study-notes").value = profile.studyNotes || "";

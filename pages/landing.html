@@ -39,10 +39,30 @@
       </nav>
     </header>
 
-    <!-- Study alone or in a group? Switching saves the preference. -->
-    <div class="segmented big" role="radiogroup" aria-label="How are you studying?">
-      <label><input type="radio" name="preference" value="alone"> Studying on my own</label>
-      <label><input type="radio" name="preference" value="group"> Studying with a group</label>
+    <!-- Weekly study goal progress: time checked off this week (public/study-log.js) -->
+    <div id="week-progress" hidden></div>
+
+    <!-- Study alone or in a group? Switching saves the preference, and the page below follows it. -->
+    <div class="pref-picker">
+      <p class="pref-label" id="pref-label">Your study preference <span class="pref-label-hint">Pick one. You can switch any time.</span></p>
+      <div class="choice-cards pref-cards" role="radiogroup" aria-labelledby="pref-label">
+        <label class="choice-card choice-group">
+          <input type="radio" name="preference" value="group">
+          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="choice-text"><strong>Group</strong>
+            <span>Matched with classmates, one weekly session</span></span>
+          <span class="choice-check" aria-hidden="true"></span>
+        </label>
+        <label class="choice-card choice-solo">
+          <input type="radio" name="preference" value="alone">
+          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
+          <span class="choice-text"><strong>Solo</strong>
+            <span>Study time planned around your week</span></span>
+          <span class="choice-check" aria-hidden="true"></span>
+        </label>
+      </div>
+      <!-- What StudySync does for the picked preference (public/landing.js) -->
+      <p class="pref-result" id="pref-result" aria-live="polite"><span id="pref-result-text"></span> <span class="pref-saved" id="pref-saved" hidden>✓ Saved</span></p>
     </div>
 
     <p id="no-schedule" class="notice-box" hidden>
@@ -50,9 +70,42 @@
       <a href="/setup">Add your classes</a> to get real suggestions.
     </p>
 
-    <!-- ========== With a group: matched automatically ========== -->
+    <!-- ========== Group: matched automatically ========== -->
     <section id="group-view" hidden>
-      <h2>Your study groups <span class="early-tag">Early preview</span></h2>
+      <!-- The headline feature, before anything else: StudySync does the matching and scheduling -->
+      <div class="groups-hero">
+        <div class="groups-hero-text">
+          <p class="groups-hero-eyebrow">Your study groups <span class="early-tag">Early preview</span></p>
+          <h2 class="groups-hero-title">Stop trying to find a time.<br><span>We schedule it for you.</span></h2>
+          <p class="groups-hero-sub"><strong>No more phone tag.</strong> Finding a time to study together usually means days of
+            "when are you free?" texts. StudySync checks everyone's class schedules, puts you in a study group for each
+            class and picks a weekly time when every member is free. You just show up.</p>
+        </div>
+        <ul class="groups-hero-features">
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <strong>Auto matching</strong>
+            <span>Classmates from each of your classes, grouped for you</span>
+          </li>
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+            </span>
+            <strong>Auto scheduling</strong>
+            <span>A weekly time that fits everyone's classes</span>
+          </li>
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </span>
+            <strong>One-tap rescheduling</strong>
+            <span>Something came up? We find a new time that still works</span>
+          </li>
+        </ul>
+      </div>
+
       <!-- Study groups are the newest, least finished part of StudySync: say so plainly -->
       <div class="early-box" role="note">
         <span class="early-box-icon" aria-hidden="true">🧪</span>
@@ -61,8 +114,6 @@
           <p>Groups and members may change while we test, and some things won't work yet.</p>
           <p class="early-soon"><strong>Coming soon:</strong></p>
           <ul class="early-soon-list">
-            <li>Pick where to meet, together</li>
-            <li>See who's showing up to each session</li>
             <li>A study session summary that pulls together every concept your group covered</li>
             <li>Profiles with your study streaks, who you've studied with, and how many sessions you've done</li>
           </ul>
@@ -71,8 +122,6 @@
             <button type="button" class="early-box-link" data-feedback-open="idea">Tell us what you want</button></p>
         </div>
       </div>
-      <p class="hint">No more phone tag trying to find a time: we make a group for each of your classes
-        automatically, meeting when everyone in it is free.</p>
       <div id="my-groups" class="group-grid"></div>
 
       <!-- Classes that don't have a group yet (when they have at least one group) -->
@@ -87,25 +136,73 @@
       </div>
     </section>
 
-    <!-- ========== On my own: free times to set aside ========== -->
-    <!-- Also shown under "With a group" while waiting for a match -->
+    <!-- ========== Solo: free times to set aside ========== -->
+    <!-- Also shown under "Group" while waiting for a match -->
     <section id="alone-view" hidden>
+      <!-- Same kind of banner as the study groups one: what "on my own" gets you.
+           Hidden while a group student waits for a match (they see just the times below). -->
+      <div class="groups-hero solo-hero" id="solo-hero">
+        <div class="groups-hero-text">
+          <p class="groups-hero-eyebrow">Your solo study plan</p>
+          <h2 class="groups-hero-title">Your week has free time.<br><span>We'll find it for you.</span></h2>
+          <p class="groups-hero-sub"><strong>You picked Solo.</strong> StudySync looks at your classes, work
+            and everything else on your schedule, then sets aside study sessions in your free time until you reach
+            your weekly goal. No planning needed: just open this page and study when it says.</p>
+        </div>
+        <ul class="groups-hero-features">
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><polyline points="11 8 11 11 13 12"/></svg>
+            </span>
+            <strong>Finds your free time</strong>
+            <span>The gaps between classes and work, with time to get from place to place</span>
+          </li>
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+            </span>
+            <strong>Built around your goal</strong>
+            <span>Sessions as long as you like, spread across the week until you hit your hours</span>
+          </li>
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            </span>
+            <strong>Best times first</strong>
+            <span>Calm afternoons first, then evenings and mornings</span>
+          </li>
+        </ul>
+      </div>
       <div class="alone-head">
         <h2 id="alone-heading">Times to set aside for studying</h2>
-        <label class="goal-picker">Weekly goal
-          <select id="goal-select"></select>
-        </label>
+        <div class="plan-pickers">
+          <label class="goal-picker">Weekly goal
+            <select id="goal-select"></select>
+          </label>
+          <!-- Solo only: group sessions are scheduled for the whole group (match_study_group) -->
+          <label class="goal-picker" id="length-picker">Session length
+            <select id="length-select">
+              <option value="short">Short bursts (30–45 min)</option>
+              <option value="medium">Medium (45–90 min)</option>
+              <option value="long">Long, focused (1.5–2 hours)</option>
+            </select>
+          </label>
+        </div>
       </div>
-      <p class="hint">Calm afternoons first, then evenings and mornings. Sessions are 1–2 hours,
-        spread across the week, with a break after each class.
+      <p class="hint">Calm afternoons first, then evenings and mornings. <span id="length-hint"></span>
+        We leave 15 minutes before and after each class or shift to get there and back.
         <a href="/setup">Change your schedule or study notes</a></p>
+      <p id="length-error" class="error" hidden></p>
       <p id="study-total" class="study-total"></p>
+
       <div id="study-times" class="study-week"></div>
     </section>
 
     <p id="load-error" class="error" hidden></p>
   </div>
 
+  <script src="/public/day-emoji.js"></script>
+  <script src="/public/study-log.js"></script>
   <script src="/public/landing.js"></script>
   <script src="/public/feedback.js"></script>
 </body>

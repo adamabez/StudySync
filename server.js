@@ -41,7 +41,9 @@ const feedback = require("./feedback");
 const canvas = require("./canvas");
 const onboarding = require("./onboarding");
 const groups = require("./groups");
+const meetups = require("./meetups");
 const courses = require("./courses");
+const studylog = require("./studylog");
 const sections = require("./sections");
 const studyplan = require("./studyplan");
 const demo = require("./demo");
@@ -86,6 +88,7 @@ const FILE_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".png": "image/png",
+  ".svg": "image/svg+xml",
 };
 
 function sendPublicFile(res, urlPath) {
@@ -134,6 +137,18 @@ function readJson(req, res, limit, callback) {
   });
 }
 
+// Meetup changes (spots, votes, RSVPs, moving a session): at most WRITE_LIMIT a minute per student
+const WRITE_LIMIT = 30;
+const writeTimes = new Map(); // user ID → [times]
+function writeAllowed(userId) {
+  const since = Date.now() - 60 * 1000;
+  const times = (writeTimes.get(userId) || []).filter((t) => t > since);
+  if (writeTimes.size > 5_000) writeTimes.clear();
+  if (times.length >= WRITE_LIMIT) return false;
+  writeTimes.set(userId, [...times, Date.now()]);
+  return true;
+}
+
 // Feedback without an account: at most FEEDBACK_LIMIT messages per visitor (IP) every 10 minutes
 const FEEDBACK_LIMIT = 5;
 const feedbackTimes = new Map(); // ip → [times]
@@ -166,8 +181,11 @@ async function handleRequest(req, res) {
   // Trying the demo (demo.js): no account, sample data. A real login always wins.
   const inDemo = !loggedIn && demo.hasDemo(req);
   // Logging in, signing up or logging out also ends the demo
-  // The login page's live preview: the demo without its banner
-  const demoMode = inDemo && url.searchParams.get("embed") === "1" ? "embed" : inDemo;
+  // The login page's live demo box: the demo without its banner. It starts at ?embed=1;
+  // pages visitors click to inside the box stay embedded (browsers mark frame loads with
+  // Sec-Fetch-Dest: iframe), so the banner never shows up inside it.
+  const inFrame = url.searchParams.get("embed") === "1" || req.headers["sec-fetch-dest"] === "iframe";
+  const demoMode = inDemo && inFrame ? "embed" : inDemo;
   const endDemo = (cookies) => (demo.hasDemo(req) ? [...[].concat(cookies), demo.clearCookie()] : cookies);
 
   // "Try the demo" (the login page's button, or a QR code pointing here): straight to the
@@ -214,7 +232,7 @@ async function handleRequest(req, res) {
       const form = new URLSearchParams(body);
       const name = onboarding.cleanName(form.get("name"));
       if (name.error) return redirect(res, `/signup?error=${name.code}`);
-      const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value);
+      const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value, `${siteUrl(req)}/?confirmed=1`);
       if (result.error) return redirect(res, `/signup?error=${result.error}`);
       if (result.confirmEmail) return redirect(res, "/?checkEmail=1");
       redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
@@ -268,7 +286,7 @@ async function handleRequest(req, res) {
   // One study group's page: /group?id=<group id>
   if (req.method === "GET" && url.pathname === "/group") {
     if (!loggedIn && !inDemo) return redirect(res, "/");
-    return sendPage(res, "group.html", 200, inDemo);
+    return sendPage(res, "group.html", 200, demoMode);
   }
 
   // Log out
@@ -327,7 +345,7 @@ async function handleRequest(req, res) {
         if (result.error) return sendJson(res, { error: result.error }, 400);
       } catch (error) {
         // Without an account this needs the newest supabase/schema.sql (feedback without a user)
-        console.error("Feedback failed" + (loggedIn ? "" : " (no account: run supabase/schema.sql again?)") + ":", error.message || error);
+        console.error("Feedback failed" + (loggedIn ? "" : " (no account: run supabase/feedback-anonymous.sql in Supabase)") + ":", error.message || error);
         return sendJson(res, { error: "Couldn't send that right now. Try again in a bit." }, 502);
       }
       sendJson(res, { ok: true }, 201);
@@ -405,9 +423,30 @@ async function handleRequest(req, res) {
       return sendJson(res, await studyplan.getStudyPlan(db, userId, calendar, profile));
     }
 
+    // --- "I studied" checkmarks on solo study sessions (studylog.js) ---
+    if (req.method === "GET" && url.pathname === "/api/study-log") {
+      const result = await studylog.listDone(db, url.searchParams.get("from"), url.searchParams.get("to"));
+      if (result.error) return sendJson(res, { error: result.error }, 400);
+      return sendJson(res, result.value);
+    }
+    if (req.method === "POST" && url.pathname === "/api/study-log") {
+      return readJson(req, res, 2_000, async (input) => {
+        const result = await studylog.setDone(db, userId, input);
+        if (result.error) return sendJson(res, { error: result.error }, result.status || 400);
+        sendJson(res, result.value);
+      });
+    }
+
     if (req.method === "POST" && url.pathname === "/api/profile") {
       return readJson(req, res, 10_000, async (input) => {
-        const result = await onboarding.updateProfile(db, userId, input);
+        let result;
+        try {
+          result = await onboarding.updateProfile(db, userId, input);
+        } catch (error) {
+          if (error.code !== "SESSION_LENGTH_COLUMN") throw error;
+          console.error(error.message);
+          return sendJson(res, { error: "Session length can't be saved yet. Try again later." }, 503);
+        }
         if (result.error) return sendJson(res, { error: result.error }, 400);
         await groups.matchQuietly(db); // wants a group now → find one; prefers alone → leave theirs
         sendJson(res, result.value);
@@ -426,6 +465,7 @@ async function handleRequest(req, res) {
       if (profile.preference === "group" && myGroups.length) {
         return sendJson(res, myGroups.map((g) => ({
           type: "group",
+          id: g.id,
           name: g.name,
           days: g.days,
           start: g.start,
@@ -458,7 +498,12 @@ async function handleRequest(req, res) {
 
     // --- Course catalog (courses.js): the class picker's suggestions ---
     if (req.method === "GET" && url.pathname === "/api/courses") {
+      if (url.searchParams.has("subject")) return sendJson(res, courses.coursesInSubject(url.searchParams.get("subject")));
       return sendJson(res, await courses.searchCourses(db, url.searchParams.get("q")));
+    }
+    // Every subject A-Z, for browsing (MATH → its classes)
+    if (req.method === "GET" && url.pathname === "/api/courses/subjects") {
+      return sendJson(res, courses.listSubjects());
     }
 
     // Sections of one course this term, from Sac State's class schedule (sections.js)
@@ -472,20 +517,93 @@ async function handleRequest(req, res) {
       }
     }
 
-    // One group + its shared notes (only members can see it)
     const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
-    const groupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})(?:/notes(?:/(${UUID}))?)?$`));
+
+    // Meeting up (meetups.js): the spot and suggestions, RSVPs, moving a week's session, session chat.
+    // Every change answers with the fresh { meetup, spots, rsvps, moves } so the page just redraws.
+    const meetupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})/(meetup|spots|rsvp|slots|move|messages)(?:/(${UUID})(/vote)?)?$`));
+    if (meetupMatch) {
+      const [, groupId, part, spotId, isVote] = meetupMatch;
+      const group = await groups.getGroup(db, groupId, userId);
+      if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
+
+      const reply = async (result, status = 200) => {
+        if (result && result.error) return sendJson(res, { error: result.error }, 400);
+        const info = await meetups.getInfo(db, group, userId);
+        sendJson(res, { ...info, ...(result && typeof result.value === "object" ? result.value : {}) }, status);
+      };
+      const run = (work) => work().catch((error) => {
+        if (!meetups.isMissingTable(error)) throw error;
+        console.error("Meetups need the latest supabase/schema.sql:", error.message || error);
+        sendJson(res, { error: "Meetups aren't set up yet. Run the latest supabase/schema.sql in Supabase.", notSetUp: true }, 503);
+      });
+      const body = (limit, work) => readJson(req, res, limit, (input) => run(() => work(input)));
+
+      if (req.method !== "GET" && !writeAllowed(userId)) {
+        return sendJson(res, { error: "That's a lot of changes at once. Wait a few seconds and try again." }, 429);
+      }
+      if (req.method === "GET" && part === "meetup") return run(() => reply(null));
+      if (req.method === "POST" && part === "meetup") return body(2_000, async (input) => reply(await meetups.setMeetup(db, group, userId, input)));
+      if (req.method === "DELETE" && part === "meetup") return run(async () => { await meetups.clearMeetup(db, group); await reply(null); });
+      if (req.method === "POST" && part === "spots" && !spotId) return body(2_000, async (input) => reply(await meetups.addSpot(db, group, userId, input), 201));
+      if (req.method === "POST" && part === "spots" && spotId && isVote) {
+        return body(1_000, async (input) => reply(await meetups.setVote(db, group, userId, spotId, input.on !== false)));
+      }
+      if (req.method === "DELETE" && part === "spots" && spotId && !isVote) return run(async () => { await meetups.removeSpot(db, group, spotId); await reply(null); });
+      if (req.method === "POST" && part === "rsvp") return body(1_000, async (input) => reply(await meetups.setRsvp(db, group, userId, input)));
+      if (req.method === "GET" && part === "slots") return run(async () => sendJson(res, await meetups.freeSlots(db, group)));
+      if (req.method === "POST" && part === "move") return body(1_000, async (input) => reply(await meetups.moveSession(db, group, input)));
+      if (req.method === "DELETE" && part === "move") {
+        return run(async () => reply(await meetups.undoMove(db, group, { sessionDate: url.searchParams.get("session") })));
+      }
+
+      // Session chat: these answer with messages, not the whole meetup info
+      const answer = (result, status = 200) =>
+        result.error ? sendJson(res, { error: result.error }, 400) : sendJson(res, result.value, status);
+      if (req.method === "GET" && part === "messages" && !spotId) {
+        return run(async () => answer(await meetups.listMessages(db, group, userId, url.searchParams.get("session"), url.searchParams.get("after"))));
+      }
+      if (req.method === "POST" && part === "messages" && !spotId) {
+        const profile = await onboarding.getProfile(db, userId);
+        if (!onboarding.displayName(profile, req.user)) {
+          return sendJson(res, { error: "Add your name in Account settings first, so your group knows who's talking.", needsName: true }, 400);
+        }
+        return body(5_000, async (input) => answer(await meetups.addMessage(db, group, userId, input), 201));
+      }
+      if (req.method === "DELETE" && part === "messages" && spotId) {
+        return run(async () => { await meetups.removeMessage(db, group, spotId); sendJson(res, { ok: true }); });
+      }
+      return sendJson(res, { error: "Not found" }, 404);
+    }
+
+    // One group + its shared notes (only members can see it)
+    const groupMatch = url.pathname.match(new RegExp(`^/api/groups/(${UUID})(?:/notes(?:/(${UUID}))?|/(discord))?$`));
     if (groupMatch) {
-      const [, groupId, noteId] = groupMatch;
+      const [, groupId, noteId, isDiscord] = groupMatch;
       const isNotes = url.pathname.includes("/notes");
       const group = await groups.getGroup(db, groupId, userId);
       if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
 
-      if (req.method === "GET" && !isNotes) {
-        const notes = await groups.listNotes(db, group, userId);
+      // The class's Discord server (shared by every group in the class): anyone in it can set,
+      // change or remove the invite link
+      // (Paused for now: groups.DISCORD_ENABLED)
+      if (req.method === "PUT" && isDiscord && groups.DISCORD_ENABLED) {
+        return readJson(req, res, 2_000, async (input) => {
+          const result = await groups.setDiscord(db, group, input);
+          if (result.error) return sendJson(res, { error: result.error }, 400);
+          sendJson(res, result.value);
+        });
+      }
+
+      if (req.method === "GET" && !isNotes && !isDiscord) {
+        // A missing Discord table (schema.sql not re-run yet) shouldn't break the group page
+        const classDiscord = !groups.DISCORD_ENABLED ? null : groups.getClassDiscordLink(db, group)
+          .then((link) => groups.discordForBrowser(link))
+          .catch((error) => { console.error("Class Discord lookup failed (run supabase/schema.sql again?):", error.message || error); return null; });
+        const [notes, discord] = await Promise.all([groups.listNotes(db, group, userId), classDiscord]);
         const { members, ...details } = group;
         return sendJson(res, {
-          group: { ...details, members: members.map(groups.memberForBrowser) },
+          group: { ...details, discord, discordEnabled: groups.DISCORD_ENABLED, members: members.map(groups.memberForBrowser) },
           notes,
         });
       }

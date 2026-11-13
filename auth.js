@@ -104,9 +104,13 @@ async function logIn(email, password) {
 // or { error: "<code>" }
 // name: what classmates see. Saved on the account (user_metadata.name) because there's no
 // session yet to write the profile with; group_member_names falls back to it.
-async function signUp(email, password, name) {
+// confirmUrl: where the confirmation email's link goes back to (the login page, which says
+// "Email confirmed"). Supabase only allows addresses listed under Redirect URLs.
+async function signUp(email, password, name, confirmUrl) {
   if (!isConfigured()) return { error: "config" };
-  const { data, error } = await safely(() => newClient().auth.signUp({ email, password, options: { data: { name } } }));
+  const options = { data: { name } };
+  if (confirmUrl) options.emailRedirectTo = confirmUrl;
+  const { data, error } = await safely(() => newClient().auth.signUp({ email, password, options }));
   if (error) return { error: errorCode(error) };
   // With "Confirm email" on, Supabase also returns no session for an email that's
   // already registered, so the response can't be used to find out who has an account.

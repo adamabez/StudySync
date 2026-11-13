@@ -17,6 +17,9 @@ const schedule = require("./schedule");
 const courses = require("./courses");
 const sections = require("./sections");
 const chats = require("./chats");
+const meetups = require("./meetups");
+const groups = require("./groups");
+const { checkMessage } = require("./namefilter");
 const ai = require("./ai");
 const planner = require("./public/planner");
 
@@ -92,6 +95,38 @@ function end(req) {
 // ---------- The sample student ----------
 
 const uuid = () => crypto.randomUUID();
+
+// "YYYY-MM-DD" of the next given weekday ("tue"): today, unless a session ending at endTime is already over
+function nextDate(dayKey, endTime = "23:59") {
+  const keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const d = new Date();
+  const ahead = (keys.indexOf(dayKey) - d.getDay() + 7) % 7;
+  const overToday = ahead === 0 && d.getHours() * 60 + d.getMinutes() >= Number(endTime.slice(0, 2)) * 60 + Number(endTime.slice(3, 5));
+  d.setDate(d.getDate() + (overToday ? 7 : ahead));
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+// Weekly times the demo student is free for a session as long as the group's usual one
+// (the sample classmates are always free). Same hours as the real thing: weekdays 9-9, weekends 10-6.
+function demoFreeSlots(data, group) {
+  const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const toTime = (n) => String(Math.floor(n / 60)).padStart(2, "0") + ":" + String(n % 60).padStart(2, "0");
+  const len = toMin(group.end) - toMin(group.start);
+  const busy = [
+    ...data.classes.filter((c) => c.start && c.end).map((c) => ({ days: c.days, start: toMin(c.start), end: toMin(c.end) })),
+    ...myGroups(data).filter((g) => g.id !== group.id).map((g) => ({ days: g.days, start: toMin(g.start), end: toMin(g.end) })),
+  ];
+  const slots = [];
+  for (const [i, day] of ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].entries()) {
+    const [open, close] = i < 5 ? [9 * 60, 21 * 60] : [10 * 60, 18 * 60];
+    for (let s = open; s + len <= close; s += 30) {
+      if (!busy.some((b) => b.days.includes(day) && b.start < s + len && s < b.end)) {
+        slots.push({ day, start: toTime(s), end: toTime(s + len) });
+      }
+    }
+  }
+  return slots;
+}
 const ENGL_ID = "async";
 
 // Due dates are worked out from today, so the homework always looks current
@@ -217,10 +252,29 @@ function sampleData() {
   ].map((a) => ({ ...a, url: null }));
 
   return {
-    profile: { onboarded: true, preference: "group", weeklyHours: 6, studyNotes: "" },
+    profile: { onboarded: true, preference: "group", weeklyHours: 6, studyNotes: "", sessionLength: "medium" },
     classes,
     groups,
     notes,
+    meetups: {
+      [csGroupId]: {
+        meetup: { place: "Library 2nd floor, by the windows", setBy: "Maya R.", setAt: iso(60 * 5) },
+        spots: [
+          { id: uuid(), place: "Library 2nd floor, by the windows", by: "Priya S.", voters: new Set(["Priya S.", "Maya R.", "Jordan T."]) },
+          { id: uuid(), place: "Student Union food court", by: "Jordan T.", voters: new Set(["Jordan T."]) },
+        ],
+        rsvps: [
+          { sessionDate: nextDate("tue", "18:30"), name: "Maya R.", status: "going" },
+          { sessionDate: nextDate("tue", "18:30"), name: "Jordan T.", status: "late" },
+        ],
+        moves: [],
+        messages: [
+          { id: uuid(), sessionDate: nextDate("tue", "18:30"), author: "Jordan T.", body: "I have a lab until 5:15 on Tuesday, so I might be a bit late", createdAt: iso(60 * 3) },
+          { id: uuid(), sessionDate: nextDate("tue", "18:30"), author: "Maya R.", body: "No worries! We'll start with the practice problems", createdAt: iso(60 * 2) },
+        ],
+        replied: false,
+      },
+    },
     sources,
     chats: savedChats,
     homework,
@@ -281,7 +335,7 @@ function linkName(item) {
 
 function studyPlan(data) {
   const goalMinutes = data.profile.weeklyHours * 60;
-  const plan = planner.planStudyTimes(data.classes, goalMinutes);
+  const plan = planner.planStudyTimes(data.classes, goalMinutes, data.profile.sessionLength);
   return {
     source: "algorithm",
     goalMinutes,
@@ -370,14 +424,35 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
         data.profile.weeklyHours = hours;
       }
       if (typeof input.studyNotes === "string") data.profile.studyNotes = input.studyNotes.trim().slice(0, 300);
+      if (planner.SESSION_LENGTHS[input.sessionLength]) data.profile.sessionLength = input.sessionLength;
       sendJson(res, data.profile);
     });
   }
   if (m === "GET" && p === "/api/study-plan") return sendJson(res, studyPlan(data));
+  // "I studied" checkmarks: { "2026-11-09|13:00": { date, start, end } }
+  if (p === "/api/study-log") {
+    const log = (data.studyLog = data.studyLog || {});
+    if (m === "GET") {
+      const from = url.searchParams.get("from") || "";
+      const to = url.searchParams.get("to") || "";
+      return sendJson(res, { ready: true, done: Object.values(log).filter((row) => row.date >= from && row.date <= to) });
+    }
+    if (m === "POST") {
+      return readJson(req, res, 2_000, (input) => {
+        const { date, start, end } = input || {};
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "") || !planner.isTime(start) || !planner.isTime(end)) {
+          return sendJson(res, { error: "That study session doesn't look right." }, 400);
+        }
+        if (input.done) log[date + "|" + start] = { date, start, end };
+        else delete log[date + "|" + start];
+        sendJson(res, { date, start, end, done: Boolean(input.done) });
+      });
+    }
+  }
   if (m === "GET" && p === "/api/study-times") {
     const mine = myGroups(data);
     if (data.profile.preference === "group" && mine.length) {
-      return sendJson(res, mine.map((g) => ({ type: "group", name: g.name, days: g.days, start: g.start, end: g.end, note: g.members.length + " members" })));
+      return sendJson(res, mine.map((g) => ({ type: "group", id: g.id, name: g.name, days: g.days, start: g.start, end: g.end, note: g.members.length + " members" })));
     }
     return sendJson(res, studyPlan(data).sessions.map((s) => ({ type: "study", name: "Study time", days: [s.day], start: s.start, end: s.end, note: s.label })));
   }
@@ -386,15 +461,154 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
   if (m === "POST" && p === "/api/groups/match") return sendJson(res, myGroups(data));
   if (m === "GET" && p === "/api/groups/classes") return sendJson(res, classGroups(data));
 
-  const groupMatch = p.match(/^\/api\/groups\/([\w-]+)(?:\/notes(?:\/([\w-]+))?)?$/);
+  // --- Meeting up (kept in memory): spots, RSVPs, and moving a week's session ---
+  const meetupMatch = p.match(/^\/api\/groups\/([\w-]+)\/(meetup|spots|rsvp|slots|move|messages)(?:\/([\w-]+)(\/vote)?)?$/);
+  if (meetupMatch) {
+    const [, groupId, part, spotId, isVote] = meetupMatch;
+    const group = myGroups(data).find((g) => g.id === groupId);
+    if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
+    const state = (data.meetups[groupId] = data.meetups[groupId] || { meetup: null, spots: [], rsvps: [], moves: [], messages: [], replied: false });
+    const info = () => ({
+      meetup: state.meetup && { ...state.meetup, setBy: state.meetup.setBy === DEMO_NAME ? "You" : state.meetup.setBy },
+      spots: state.spots
+        .map((x) => ({
+          id: x.id, place: x.place, by: x.by === DEMO_NAME ? "You" : x.by, isYours: x.by === DEMO_NAME,
+          votes: x.voters.size, votedByYou: x.voters.has(DEMO_NAME), isTheSpot: state.meetup?.place === x.place,
+        }))
+        .sort((a, b) => b.votes - a.votes),
+      rsvps: state.rsvps.map((r) => ({ ...r, isYou: r.name === DEMO_NAME })),
+      moves: state.moves.map((x) => ({ ...x, movedBy: x.movedBy === DEMO_NAME ? "You" : x.movedBy })),
+    });
+    const isDate = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+    if (m === "GET" && part === "meetup") return sendJson(res, info());
+    if (m === "POST" && part === "meetup") {
+      return readJson(req, res, 2_000, (input) => {
+        const place = meetups.cleanPlace(input.place);
+        if (place.error) return sendJson(res, { error: place.error }, 400);
+        state.meetup = { place: place.value, setBy: DEMO_NAME, setAt: new Date().toISOString() };
+        sendJson(res, info());
+      });
+    }
+    if (m === "DELETE" && part === "meetup") {
+      state.meetup = null;
+      return sendJson(res, info());
+    }
+    if (m === "POST" && part === "spots" && !spotId) {
+      return readJson(req, res, 2_000, (input) => {
+        const place = meetups.cleanPlace(input.place);
+        if (place.error) return sendJson(res, { error: place.error }, 400);
+        if (state.spots.some((x) => x.place.toLowerCase() === place.value.toLowerCase())) {
+          return sendJson(res, { error: "Someone already suggested that. Vote for it instead." }, 400);
+        }
+        if (state.spots.length >= meetups.MAX_SPOTS) {
+          return sendJson(res, { error: "That's " + meetups.MAX_SPOTS + " suggestions already. Remove one or vote for an existing spot." }, 400);
+        }
+        state.spots.push({ id: uuid(), place: place.value, by: DEMO_NAME, voters: new Set([DEMO_NAME]) });
+        sendJson(res, info(), 201);
+      });
+    }
+    const spot = state.spots.find((x) => x.id === spotId);
+    if (m === "POST" && part === "spots" && spotId && isVote) {
+      return readJson(req, res, 1_000, (input) => {
+        if (!spot) return sendJson(res, { error: "That suggestion was removed." }, 400);
+        input.on === false ? spot.voters.delete(DEMO_NAME) : spot.voters.add(DEMO_NAME);
+        sendJson(res, info());
+      });
+    }
+    if (m === "DELETE" && part === "spots" && spotId && !isVote) {
+      state.spots = state.spots.filter((x) => !(x.id === spotId && x.by === DEMO_NAME));
+      return sendJson(res, info());
+    }
+    if (m === "POST" && part === "rsvp") {
+      return readJson(req, res, 1_000, (input) => {
+        if (!isDate(input.sessionDate)) return sendJson(res, { error: "That session isn't coming up." }, 400);
+        state.rsvps = state.rsvps.filter((r) => !(r.sessionDate === input.sessionDate && r.name === DEMO_NAME));
+        if (input.status !== null) {
+          if (!meetups.STATUSES.includes(input.status)) return sendJson(res, { error: "Pick Going, Running late or Can't make it." }, 400);
+          state.rsvps.push({ sessionDate: input.sessionDate, name: DEMO_NAME, status: input.status });
+        }
+        sendJson(res, info());
+      });
+    }
+    if (m === "GET" && part === "slots") return sendJson(res, demoFreeSlots(data, group));
+    if (m === "POST" && part === "move") {
+      return readJson(req, res, 1_000, (input) => {
+        const day = isDate(input.date) && ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(input.date + "T12:00:00Z").getUTCDay()];
+        const fits = demoFreeSlots(data, group).some((x) => x.day === day && x.start === input.start && x.end === input.end);
+        if (!isDate(input.sessionDate) || !fits) return sendJson(res, { error: "Pick one of the suggested times." }, 400);
+        state.moves = state.moves.filter((x) => x.sessionDate !== input.sessionDate);
+        state.moves.push({ sessionDate: input.sessionDate, date: input.date, start: input.start, end: input.end, movedBy: DEMO_NAME });
+        // The time changed, so everyone answers again (you're going, since you picked it)
+        state.rsvps = state.rsvps.filter((r) => r.sessionDate !== input.sessionDate);
+        state.rsvps.push({ sessionDate: input.sessionDate, name: DEMO_NAME, status: "going" });
+        sendJson(res, info());
+      });
+    }
+    if (m === "DELETE" && part === "move") {
+      state.moves = state.moves.filter((x) => x.sessionDate !== url.searchParams.get("session"));
+      return sendJson(res, info());
+    }
+
+    // Session chat
+    const forBrowser = (x) => ({ id: x.id, body: x.body, createdAt: x.createdAt, author: x.author === DEMO_NAME ? "You" : x.author, isYours: x.author === DEMO_NAME });
+    if (m === "GET" && part === "messages" && !spotId) {
+      const session = url.searchParams.get("session");
+      const after = Date.parse(url.searchParams.get("after") || "");
+      return sendJson(res, state.messages
+        .filter((x) => x.sessionDate === session && (isNaN(after) || Date.parse(x.createdAt) >= after))
+        .map(forBrowser));
+    }
+    if (m === "POST" && part === "messages" && !spotId) {
+      return readJson(req, res, 5_000, (input) => {
+        const body = typeof input.body === "string" ? input.body.trim() : "";
+        if (!isDate(input.sessionDate)) return sendJson(res, { error: "That session isn't coming up." }, 400);
+        if (!body) return sendJson(res, { error: "Type a message first." }, 400);
+        if (body.length > meetups.MAX_MESSAGE) return sendJson(res, { error: "Keep it under " + meetups.MAX_MESSAGE + " characters." }, 400);
+        const problem = checkMessage(body);
+        if (problem) return sendJson(res, { error: problem.error }, 400);
+        if (state.messages.length >= MAX_DEMO_ITEMS) return sendJson(res, { error: "That's plenty of messages for a demo." }, 400);
+        const message = { id: uuid(), sessionDate: input.sessionDate, author: DEMO_NAME, body, createdAt: new Date().toISOString() };
+        state.messages.push(message);
+        // The first time, a classmate answers a few seconds later, so the demo shows new messages arriving
+        const mate = group.members.find((x) => !x.isYou);
+        if (mate && !state.replied) {
+          state.replied = true;
+          setTimeout(() => state.messages.push({
+            id: uuid(), sessionDate: input.sessionDate, author: mate.name, body: "Works for me 👍", createdAt: new Date().toISOString(),
+          }), 4000);
+        }
+        sendJson(res, forBrowser(message), 201);
+      });
+    }
+    if (m === "DELETE" && part === "messages" && spotId) {
+      state.messages = state.messages.filter((x) => !(x.id === spotId && x.author === DEMO_NAME));
+      return sendJson(res, { ok: true });
+    }
+    return sendJson(res, { error: "Not found" }, 404);
+  }
+
+  const groupMatch = p.match(/^\/api\/groups\/([\w-]+)(?:\/notes(?:\/([\w-]+))?|\/(discord))?$/);
   if (groupMatch && !["match", "classes"].includes(groupMatch[1])) {
-    const [, groupId, noteId] = groupMatch;
+    const [, groupId, noteId, isDiscord] = groupMatch;
     const group = myGroups(data).find((g) => g.id === groupId);
     if (!group) return sendJson(res, { error: "That group doesn't exist, or you're not in it." }, 404);
     const notes = (data.notes[groupId] = data.notes[groupId] || []);
     const isNotes = p.includes("/notes");
+    const discordLinks = (data.discordLinks = data.discordLinks || {}); // by class, kept in memory like everything in the demo
 
-    if (m === "GET" && !isNotes) return sendJson(res, { group, notes });
+    if (m === "PUT" && isDiscord && groups.DISCORD_ENABLED) { // paused for now
+      return readJson(req, res, 2_000, async (input) => {
+        const checked = await groups.checkDiscordInput(input);
+        if (checked.error) return sendJson(res, { error: checked.error }, 400);
+        discordLinks[group.course] = checked.link;
+        sendJson(res, { discord: await groups.discordForBrowser(checked.link) });
+      });
+    }
+    if (m === "GET" && !isNotes && !isDiscord) {
+      const discord = groups.DISCORD_ENABLED ? await groups.discordForBrowser(discordLinks[group.course] || "") : null;
+      return sendJson(res, { group: { ...group, discord, discordEnabled: groups.DISCORD_ENABLED }, notes });
+    }
     if (m === "POST" && isNotes && !noteId) {
       return readJson(req, res, 50_000, (input) => {
         const title = typeof input.title === "string" ? input.title.trim() : "";
@@ -415,7 +629,9 @@ async function handleApi(req, res, url, { sendJson, readJson }) {
   }
 
   // --- Course catalog and sections ---
+  if (m === "GET" && p === "/api/courses" && url.searchParams.has("subject")) return sendJson(res, courses.coursesInSubject(url.searchParams.get("subject")));
   if (m === "GET" && p === "/api/courses") return sendJson(res, searchCatalog(url.searchParams.get("q")));
+  if (m === "GET" && p === "/api/courses/subjects") return sendJson(res, courses.listSubjects());
   if (m === "GET" && p === "/api/courses/sections") {
     try {
       return sendJson(res, await sections.getSections(courses.normalizeCourse(url.searchParams.get("code"))));
@@ -598,13 +814,25 @@ function withBanner(html) {
 
 // The login page's live preview shows a page inside a frame: no banner, pop-ups or scrollbars.
 // The login page scrolls it from outside, so it doesn't need to be clickable.
+// The login page's live demo box: visitors scroll and click around the real demo inside it.
+// Links that leave the demo (sign up, log in, log out, exit) open in the whole window instead.
 const PREVIEW_STYLE = `
   <style>
-    html { scrollbar-width: none; }
-    html::-webkit-scrollbar { display: none; }
+    html { scrollbar-width: thin; }
     .ai-notice, .ai-disclaimer, .theme-toggle, .dash-footer, .fb-fab { display: none !important; }
-    body { pointer-events: none; align-items: flex-start !important; } /* page at the top, not centered */
-  </style>`;
+    body { align-items: flex-start !important; } /* page at the top, not centered */
+  </style>
+  <script>
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest && event.target.closest("a[href]");
+      if (!link || link.target === "_blank") return;
+      const url = new URL(link.href, location.href);
+      // Off-site, the login page itself ("/"), or anything about accounts
+      const leaves = url.origin !== location.origin || url.pathname === "/" ||
+        /^\\/(signup|login|logout|forgot|reset-password|account)\\b/.test(url.pathname);
+      if (leaves) { event.preventDefault(); window.top.location.href = url.href; }
+    }, true);
+  </script>`;
 
 function forPreview(html) {
   return html.replace("</head>", `${PREVIEW_STYLE}\n</head>`);

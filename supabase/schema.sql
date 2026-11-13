@@ -107,6 +107,33 @@ alter table public.profiles add column if not exists weekly_study_hours integer 
 alter table public.profiles add column if not exists study_notes text check (char_length(study_notes) <= 300);
 alter table public.profiles add column if not exists study_plan jsonb;
 alter table public.profiles add column if not exists study_plan_key text;
+-- How long study sessions are: short (30-45 min), medium (45-90) or long (90-120). null = medium
+alter table public.profiles add column if not exists study_session_length text check (study_session_length in ('short', 'medium', 'long'));
+
+-- ---------- "I studied" checkmarks (studylog.js) ----------
+-- One row per study session a student checked off, by date (so each week starts fresh)
+create table if not exists public.study_log (
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  date        date not null,
+  start_time  text not null check (start_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+  end_time    text not null check (end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+  kind        text not null default 'solo' check (kind in ('solo', 'group')),  -- own study time, or a study group meeting
+  group_id    uuid,                                                          -- which study group (kind = 'group')
+  created_at  timestamptz not null default now(),
+  primary key (user_id, date, start_time)
+);
+-- (for projects that made study_log before group check-offs existed)
+alter table public.study_log add column if not exists kind text not null default 'solo' check (kind in ('solo', 'group'));
+alter table public.study_log add column if not exists group_id uuid;
+
+-- Everyone sees and changes only their own checkmarks
+alter table public.study_log enable row level security;
+drop policy if exists "Own study log" on public.study_log;
+create policy "Own study log" on public.study_log
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+grant select, insert, update, delete on public.study_log to authenticated;
 
 -- ---------- Study groups ----------
 -- Students who'd rather study in a group are matched automatically (see
@@ -432,8 +459,10 @@ begin
 
     if gid is not null then
       if alone_gid is not null then
-        -- Moving out of a group you were alone in: bring your notes, then remove the empty group
+        -- Moving out of a group you were alone in: bring your notes and suggested spots, then remove the empty group
         update public.group_notes set group_id = gid where group_id = alone_gid;
+        update public.group_spots set group_id = gid where group_id = alone_gid;
+        update public.group_messages set group_id = gid where group_id = alone_gid;
         delete from public.group_members where group_id = alone_gid and user_id = uid;
         delete from public.study_groups where id = alone_gid;
       end if;
@@ -548,6 +577,63 @@ as $$
 $$;
 revoke execute on function public.group_member_names(uuid) from public, anon;
 grant execute on function public.group_member_names(uuid) to authenticated;
+
+-- ---------- Class Discord server ----------
+-- One Discord server per class (course key, e.g. 'CSC 130'), shared by every study group
+-- in it. Anyone taking the class can add, change or remove the invite link; the app checks
+-- it's a real Discord invite (groups.js) and shows the server's icon and name on group pages.
+
+-- Is the logged-in student taking this class? (course = a course key, like study_groups.course)
+create or replace function public.takes_course(p_course text)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.classes c
+    where c.user_id = (select auth.uid()) and c.kind = 'class'
+      and public.course_key(c.course_code, c.name) = p_course
+  );
+$$;
+revoke execute on function public.takes_course(text) from public, anon;
+grant execute on function public.takes_course(text) to authenticated;
+
+create table if not exists public.course_discord (
+  course      text primary key,                  -- course key, e.g. 'CSC 130'
+  invite_url  text not null check (char_length(invite_url) <= 200),
+  set_by      uuid default auth.uid() references auth.users (id) on delete set null,
+  updated_at  timestamptz not null default now()
+);
+alter table public.course_discord enable row level security;
+
+drop policy if exists "Classmates read the class Discord" on public.course_discord;
+create policy "Classmates read the class Discord" on public.course_discord
+  for select to authenticated using (public.takes_course(course));
+drop policy if exists "Classmates add the class Discord" on public.course_discord;
+create policy "Classmates add the class Discord" on public.course_discord
+  for insert to authenticated with check (public.takes_course(course));
+drop policy if exists "Classmates change the class Discord" on public.course_discord;
+create policy "Classmates change the class Discord" on public.course_discord
+  for update to authenticated using (public.takes_course(course)) with check (public.takes_course(course));
+drop policy if exists "Classmates remove the class Discord" on public.course_discord;
+create policy "Classmates remove the class Discord" on public.course_discord
+  for delete to authenticated using (public.takes_course(course));
+
+-- A short-lived version stored one Discord link per group. Move any of those to their class
+-- (first one wins), then remove the old column and function.
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'study_groups' and column_name = 'discord_url') then
+    insert into public.course_discord (course, invite_url, set_by)
+      select distinct on (course) course, discord_url, null
+      from public.study_groups
+      where discord_url is not null and course <> ''
+      order by course, created_at
+    on conflict (course) do nothing;
+    alter table public.study_groups drop column discord_url;
+  end if;
+end $$;
+drop function if exists public.set_group_discord(uuid, text);
 
 -- ---------- Delete my account ----------
 -- The app's key can't delete logins, so this runs with the owner's rights, and only ever
@@ -690,3 +776,212 @@ create policy "Own homework check-offs" on public.homework_done
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
+
+-- ---------- Meeting up: where, who's coming, and moving a session ----------
+-- A group should be able to go from matched to meeting without messaging anyone:
+--   group_spots / group_spot_votes → places members suggest, and who likes which
+--   group_meetup                   → the place the group settled on
+--   group_rsvps                    → Going / Running late / Can't make it, per weekly session
+--   group_session_moves            → one week's session moved to another time everyone is free
+--   group_messages                 → a small chat for each week's session, to settle the details
+-- A session is named by the date it would normally happen (session_date), even if it's moved.
+
+create table if not exists public.group_spots (
+  id          uuid primary key default gen_random_uuid(),
+  group_id    uuid not null references public.study_groups (id) on delete cascade,
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  place       text not null check (char_length(place) between 1 and 120),
+  created_at  timestamptz not null default now()
+);
+create index if not exists group_spots_group_id_idx on public.group_spots (group_id, created_at);
+alter table public.group_spots enable row level security;
+
+drop policy if exists "Members read spots" on public.group_spots;
+create policy "Members read spots" on public.group_spots
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members suggest spots" on public.group_spots;
+create policy "Members suggest spots" on public.group_spots
+  for insert to authenticated with check (user_id = (select auth.uid()) and public.is_group_member(group_id));
+drop policy if exists "Remove own spots" on public.group_spots;
+create policy "Remove own spots" on public.group_spots
+  for delete to authenticated using (user_id = (select auth.uid()));
+
+create table if not exists public.group_spot_votes (
+  spot_id     uuid not null references public.group_spots (id) on delete cascade,
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  primary key (spot_id, user_id)
+);
+alter table public.group_spot_votes enable row level security;
+
+drop policy if exists "Members read votes" on public.group_spot_votes;
+create policy "Members read votes" on public.group_spot_votes
+  for select to authenticated
+  using (exists (select 1 from public.group_spots s where s.id = spot_id and public.is_group_member(s.group_id)));
+drop policy if exists "Members vote" on public.group_spot_votes;
+create policy "Members vote" on public.group_spot_votes
+  for insert to authenticated
+  with check (user_id = (select auth.uid())
+    and exists (select 1 from public.group_spots s where s.id = spot_id and public.is_group_member(s.group_id)));
+drop policy if exists "Take back own vote" on public.group_spot_votes;
+create policy "Take back own vote" on public.group_spot_votes
+  for delete to authenticated using (user_id = (select auth.uid()));
+
+create table if not exists public.group_meetup (
+  group_id    uuid primary key references public.study_groups (id) on delete cascade,
+  place       text not null check (char_length(place) between 1 and 120),
+  set_by      uuid default auth.uid() references auth.users (id) on delete set null,
+  set_at      timestamptz not null default now()
+);
+alter table public.group_meetup enable row level security;
+
+drop policy if exists "Members read meetup" on public.group_meetup;
+create policy "Members read meetup" on public.group_meetup
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members set meetup" on public.group_meetup;
+create policy "Members set meetup" on public.group_meetup
+  for insert to authenticated with check (public.is_group_member(group_id));
+drop policy if exists "Members change meetup" on public.group_meetup;
+create policy "Members change meetup" on public.group_meetup
+  for update to authenticated using (public.is_group_member(group_id)) with check (public.is_group_member(group_id));
+drop policy if exists "Members clear meetup" on public.group_meetup;
+create policy "Members clear meetup" on public.group_meetup
+  for delete to authenticated using (public.is_group_member(group_id));
+
+create table if not exists public.group_rsvps (
+  group_id      uuid not null references public.study_groups (id) on delete cascade,
+  user_id       uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  session_date  date not null,
+  status        text not null check (status in ('going', 'late', 'cant')),
+  updated_at    timestamptz not null default now(),
+  primary key (group_id, user_id, session_date)
+);
+alter table public.group_rsvps enable row level security;
+
+drop policy if exists "Members read RSVPs" on public.group_rsvps;
+create policy "Members read RSVPs" on public.group_rsvps
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "RSVP for yourself" on public.group_rsvps;
+create policy "RSVP for yourself" on public.group_rsvps
+  for insert to authenticated with check (user_id = (select auth.uid()) and public.is_group_member(group_id));
+drop policy if exists "Change own RSVP" on public.group_rsvps;
+create policy "Change own RSVP" on public.group_rsvps
+  for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "Take back own RSVP" on public.group_rsvps;
+create policy "Take back own RSVP" on public.group_rsvps
+  for delete to authenticated using (user_id = (select auth.uid()));
+
+create table if not exists public.group_session_moves (
+  group_id      uuid not null references public.study_groups (id) on delete cascade,
+  session_date  date not null,                 -- the week's usual date
+  new_date      date not null,
+  new_start     text not null,                 -- 'HH:MM', like study_groups.start_time
+  new_end       text not null,
+  moved_by      uuid references auth.users (id) on delete set null,
+  moved_at      timestamptz not null default now(),
+  primary key (group_id, session_date)
+);
+alter table public.group_session_moves enable row level security;
+
+-- Members read moves and can undo one; moving goes through move_group_session() below,
+-- which checks that every member is free first
+drop policy if exists "Members read moves" on public.group_session_moves;
+create policy "Members read moves" on public.group_session_moves
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members undo moves" on public.group_session_moves;
+create policy "Members undo moves" on public.group_session_moves
+  for delete to authenticated using (public.is_group_member(group_id));
+
+-- Times in the week when EVERY member of the group is free for a session as long as the
+-- usual one: their classes, tasks and other groups are checked (weekdays 9 AM – 9 PM,
+-- weekends 10 AM – 6 PM, on the half hour). Members only. Used to move one week's session.
+create or replace function public.group_free_slots(gid uuid)
+returns table (day_key text, start_time text, end_time text)
+language sql stable security definer set search_path = ''
+as $$
+  with g as (
+    select sg.id, (sg.end_time::time - sg.start_time::time) as len
+    from public.study_groups sg
+    where sg.id = gid and public.is_group_member(gid)
+  ),
+  slots as (
+    select d.day_key, d.ord, t,
+           to_char(t, 'HH24:MI') as s_start,
+           to_char(t + g.len, 'HH24:MI') as s_end
+    from g
+    cross join unnest(array['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']) with ordinality as d(day_key, ord)
+    cross join lateral generate_series(timestamp '2000-01-01 09:00', timestamp '2000-01-01 21:00' - g.len, interval '30 minutes') as t
+    where d.ord <= 5 or (t >= timestamp '2000-01-01 10:00' and t + g.len <= timestamp '2000-01-01 18:00')
+  )
+  select s.day_key, s.s_start, s.s_end
+  from slots s
+  where not exists (
+    select 1 from public.group_members m
+    where m.group_id = gid
+      and (not public.user_is_free(m.user_id, array[s.day_key], s.s_start, s.s_end)
+           or not public.user_groups_free(m.user_id, array[s.day_key], s.s_start, s.s_end, gid))
+  )
+  order by s.ord, s.t;
+$$;
+
+-- Move one week's session (named by its usual date) to another time every member is free.
+-- Clears that session's RSVPs, since the time changed, and marks the mover as going.
+create or replace function public.move_group_session(gid uuid, p_session date, p_new date, p_start text, p_end text)
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  uid uuid := (select auth.uid());
+begin
+  if not public.is_group_member(gid) then
+    raise exception 'Not a member of this group';
+  end if;
+  if p_session < current_date - 7 or p_session > current_date + 14
+     or p_new < current_date - 1 or p_new > current_date + 9 then
+    raise exception 'That date is too far away';
+  end if;
+  if not exists (
+    select 1 from public.group_free_slots(gid) f
+    where f.day_key = lower(to_char(p_new, 'dy')) and f.start_time = p_start and f.end_time = p_end
+  ) then
+    raise exception 'Not everyone is free then';
+  end if;
+
+  insert into public.group_session_moves (group_id, session_date, new_date, new_start, new_end, moved_by, moved_at)
+  values (gid, p_session, p_new, p_start, p_end, uid, now())
+  on conflict (group_id, session_date) do update
+    set new_date = excluded.new_date, new_start = excluded.new_start, new_end = excluded.new_end,
+        moved_by = excluded.moved_by, moved_at = excluded.moved_at;
+
+  delete from public.group_rsvps where group_id = gid and session_date = p_session;
+  insert into public.group_rsvps (group_id, user_id, session_date, status) values (gid, uid, p_session, 'going');
+end;
+$$;
+
+-- A small chat for each week's session (named by its usual date), mostly to settle the time.
+-- Each week starts fresh. Members read and post; you can delete your own messages.
+create table if not exists public.group_messages (
+  id            uuid primary key default gen_random_uuid(),
+  group_id      uuid not null references public.study_groups (id) on delete cascade,
+  user_id       uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  session_date  date not null,
+  body          text not null check (char_length(body) between 1 and 500),
+  created_at    timestamptz not null default now()
+);
+alter table public.group_messages add column if not exists session_date date;
+create index if not exists group_messages_session_idx on public.group_messages (group_id, session_date, created_at);
+alter table public.group_messages enable row level security;
+
+drop policy if exists "Members read group messages" on public.group_messages;
+create policy "Members read group messages" on public.group_messages
+  for select to authenticated using (public.is_group_member(group_id));
+drop policy if exists "Members send group messages" on public.group_messages;
+create policy "Members send group messages" on public.group_messages
+  for insert to authenticated with check (user_id = (select auth.uid()) and public.is_group_member(group_id));
+drop policy if exists "Delete own group messages" on public.group_messages;
+create policy "Delete own group messages" on public.group_messages
+  for delete to authenticated using (user_id = (select auth.uid()));
+
+revoke execute on function public.group_free_slots(uuid) from public, anon;
+grant execute on function public.group_free_slots(uuid) to authenticated;
+revoke execute on function public.move_group_session(uuid, date, date, text, text) from public, anon;
+grant execute on function public.move_group_session(uuid, date, date, text, text) to authenticated;

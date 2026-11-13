@@ -110,6 +110,15 @@ function render() {
 
     const title = document.createElement("h3");
     title.textContent = label;
+    // 📚 on class days, 🏋️ on gym / sports days (day-emoji.js)
+    const badges = window.dayEmoji ? window.dayEmoji.badges(classes, key) : "";
+    if (badges) {
+      const badge = document.createElement("span");
+      badge.className = "day-badges";
+      badge.textContent = badges;
+      badge.title = [badges.includes("📚") && "Classes", badges.includes("🏋️") && "Gym / sports"].filter(Boolean).join(" + ");
+      title.append(" ", badge);
+    }
     col.appendChild(title);
 
     const todays = [...classes, ...studyTimes]
@@ -119,11 +128,12 @@ function render() {
     if (todays.length === 0) {
       const empty = document.createElement("p");
       empty.className = "empty";
-      empty.innerHTML = '<span class="empty-icon" aria-hidden="true">☀️</span>Nothing yet!';
+      const icon = window.dayEmoji ? window.dayEmoji.rest(key) : "☀️";
+      empty.innerHTML = '<span class="empty-icon" aria-hidden="true">' + icon + "</span>Nothing yet!";
       col.appendChild(empty);
     }
 
-    for (const c of todays) col.appendChild(c.type ? makeStudyCard(c) : makeCard(c));
+    for (const c of todays) col.appendChild(c.type ? makeStudyCard(c, key) : makeCard(c));
     col.appendChild(makeDayAdd(key, label));
     week.appendChild(col);
   }
@@ -178,7 +188,7 @@ function makeCard(c) {
 }
 
 // A study session or study group meeting. Read-only: it's planned for you, so no pencil.
-function makeStudyCard(s) {
+function makeStudyCard(s, dayKey = s.days[0]) {
   const card = document.createElement("div");
   card.className = "class-card study-time";
   card.title = "Planned for you by StudySync";
@@ -206,6 +216,12 @@ function makeStudyCard(s) {
   meta.textContent = formatTime(s.start) + " – " + formatTime(s.end) + (s.note ? " · " + s.note : "");
 
   card.append(sparkle, hidden, tag, name, meta);
+  // Check off a solo session ("Mark done") or a group meeting ("Already studied?") (study-log.js)
+  if (window.studyLog && window.studyLog.ready) {
+    const session = { day: dayKey, start: s.start, end: s.end };
+    if (s.type === "study") card.appendChild(window.studyLog.button(session));
+    else if (s.type === "group") card.appendChild(window.studyLog.button({ ...session, kind: "group", groupId: s.id }, { off: "Studied?", on: "Studied" }));
+  }
   return card;
 }
 
@@ -347,13 +363,26 @@ async function loadClasses() {
   loadStudyTimes();
 }
 
+// Weekly goal progress bar at the top (study-log.js): goal from the profile
+if (window.studyLog) {
+  window.studyLog.progress.mount(document.getElementById("week-progress"));
+  fetch("/api/profile").then((r) => (r.ok ? r.json() : null)).then((p) => {
+    if (p && p.weeklyHours) window.studyLog.progress.setGoal(p.weeklyHours * 60);
+  }).catch(() => {});
+}
+
 // Study times depend on the schedule, so reload them after every change.
 // If they can't load (e.g. the database setup is out of date), the calendar just goes without.
 async function loadStudyTimes() {
   try {
-    const res = await fetch("/api/study-times");
+    const [res] = await Promise.all([fetch("/api/study-times"), window.studyLog ? window.studyLog.load() : null]);
     if (!res.ok) return;
     studyTimes = await res.json();
+    if (window.studyLog) {
+      window.studyLog.clearButtons();
+      // This week's sessions for the progress bar (a group meeting counts once per day it meets)
+      window.studyLog.progress.setPlanned(studyTimes.flatMap((s) => s.days.map((day) => ({ day, start: s.start, end: s.end }))));
+    }
     render();
   } catch {
     // offline or server restarting: keep what's shown

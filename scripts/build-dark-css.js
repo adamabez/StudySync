@@ -175,7 +175,52 @@ ${PREFIX} select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http:
 /* Notebook: the question box sits inside its own bordered box, and a waiting Send button stays quiet */
 ${PREFIX} .composer-box textarea { background: transparent; border: none; }
 ${PREFIX} .composer-send:disabled, ${PREFIX} .composer-send:disabled:hover { background: #30364c; color: #7d849c; }
+${PREFIX} .sc-form input { background: transparent; border: none; }
+${PREFIX} .sc-send:disabled, ${PREFIX} .sc-send:disabled:hover { background: #30364c; color: #7d849c; }
+${PREFIX} .sc-msg.mine .sc-bubble { background: #3b56d6; border-color: #3b56d6; color: #fff; }
+${PREFIX} .ns-person::before { background: #5a6078; }
+${PREFIX} .ns-person.going::before { background: #3fbf7f; }
+${PREFIX} .ns-person.late::before { background: #f0ad3a; }
+${PREFIX} .ns-person.cant::before { background: #ef6b67; }
 ${PREFIX} .nb-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+/* Discord button: white text on blurple, like in light mode (the link color above would dim it) */
+${PREFIX} a.discord-button, ${PREFIX} a.discord-button:hover { color: #fff; }
+${PREFIX} .discord-icon.discord-initials { background: #5865f2; color: #fff; }
+/* The group page's "Auto-scheduled for you" banner: same gradient, keep its light-mode colors */
+${PREFIX} .group-why { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); }
+${PREFIX} .group-why .group-why-title { color: #fff; }
+${PREFIX} .group-why p { color: #e4e9ff; }
+/* Study groups banner: it's already a dark gradient, so keep its light-mode colors
+   (the automatic flips above would turn its text blue-on-blue) */
+${PREFIX} .groups-hero { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+${PREFIX} .groups-hero-eyebrow { color: #cdd6ff; }
+${PREFIX} .groups-hero-title { color: #fff; }
+${PREFIX} .groups-hero-title span { color: #8ff0c0; }
+${PREFIX} .groups-hero-sub { color: #e4e9ff; }
+${PREFIX} .groups-hero-features li { border: 1px solid rgba(255, 255, 255, 0.18); }
+${PREFIX} .groups-hero-features strong { color: #fff; }
+${PREFIX} .groups-hero-features li > span:last-child { color: #d5dcff; }
+${PREFIX} .groups-hero-icon { background: #8ff0c0; color: #13235f; }
+/* "On my own" banner: teal, also kept as in light mode */
+${PREFIX} .solo-hero .groups-hero-title span { color: #fde68a; }
+${PREFIX} .solo-hero .groups-hero-icon { background: #fde68a; color: #134e4a; }
+${PREFIX} .solo-hero .groups-hero-eyebrow { color: #c5f1ee; }
+${PREFIX} .solo-hero .groups-hero-sub { color: #e2f7f5; }
+${PREFIX} .solo-hero .groups-hero-features li > span:last-child { color: #d3f0ee; }
+${PREFIX} .solo-hero .groups-hero-features li { background: rgba(4, 40, 48, 0.28); border: 1px solid rgba(255, 255, 255, 0.18); }
+/* Ticked "Studied" checkmark: keep the filled green circle */
+${PREFIX} .study-check.on .study-check-box { border: none; background: none; color: #4cc46a; }
+${PREFIX} .study-check span:not(.study-check-box) { color: inherit; }
+/* Group / Solo option cards: picked icon fills in, white tick in the circle, softer teal */
+${PREFIX} .choice-card .choice-text strong { color: #e3e7f7; }
+${PREFIX} .choice-card:has(input:checked) .choice-icon { background: #3b56d6; color: #fff; }
+${PREFIX} .choice-card:has(input:checked) .choice-check {
+  border-color: #3b56d6;
+  background: #3b56d6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpolyline points='2.5 6.5 5 9 9.5 3.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+${PREFIX} .choice-solo:has(input:checked) { border-color: #2a9d92; background: #16302d; }
+${PREFIX} .choice-solo:has(input:checked) .choice-icon { background: #0f766e; color: #fff; }
+${PREFIX} .choice-solo:has(input:checked) .choice-check { border-color: #2a9d92; background-color: #0f766e; }
 /* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
    theme.js swaps the image too, for browsers that ignore content on images. */
 ${PREFIX} img.logo { content: url("/public/logo-dark.png"); }
