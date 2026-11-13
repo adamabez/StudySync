@@ -23,7 +23,7 @@
 <body class="welcome">
   <!-- The first page new visitors see: what StudySync does, the live demo, then sign up -->
   <header class="wl-top">
-    <a href="/" class="wl-brand" aria-label="StudySync home">
+    <a href="/?about=1" class="wl-brand" aria-label="StudySync home">
       <img src="/public/logo.png" alt="StudySync" class="logo">
       <span class="beta-tag" title="StudySync is still in development">Beta</span>
     </a>
@@ -45,6 +45,11 @@
         <a href="/signup" class="wl-btn wl-btn-ghost">Create a free account</a>
       </div>
       <p class="wl-fine">No sign-up needed. The demo uses a sample week, and nothing is saved.</p>
+      <!-- Opens the "early version, full app coming" install window (public/install.js) -->
+      <button type="button" class="wl-install" data-install-app>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        Get the early app on your phone
+      </button>
     </section>
 
     <section class="wl-steps" aria-labelledby="steps-title">

@@ -84,6 +84,9 @@ async function run() {
     "/sw.js", "/offline"]) {
     await record("out GET " + page, "GET", page);
   }
+  // Someone who has logged in on this device before goes to the login form (unless ?about=1)
+  await record("returning GET /", "GET", "/", { cookie: "ss_returning=1" });
+  await record("returning GET /?about=1", "GET", "/?about=1", { cookie: "ss_returning=1" });
   await record("out GET /ai-status", "GET", "/ai-status");
   await record("out GET /api/me", "GET", "/api/me");
   await record("out POST /api/feedback bad email", "POST", "/api/feedback", { body: { message: "hi", email: "nope" } });

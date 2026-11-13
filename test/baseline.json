@@ -109,6 +109,15 @@
     "status": 200,
     "title": "StudySync – Offline"
   },
+  "returning GET /": {
+    "status": 302,
+    "location": "/login",
+    "type": ""
+  },
+  "returning GET /?about=1": {
+    "status": 200,
+    "title": "StudySync – Study smarter, together"
+  },
   "out GET /ai-status": {
     "status": 200,
     "shape": {
