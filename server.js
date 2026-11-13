@@ -12,6 +12,7 @@
 //     groups.js    study groups, meetups, session chat
 //     notebook.js  the study assistant: materials, saved chats, asking the AI
 //     canvas.js    linking Canvas and loading homework
+//     calendar.js  "Add to my calendar": the private calendar link and its feed
 //   lib/        → the work behind the routes (Supabase, the AI, Canvas, the demo...):
 //     http.js        sending pages / JSON, reading requests, the router
 //     auth.js        login with Supabase and who's logged in
@@ -21,6 +22,7 @@
 //     studyplan.js   weekly study times (AI if there's a key, else public/planner.js)   studylog.js  checkmarks
 //     materials.js / chats.js  notebook materials and chats   ai.js  the AI (ai-gemini.js / ai-anthropic.js)
 //     canvas.js      Canvas homework         feedback.js  feedback reports    limits.js  rate limits
+//     terms.js       this semester's dates and holidays   calendarfeed.js  the .ics calendar feed
 //     demo.js        "Try the demo": the real pages with sample data, no account needed
 //   pages/      → the HTML for each page
 //   public/     → CSS and browser JavaScript the pages load
@@ -45,7 +47,8 @@ const { sendPage, sendJson, readJson, sendPublicFile, handleError, compile, rout
 const PORT = Number(process.env.PORT) || 3000;
 
 // Routes anyone can use (pages, login forms, the demo, feedback)
-const publicRoutes = compile(require("./routes/pages"));
+const calendar = require("./routes/calendar");
+const publicRoutes = compile([...require("./routes/pages"), ...calendar.feedRoutes]);
 
 // /api/ routes for logged-in students (demo visitors are answered by lib/demo.js instead)
 const apiRoutes = compile([
@@ -55,6 +58,7 @@ const apiRoutes = compile([
   ...require("./routes/groups"),
   ...require("./routes/notebook"),
   ...require("./routes/canvas"),
+  ...calendar.apiRoutes,
 ]);
 
 const server = http.createServer((req, res) => {

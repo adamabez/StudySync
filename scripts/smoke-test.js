@@ -84,6 +84,11 @@ async function run() {
     await record("out GET " + page, "GET", page);
   }
   await record("out GET /ai-status", "GET", "/ai-status");
+  await record("out GET /api/term", "GET", "/api/term");
+  await record("out GET /calendar", "GET", "/calendar");
+  // A calendar link that doesn't exist (read-only lookup)
+  await record("out GET calendar feed unknown", "GET", "/calendar/00000000-0000-4000-8000-000000000000.ics");
+  await record("out GET calendar feed bad code", "GET", "/calendar/nope.ics");
   await record("out GET /api/me", "GET", "/api/me");
   await record("out POST /api/feedback bad email", "POST", "/api/feedback", { body: { message: "hi", email: "nope" } });
   await record("out POST /api/feedback bad json", "POST", "/api/feedback", { body: undefined });
@@ -98,7 +103,7 @@ async function run() {
   const opts = { cookie };
 
   for (const page of ["/", "/login", "/home", "/start", "/setup", "/landing", "/dashboard", "/account", "/group",
-    "/landing?embed=1", "/dashboard?embed=1"]) {
+    "/landing?embed=1", "/dashboard?embed=1", "/calendar"]) {
     await record("demo GET " + page, "GET", page, opts);
   }
 
@@ -106,7 +111,7 @@ async function run() {
   for (const api of ["/api/me", "/api/profile", "/api/study-plan", "/api/study-times", "/api/groups/classes",
     "/api/classes", "/api/sources", "/api/chats", "/api/notebook/status", "/api/canvas/status",
     "/api/canvas/assignments", "/api/courses?q=math", "/api/courses?subject=MATH", "/api/courses/subjects",
-    "/api/study-log?from=2026-01-01&to=2026-12-31", "/api/nope"]) {
+    "/api/study-log?from=2026-01-01&to=2026-12-31", "/api/calendar/link", "/api/nope"]) {
     await record("demo GET " + api, "GET", api, opts);
   }
 

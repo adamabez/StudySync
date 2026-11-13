@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/public/favicon.png">
+  <script src="/public/theme.js"></script>
+  <title>StudySync – Calendar</title>
+  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/dashboard.css">
+  <link rel="stylesheet" href="/public/calendar.css">
+  <link rel="stylesheet" href="/public/feedback.css">
+  <link rel="stylesheet" href="/public/dark.css">
+</head>
+<body>
+  <div class="box wide">
+    <nav id="app-nav" data-page="calendar"></nav>
+    <script src="/public/nav.js"></script>
+    <!-- The whole semester, a month at a time (public/calendar.js). Classes repeat from the first
+         to the last day of classes and skip holidays (lib/terms.js, /api/term). -->
+    <div class="page-sub-row">
+      <p class="page-sub" id="term-line">Your semester, month by month</p>
+      <a href="/setup" class="edit-schedule-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M14.5 13.5l2 2-4 4h-2v-2z"/></svg>
+        <span>Edit schedule</span>
+      </a>
+    </div>
+
+    <div class="cal-head">
+      <button type="button" class="cal-arrow" id="cal-prev" aria-label="Previous month">‹</button>
+      <h2 id="cal-month" aria-live="polite">Month</h2>
+      <button type="button" class="cal-arrow" id="cal-next" aria-label="Next month">›</button>
+      <button type="button" class="cal-today" id="cal-today">Today</button>
+    </div>
+
+    <div class="cal-grid" id="cal-grid" role="grid" aria-labelledby="cal-month">
+      <p class="cal-loading">Loading your semester…</p>
+    </div>
+
+    <ul class="cal-legend" aria-label="Color key">
+      <li><span class="cal-dot class"></span>Classes</li>
+      <li><span class="cal-dot task"></span>Tasks</li>
+      <li><span class="cal-dot other"></span>Other</li>
+      <li><span class="cal-dot group"></span>Study group</li>
+      <li><span class="cal-dot study"></span>Study time</li>
+      <li><span class="cal-dot holiday"></span>No classes</li>
+    </ul>
+
+    <!-- The picked day's full list (public/calendar.js) -->
+    <section class="cal-day" id="cal-day" aria-live="polite"></section>
+
+    <!-- ========== Add to Google / Apple / Outlook calendar (public/calendar.js, routes/calendar.js) ========== -->
+    <section class="cal-feed" id="cal-feed" hidden>
+      <h2>Add to your calendar</h2>
+      <p class="hint">Your classes, tasks and study group meetings in Google Calendar, Apple Calendar or Outlook, for the whole
+        semester. It stays up to date when you change your schedule (calendar apps check every few hours).</p>
+      <div class="cal-feed-actions" id="cal-feed-actions"></div>
+      <p class="cal-feed-note" id="cal-feed-note"></p>
+    </section>
+  </div>
+  <script src="/public/colors.js"></script>
+  <script src="/public/format.js"></script>
+  <script src="/public/calendar.js"></script>
+  <script src="/public/feedback.js"></script>
+</body>
+</html>

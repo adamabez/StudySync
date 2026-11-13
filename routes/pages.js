@@ -11,6 +11,7 @@ const ai = require("../lib/ai");
 const feedback = require("../lib/feedback");
 const onboarding = require("../lib/onboarding");
 const demo = require("../lib/demo");
+const terms = require("../lib/terms");
 const { siteUrl, sendPage, sendJson, redirect, readBody, readJson } = require("../lib/http");
 const { feedbackLimited } = require("../lib/limits");
 
@@ -32,6 +33,10 @@ module.exports = [
     if (inDemo) return redirect(res, target);
     redirect(res, target, { "Set-Cookie": demo.startCookie(demo.start()) });
   }],
+
+  // This semester's dates (lib/terms.js): first / last day of classes and holidays. Not private,
+  // so it works for everyone, the demo too.
+  ["GET", "/api/term", async ({ res }) => sendJson(res, await terms.getTerm())],
 
   // Whether to show the "Demo version" AI notice on login / sign-up
   ["GET", "/ai-status", ({ res }) => {
@@ -101,7 +106,8 @@ module.exports = [
   ["GET", "/setup", appPage("setup.html")], // "Edit schedule" works in the demo too (always with the banner)
   ["GET", "/landing", appPage("landing.html", { demoBanner: "auto" })],
   ["GET", "/dashboard", appPage("dashboard.html", { demoBanner: "auto" })],
-  ["GET", "/group", appPage("group.html", { demoBanner: "auto" })], // one study group: /group?id=<group id>
+  ["GET", "/group", appPage("group.html", { demoBanner: "auto" })],
+  ["GET", "/calendar", appPage("calendar.html", { demoBanner: "auto" })], // the semester, month by month // one study group: /group?id=<group id>
 
   // Account settings: change email / password, dark mode, delete account
   ["GET", "/account", ({ res, loggedIn, inDemo }) => {
