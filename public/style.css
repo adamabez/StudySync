@@ -110,7 +110,7 @@ button:hover { background: #2240b0; }
   height: 30px;
   padding: 0 7px;
   box-sizing: border-box;
-  border: 1px solid #d5d9e6;
+  border: 2px solid #b8c0dc;
   border-radius: 999px;
   background: #eef1fb;
   color: #7a83a6;
@@ -119,8 +119,8 @@ button:hover { background: #2240b0; }
 .theme-toggle .tt-icon { position: relative; z-index: 1; display: inline-flex; line-height: 0; transition: color 0.2s; }
 .theme-toggle .tt-knob {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 1px; /* inside the 2px border */
+  left: 1px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -131,7 +131,7 @@ button:hover { background: #2240b0; }
 .theme-toggle[aria-checked="true"] .tt-knob { transform: translateX(28px); }
 .theme-toggle[aria-checked="false"] .tt-sun { color: #e0a100; }
 .theme-toggle[aria-checked="true"] .tt-moon { color: #2b4acb; }
-.theme-toggle:hover { border-color: #aab3d6; }
+.theme-toggle:hover { border-color: #8f9bc9; }
 .theme-toggle:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .theme-toggle .tt-knob, .theme-toggle .tt-icon { transition: none; } }
 .theme-toggle.floating { position: fixed; top: 14px; right: 14px; z-index: 50; }

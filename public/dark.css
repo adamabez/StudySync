@@ -49,12 +49,12 @@ html[data-theme="dark"] .notice {
   color: #88d38c;
 }
 html[data-theme="dark"] .theme-toggle {
-  border: 1px solid #404453;
+  border: 2px solid #4f5772;
   background: #1b1f2a;
   color: #6f7894;
 }
 html[data-theme="dark"] .theme-toggle:hover {
-  border-color: #5a6280;
+  border-color: #6b7499;
 }
 html[data-theme="dark"] .theme-toggle .tt-knob {
   background: #3b4466;
