@@ -50,11 +50,18 @@ html[data-theme="dark"] .notice {
 }
 html[data-theme="dark"] .theme-toggle {
   border: 1px solid #404453;
-  background: #23262e;
-  color: #8ea0e7;
+  background: #1b1f2a;
+  color: #6f7894;
 }
 html[data-theme="dark"] .theme-toggle:hover {
-  background: #161c31;
+  border-color: #5a6280;
+}
+html[data-theme="dark"] .theme-toggle .tt-knob {
+  background: #3b4466;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="dark"] .theme-toggle[aria-checked="true"] .tt-moon {
+  color: #c9d3ff;
 }
 html[data-theme="dark"] .theme-toggle:focus-visible {
   outline: 2px solid #5871dc;

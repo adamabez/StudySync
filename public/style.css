@@ -99,22 +99,41 @@ button:hover { background: #2240b0; }
 .switch { font-size: 14px; margin: 20px 0 0; }
 
 /* Light / dark toggle (public/theme.js puts it in the page header, or the corner) */
+/* Light / dark switch (public/theme.js): sun and moon in a track, the knob slides over the one that's on */
 .theme-toggle {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   flex: none;
-  width: 36px;
-  height: 36px;
-  padding: 0;
+  width: 58px;
+  height: 30px;
+  padding: 0 7px;
+  box-sizing: border-box;
   border: 1px solid #d5d9e6;
-  border-radius: 50%;
-  background: #fff;
-  color: #2b4acb;
+  border-radius: 999px;
+  background: #eef1fb;
+  color: #7a83a6;
   cursor: pointer;
 }
-.theme-toggle:hover { background: #eef1fb; }
+.theme-toggle .tt-icon { position: relative; z-index: 1; display: inline-flex; line-height: 0; transition: color 0.2s; }
+.theme-toggle .tt-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(20, 30, 70, 0.25);
+  transition: transform 0.25s ease;
+}
+.theme-toggle[aria-checked="true"] .tt-knob { transform: translateX(28px); }
+.theme-toggle[aria-checked="false"] .tt-sun { color: #e0a100; }
+.theme-toggle[aria-checked="true"] .tt-moon { color: #2b4acb; }
+.theme-toggle:hover { border-color: #aab3d6; }
 .theme-toggle:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .theme-toggle .tt-knob, .theme-toggle .tt-icon { transition: none; } }
 .theme-toggle.floating { position: fixed; top: 14px; right: 14px; z-index: 50; }
 .header-actions { display: flex; align-items: center; gap: 10px; }
 
