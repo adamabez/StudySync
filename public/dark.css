@@ -1941,16 +1941,16 @@ html[data-theme="dark"] .install-share {
   background: #262d45;
   color: #a9b8f5;
 }
-html[data-theme="dark"] .install-other {
-  border-top-color: #343a4d;
+html[data-theme="dark"] .install-lead {
+  color: #c9cfe3;
 }
-html[data-theme="dark"] .install-other summary {
+html[data-theme="dark"] .install-address {
   color: #a9b8f5;
 }
-html[data-theme="dark"] .install-other dt {
+html[data-theme="dark"] .install-list dt {
   color: #e3e7f7;
 }
-html[data-theme="dark"] .install-other dd {
+html[data-theme="dark"] .install-list dd {
   color: #b3bad3;
 }
 html[data-theme="dark"] .signup-app {
@@ -1958,12 +1958,17 @@ html[data-theme="dark"] .signup-app {
   border-color: #343d5e;
   color: #e3e7f7;
 }
-html[data-theme="dark"] .signup-app:hover {
-  background: #2a3250;
-}
 html[data-theme="dark"] .signup-app strong {
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .signup-app > div > span {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .signup-app-buttons button {
+  background: #1b1f2a;
+  border-color: #3d4766;
   color: #a9b8f5;
 }
-html[data-theme="dark"] .signup-app span span {
-  color: #a9b0c8;
+html[data-theme="dark"] .signup-app-buttons button:hover {
+  background: #262d45;
 }

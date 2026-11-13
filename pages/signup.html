@@ -37,12 +37,18 @@
     </form>
     <p class="switch">Already have an account? <a href="/login">Log in</a></p>
     <p class="switch">Not ready yet? <a href="/demo">Try the demo first</a></p>
-    <!-- Opens the "early version" install window for this device, with steps for the others (public/install.js) -->
-    <button type="button" class="signup-app" data-install-app>
+    <!-- The early apps: each opens the install window for that kind of device (public/install.js) -->
+    <div class="signup-app" data-install-app-box>
       <img src="/public/icon-192.png" alt="" width="36" height="36">
-      <span><strong>Get the early app</strong>
-        <span>Windows · Mac · iPhone · Android. Full apps are coming.</span></span>
-    </button>
+      <div>
+        <strong>Get the early app</strong>
+        <span>Full apps are coming.</span>
+        <div class="signup-app-buttons">
+          <button type="button" data-install-app="phone"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg> Phone</button>
+          <button type="button" data-install-app="computer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg> Computer</button>
+        </div>
+      </div>
+    </div>
     <p id="ai-notice" class="ai-notice" hidden>
       <strong>Early access.</strong> StudySync is still being built, so expect some rough edges.
       AI answers can take a little while, and sometimes the AI is busy or errors out. If that
