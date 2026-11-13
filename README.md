@@ -173,6 +173,14 @@ To refresh the class list (new semester): `node scripts/import-courses.js`, then
 
 Which sections are collapsed and which chat was last open are stored in your browser only.
 
+## Installing it as an app
+StudySync can be added to a phone's home screen and opens full screen like an app (no app store needed):
+- **iPhone (Safari):** Share → Add to Home Screen. **Android (Chrome):** menu → Install app (or the prompt Chrome shows).
+- It needs the real site over https (e.g. Render). A phone opening your computer's http://… address won't offer to install.
+- Files: `public/manifest.webmanifest` (name, colors, icons), `public/icon-*.png` and `apple-touch-icon.png`, `public/sw.js` (served at `/sw.js`), `public/install.js`, `pages/offline.html`.
+- The service worker only saves the offline page. Every page and API request still goes to the server, so nothing goes stale.
+- **Renaming the app later:** change `name` / `short_name` in the manifest and `apple-mobile-web-app-title` in the pages. Installed copies pick up the new name on their next update.
+
 ## Customizing
 
 - **Calendar colors:** edit `COLOR_FAMILIES` at the top of `public/colors.js`. It's the only place colors are set; the cards and the color key both read from it. Hues: 0 red · 60 yellow · 120 green · 200 blue · 270 purple · 330 pink.

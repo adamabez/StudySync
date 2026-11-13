@@ -93,6 +93,22 @@
     "status": 404,
     "title": "StudySync – Not found"
   },
+  "out GET /public/manifest.webmanifest": {
+    "status": 200,
+    "type": "application/manifest+json"
+  },
+  "out GET /public/icon-512.png": {
+    "status": 200,
+    "type": "image/png"
+  },
+  "out GET /sw.js": {
+    "status": 200,
+    "type": "text/javascript"
+  },
+  "out GET /offline": {
+    "status": 200,
+    "title": "StudySync – Offline"
+  },
   "out GET /ai-status": {
     "status": 200,
     "shape": {

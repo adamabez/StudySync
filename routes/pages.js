@@ -11,6 +11,8 @@ const ai = require("../lib/ai");
 const feedback = require("../lib/feedback");
 const onboarding = require("../lib/onboarding");
 const demo = require("../lib/demo");
+const fs = require("fs");
+const path = require("path");
 const { siteUrl, sendPage, sendJson, redirect, readBody, readJson } = require("../lib/http");
 const { feedbackLimited } = require("../lib/limits");
 
@@ -32,6 +34,16 @@ module.exports = [
     if (inDemo) return redirect(res, target);
     redirect(res, target, { "Set-Cookie": demo.startCookie(demo.start()) });
   }],
+
+  // Installing StudySync as an app: the service worker has to come from the top of the site
+  // (not /public/) to cover every page. no-cache: phones check for a new version each visit.
+  ["GET", "/sw.js", ({ res }) => {
+    res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache" });
+    res.end(fs.readFileSync(path.join(__dirname, "..", "public", "sw.js")));
+  }],
+
+  // What the installed app shows when there's no connection (saved by public/sw.js)
+  ["GET", "/offline", ({ res }) => sendPage(res, "offline.html")],
 
   // Whether to show the "Demo version" AI notice on login / sign-up
   ["GET", "/ai-status", ({ res }) => {

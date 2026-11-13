@@ -80,7 +80,8 @@ async function run() {
   // --- Logged out: pages and redirects ---
   for (const page of ["/", "/login", "/?error=invalid", "/?confirmed=1", "/?deleted=1", "/signup", "/forgot", "/reset-password", "/home", "/start", "/setup", "/landing",
     "/dashboard", "/account", "/group", "/nope", "/public/style.css", "/public/planner.js", "/public/logo.png",
-    "/public/../server.js", "/public/missing.js"]) {
+    "/public/../server.js", "/public/missing.js", "/public/manifest.webmanifest", "/public/icon-512.png",
+    "/sw.js", "/offline"]) {
     await record("out GET " + page, "GET", page);
   }
   await record("out GET /ai-status", "GET", "/ai-status");
