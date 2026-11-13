@@ -4,6 +4,9 @@
 // account circle) · account circle. The circle opens a menu: who's logged in, Edit schedule,
 // Account settings, Log out. In the demo it offers sign-up and "Exit demo" instead.
 //
+// Phones get a tab bar fixed to the bottom of the screen instead of the top tabs: Dashboard,
+// Study plan, Schedule, Account, always one tap away (dashboard.css shows it at 600px and under).
+//
 // Each page has <nav id="app-nav" data-page="dashboard|plan|..."></nav> where the header
 // goes; data-page picks which tab is highlighted (none for other pages). Load this script
 // right after that element, before theme.js adds the switch.
@@ -64,6 +67,29 @@
 
   holder.append(logo, tabs, account);
 
+  // ---------- Phones: tab bar at the bottom ----------
+  const ICONS = {
+    dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+    plan: '<path d="M12 3l2.4 6.1L21 12l-6.6 2.9L12 21l-2.4-6.1L3 12l6.6-2.9z"/>',
+    schedule: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M14.5 13.5l2 2-4 4h-2v-2z"/>',
+    account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  };
+  const BAR = [
+    ...TABS,
+    { page: "schedule", href: "/setup", label: "Schedule" },
+    { page: "account", href: "/account", label: "Account" },
+  ];
+  const bar = el("nav", { class: "app-tabbar", "aria-label": "Pages" });
+  for (const tab of BAR) {
+    const link = el("a", { href: tab.href, class: "app-tabbar-item", "data-page": tab.page });
+    link.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[tab.page] + "</svg>";
+    link.append(el("span", {}, tab.label));
+    if (tab.page === current) link.setAttribute("aria-current", "page");
+    bar.append(link);
+  }
+  document.body.append(bar);
+  document.body.classList.add("has-tabbar");
+
   // ---------- Opening and closing the menu ----------
   // Computers: hovering or tabbing to the circle opens it (CSS). Phones: tap to open; tapping
   // elsewhere or pressing Escape closes it.
@@ -109,6 +135,10 @@
       name.hidden = false;
     }
     if (info.demo) {
+      // No account to open in the demo: the bar's Account becomes sign-up
+      const barAccount = bar.querySelector('[data-page="account"]');
+      barAccount.href = "/signup";
+      barAccount.querySelector("span").textContent = "Sign up";
       label.textContent = "Trying the demo";
       email.hidden = true;
       settingsLink.textContent = "Create a free account";

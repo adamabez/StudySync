@@ -52,12 +52,43 @@ a.back-link { text-decoration: none; }
 .edit-schedule-btn:hover { background: #eef1fb; }
 .edit-schedule-btn:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
-/* Phones: the logo on its own row, the tabs and account underneath */
+/* Phones' tab bar, fixed to the bottom (public/nav.js). Hidden on wider screens. */
+.app-tabbar { display: none; }
 @media (max-width: 600px) {
-  .app-nav { flex-wrap: wrap; }
-  .app-logo { flex-basis: 100%; }
+  .app-tabs { display: none; } /* the bottom bar does their job */
+  .app-logo { margin-right: auto; }
   .app-logo .logo { max-height: 32px; }
-  .app-tab { padding: 6px 12px; }
+  .app-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid #e1e5f2;
+    box-shadow: 0 -4px 16px rgba(20, 30, 70, 0.08);
+    backdrop-filter: blur(8px);
+  }
+  .app-tabbar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 2px;
+    border-radius: 10px;
+    color: #6b7391;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .app-tabbar-item[aria-current="page"] { color: #2b4acb; background: #eef1fb; }
+  .app-tabbar-item:focus-visible { outline: 2px solid #2b4acb; outline-offset: -2px; }
+  /* Room so the bar never covers the end of the page, and the feedback button sits above it */
+  body.has-tabbar { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  body.has-tabbar .fb-fab { bottom: calc(78px + env(safe-area-inset-bottom)); }
 }
 
 /* The account circle, and the card with your email + Log out that opens from it */

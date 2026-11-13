@@ -1879,3 +1879,15 @@ html[data-theme="dark"] .edit-schedule-btn {
 html[data-theme="dark"] .edit-schedule-btn:hover {
   background: #262d45;
 }
+html[data-theme="dark"] .app-tabbar {
+  background: rgba(27, 31, 42, 0.96);
+  border-top-color: #343a4d;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+}
+html[data-theme="dark"] .app-tabbar-item {
+  color: #8d94ab;
+}
+html[data-theme="dark"] .app-tabbar-item[aria-current="page"] {
+  color: #c9d3ff;
+  background: #262d45;
+}
