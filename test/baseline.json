@@ -1,0 +1,593 @@
+{
+  "out GET /": {
+    "status": 200,
+    "title": "StudySync – Log in"
+  },
+  "out GET /signup": {
+    "status": 200,
+    "title": "StudySync – Sign up"
+  },
+  "out GET /forgot": {
+    "status": 200,
+    "title": "StudySync – Forgot password"
+  },
+  "out GET /reset-password": {
+    "status": 200,
+    "title": "StudySync – New password"
+  },
+  "out GET /home": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  },
+  "out GET /start": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  },
+  "out GET /setup": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  },
+  "out GET /landing": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  },
+  "out GET /dashboard": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  },
+  "out GET /account": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  },
+  "out GET /group": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  },
+  "out GET /nope": {
+    "status": 404,
+    "title": "StudySync – Not found"
+  },
+  "out GET /public/style.css": {
+    "status": 200,
+    "type": "text/css"
+  },
+  "out GET /public/planner.js": {
+    "status": 200,
+    "type": "text/javascript"
+  },
+  "out GET /public/logo.png": {
+    "status": 200,
+    "type": "image/png"
+  },
+  "out GET /public/../server.js": {
+    "status": 404,
+    "title": "StudySync – Not found"
+  },
+  "out GET /public/missing.js": {
+    "status": 404,
+    "title": "StudySync – Not found"
+  },
+  "out GET /ai-status": {
+    "status": 200,
+    "shape": {
+      "freeTier": "boolean"
+    }
+  },
+  "out GET /api/me": {
+    "status": 401,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "out POST /api/feedback bad email": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "out POST /api/feedback bad json": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "out POST /reset-password weak": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "GET /demo": {
+    "status": 302,
+    "location": "/landing",
+    "type": ""
+  },
+  "demo GET /demo again": {
+    "status": 302,
+    "location": "/landing",
+    "type": ""
+  },
+  "demo GET /demo embed": {
+    "status": 302,
+    "location": "/dashboard",
+    "type": ""
+  },
+  "demo GET /": {
+    "status": 200,
+    "title": "StudySync – Log in"
+  },
+  "demo GET /home": {
+    "status": 302,
+    "location": "/landing",
+    "type": ""
+  },
+  "demo GET /start": {
+    "status": 302,
+    "location": "/landing",
+    "type": ""
+  },
+  "demo GET /setup": {
+    "status": 200,
+    "title": "StudySync – Set up your week"
+  },
+  "demo GET /landing": {
+    "status": 200,
+    "title": "StudySync – Home"
+  },
+  "demo GET /dashboard": {
+    "status": 200,
+    "title": "StudySync – Dashboard"
+  },
+  "demo GET /account": {
+    "status": 302,
+    "location": "/signup",
+    "type": ""
+  },
+  "demo GET /group": {
+    "status": 200,
+    "title": "StudySync – Study group"
+  },
+  "demo GET /landing?embed=1": {
+    "status": 200,
+    "title": "StudySync – Home"
+  },
+  "demo GET /dashboard?embed=1": {
+    "status": 200,
+    "title": "StudySync – Dashboard"
+  },
+  "demo GET /api/me": {
+    "status": 200,
+    "shape": {
+      "demo": "boolean",
+      "email": "string",
+      "name": "string"
+    }
+  },
+  "demo GET /api/profile": {
+    "status": 200,
+    "shape": {
+      "aiScheduling": "boolean",
+      "onboarded": "boolean",
+      "preference": "string",
+      "sessionLength": "string",
+      "studyNotes": "string",
+      "weeklyHours": "number"
+    }
+  },
+  "demo GET /api/study-plan": {
+    "status": 200,
+    "shape": {
+      "editable": "boolean",
+      "found": "number",
+      "goalMinutes": "number",
+      "groupMinutes": "number",
+      "sessions": [
+        {
+          "day": "string",
+          "edited": "boolean",
+          "end": "string",
+          "key": "string",
+          "label": "string",
+          "start": "string"
+        }
+      ],
+      "skipped": [],
+      "source": "string",
+      "suggestedFound": "number",
+      "weeklyGoalMinutes": "number"
+    }
+  },
+  "demo GET /api/study-times": {
+    "status": 200,
+    "shape": [
+      {
+        "days": [
+          "string"
+        ],
+        "end": "string",
+        "id": "string",
+        "name": "string",
+        "note": "string",
+        "start": "string",
+        "type": "string"
+      }
+    ]
+  },
+  "demo GET /api/groups/classes": {
+    "status": 200,
+    "shape": [
+      {
+        "courseKey": "string",
+        "hasGroup": "boolean",
+        "label": "string"
+      }
+    ]
+  },
+  "demo GET /api/classes": {
+    "status": 200,
+    "shape": [
+      {
+        "category": "string",
+        "courseCode": "string",
+        "days": [
+          "string"
+        ],
+        "end": "string",
+        "id": "string",
+        "kind": "string",
+        "location": "string",
+        "name": "string",
+        "section": "null",
+        "start": "string"
+      }
+    ]
+  },
+  "demo GET /api/sources": {
+    "status": 200,
+    "shape": [
+      {
+        "addedAt": "string",
+        "course": "string",
+        "id": "string",
+        "size": "number",
+        "title": "string",
+        "type": "string"
+      }
+    ]
+  },
+  "demo GET /api/chats": {
+    "status": 200,
+    "shape": [
+      {
+        "id": "string",
+        "questions": "number",
+        "title": "string",
+        "updatedAt": "string"
+      }
+    ]
+  },
+  "demo GET /api/notebook/status": {
+    "status": 200,
+    "shape": {
+      "aiEnabled": "boolean",
+      "freeTier": "boolean"
+    }
+  },
+  "demo GET /api/canvas/status": {
+    "status": 200,
+    "shape": {
+      "canvasUrl": "null",
+      "connected": "boolean",
+      "mode": "string"
+    }
+  },
+  "demo GET /api/canvas/assignments": {
+    "status": 200,
+    "shape": {
+      "completed": [
+        {
+          "checkable": "boolean",
+          "course": "string",
+          "done": "boolean",
+          "dueAt": "string",
+          "id": "string",
+          "name": "string",
+          "pointsPossible": "null",
+          "score": "null",
+          "url": "null"
+        }
+      ],
+      "missing": [
+        {
+          "checkable": "boolean",
+          "course": "string",
+          "dueAt": "string",
+          "id": "string",
+          "name": "string",
+          "url": "null"
+        }
+      ],
+      "source": "string",
+      "upcoming": [
+        {
+          "checkable": "boolean",
+          "course": "string",
+          "dueAt": "string",
+          "id": "string",
+          "name": "string",
+          "url": "null"
+        }
+      ]
+    }
+  },
+  "demo GET /api/courses?q=math": {
+    "status": 200,
+    "shape": [
+      {
+        "code": "string",
+        "title": "string",
+        "units": "string"
+      }
+    ]
+  },
+  "demo GET /api/courses?subject=MATH": {
+    "status": 200,
+    "shape": [
+      {
+        "code": "string",
+        "title": "string",
+        "units": "string"
+      }
+    ]
+  },
+  "demo GET /api/courses/subjects": {
+    "status": 200,
+    "shape": [
+      {
+        "count": "number",
+        "subject": "string"
+      }
+    ]
+  },
+  "demo GET /api/study-log?from=2026-01-01&to=2026-12-31": {
+    "status": 200,
+    "shape": {
+      "done": [],
+      "ready": "boolean"
+    }
+  },
+  "demo GET /api/nope": {
+    "status": 404,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo POST /api/groups/match": {
+    "status": 200,
+    "shape": [
+      {
+        "course": "string",
+        "days": [
+          "string"
+        ],
+        "end": "string",
+        "id": "string",
+        "members": [
+          {
+            "isYou": "boolean",
+            "name": "string"
+          }
+        ],
+        "name": "string",
+        "start": "string"
+      }
+    ]
+  },
+  "demo GET group": {
+    "status": 200,
+    "shape": {
+      "group": {
+        "course": "string",
+        "days": [
+          "string"
+        ],
+        "discord": "null",
+        "discordEnabled": "boolean",
+        "end": "string",
+        "id": "string",
+        "members": [
+          {
+            "isYou": "boolean",
+            "name": "string"
+          }
+        ],
+        "name": "string",
+        "start": "string"
+      },
+      "notes": [
+        {
+          "author": "string",
+          "body": "string",
+          "createdAt": "string",
+          "id": "string",
+          "isYours": "boolean",
+          "title": "string"
+        }
+      ]
+    }
+  },
+  "demo GET group meetup": {
+    "status": 200,
+    "shape": {
+      "meetup": {
+        "place": "string",
+        "setAt": "string",
+        "setBy": "string"
+      },
+      "moves": [],
+      "rsvps": [
+        {
+          "isYou": "boolean",
+          "name": "string",
+          "sessionDate": "string",
+          "status": "string"
+        }
+      ],
+      "spots": [
+        {
+          "by": "string",
+          "id": "string",
+          "isTheSpot": "boolean",
+          "isYours": "boolean",
+          "place": "string",
+          "votedByYou": "boolean",
+          "votes": "number"
+        }
+      ]
+    }
+  },
+  "demo GET group slots": {
+    "status": 200,
+    "shape": [
+      {
+        "day": "string",
+        "end": "string",
+        "start": "string"
+      }
+    ]
+  },
+  "demo GET group messages": {
+    "status": 200,
+    "shape": []
+  },
+  "demo POST group note": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo POST group note empty": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo POST group spot": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo POST group rsvp": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo GET missing group": {
+    "status": 404,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo POST class": {
+    "status": 201,
+    "shape": {
+      "category": "string",
+      "courseCode": "null",
+      "date": "null",
+      "days": [
+        "string"
+      ],
+      "end": "string",
+      "extra": [],
+      "id": "string",
+      "kind": "string",
+      "location": "string",
+      "name": "string",
+      "section": "null",
+      "start": "string"
+    }
+  },
+  "demo POST class bad": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo PUT class": {
+    "status": 200,
+    "shape": {
+      "category": "string",
+      "courseCode": "null",
+      "date": "null",
+      "days": [
+        "string"
+      ],
+      "end": "string",
+      "id": "string",
+      "kind": "string",
+      "location": "string",
+      "name": "string",
+      "section": "null",
+      "start": "string"
+    }
+  },
+  "demo DELETE class": {
+    "status": 200,
+    "shape": {
+      "ok": "boolean"
+    }
+  },
+  "demo POST profile": {
+    "status": 200,
+    "shape": {
+      "onboarded": "boolean",
+      "preference": "string",
+      "sessionLength": "string",
+      "studyNotes": "string",
+      "weeklyHours": "number"
+    }
+  },
+  "demo POST profile bad": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo POST source": {
+    "status": 201,
+    "shape": {
+      "addedAt": "string",
+      "course": "string",
+      "id": "string",
+      "size": "number",
+      "title": "string",
+      "type": "string"
+    }
+  },
+  "demo POST account": {
+    "status": 403,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo POST feedback empty": {
+    "status": 400,
+    "shape": {
+      "error": "string"
+    }
+  },
+  "demo GET /logout": {
+    "status": 302,
+    "location": "/",
+    "type": ""
+  }
+}
