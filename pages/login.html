@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="/public/favicon.png">
+  <!-- Installable as an app: public/manifest.webmanifest, public/install.js -->
+  <link rel="manifest" href="/public/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-title" content="StudySync">
+  <script src="/public/install.js" defer></script>
   <script src="/public/theme.js"></script>
   <title>StudySync – Log in</title>
   <link rel="stylesheet" href="/public/style.css">
@@ -19,7 +26,7 @@
     <p id="login-notice" class="notice" hidden></p>
     <form method="POST" action="/login">
       <label>Email
-        <input name="email" type="email" autocomplete="email" required autofocus>
+        <input name="email" type="email" autocomplete="username" required autofocus>
       </label>
       <label>Password
         <input name="password" type="password" autocomplete="current-password" required>
@@ -28,7 +35,7 @@
       <button type="submit">Log in</button>
     </form>
     <p class="switch"><a href="/forgot">Forgot password?</a></p>
-    <p class="switch">New here? <a href="/signup">Create an account</a> or <a href="/">see what StudySync does</a></p>
+    <p class="switch">New here? <a href="/signup">Create an account</a> or <a href="/?about=1">see what StudySync does</a></p>
     <p class="or-divider">or</p>
     <a href="/demo" class="demo-try">Try the demo
       <span class="demo-try-hint">No sign-up. Look around with sample data.</span>

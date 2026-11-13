@@ -93,11 +93,66 @@
     "status": 404,
     "title": "StudySync – Not found"
   },
+  "out GET /public/manifest.webmanifest": {
+    "status": 200,
+    "type": "application/manifest+json"
+  },
+  "out GET /public/icon-512.png": {
+    "status": 200,
+    "type": "image/png"
+  },
+  "out GET /sw.js": {
+    "status": 200,
+    "type": "text/javascript"
+  },
+  "out GET /offline": {
+    "status": 200,
+    "title": "StudySync – Offline"
+  },
+  "returning GET /": {
+    "status": 302,
+    "location": "/login",
+    "type": ""
+  },
+  "returning GET /?about=1": {
+    "status": 200,
+    "title": "StudySync – Study smarter, together"
+  },
   "out GET /ai-status": {
     "status": 200,
     "shape": {
       "freeTier": "boolean"
     }
+  },
+  "out GET /api/term": {
+    "status": 200,
+    "shape": {
+      "end": "string",
+      "holidays": [
+        {
+          "date": "string",
+          "name": "string"
+        }
+      ],
+      "holidaysChecked": "boolean",
+      "label": "string",
+      "source": "string",
+      "start": "string",
+      "term": "string"
+    }
+  },
+  "out GET /calendar": {
+    "status": 302,
+    "location": "/login",
+    "type": ""
+  },
+  "out GET calendar feed unknown": {
+    "status": 404,
+    "type": "text/plain"
+  },
+  "out GET calendar feed bad code": {
+    "status": 404,
+    "title": "StudySync – Not found"
   },
   "out GET /api/me": {
     "status": 401,
@@ -184,6 +239,10 @@
   "demo GET /dashboard?embed=1": {
     "status": 200,
     "title": "StudySync – Dashboard"
+  },
+  "demo GET /calendar": {
+    "status": 200,
+    "title": "StudySync – Calendar"
   },
   "demo GET /api/me": {
     "status": 200,
@@ -384,6 +443,12 @@
     "shape": {
       "done": [],
       "ready": "boolean"
+    }
+  },
+  "demo GET /api/calendar/link": {
+    "status": 200,
+    "shape": {
+      "demo": "boolean"
     }
   },
   "demo GET /api/nope": {

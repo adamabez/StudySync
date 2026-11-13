@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="/public/favicon.png">
+  <!-- Installable as an app: public/manifest.webmanifest, public/install.js -->
+  <link rel="manifest" href="/public/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-title" content="StudySync">
+  <script src="/public/install.js" defer></script>
   <script src="/public/theme.js"></script>
   <title>StudySync – Dashboard</title>
   <link rel="stylesheet" href="/public/style.css">
@@ -25,7 +32,12 @@
     <div class="week-heading">
       <div class="week-title">
         <h2>Your week</h2>
-        <button type="button" id="add-open" class="add-open">+ Add</button>
+        <button type="button" id="add-open" class="add-open">+ Add task</button>
+        <!-- Classes and anything weekly live on the schedule page; the dashboard only adds one-time tasks -->
+        <a href="/setup" class="edit-schedule-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M14.5 13.5l2 2-4 4h-2v-2z"/></svg>
+          <span>Edit schedule</span>
+        </a>
         <span class="study-loading" id="study-loading" role="status" hidden><span class="study-loading-dot" aria-hidden="true"></span>Planning your week…</span>
       </div>
       <ul class="legend" aria-label="Color key">
@@ -44,16 +56,13 @@
     <div id="day-picker" class="day-picker" role="group" aria-label="Pick a day"></div>
     <div id="week" class="week"></div>
 
-    <!-- ========== Add a Class / Task / Other (collapsible, starts collapsed: opens from "+ Add", a day's "+", or Edit) ========== -->
+    <!-- ========== Add a one-time task (collapsible, starts collapsed: opens from "+ Add task", a day's "+", or Edit) ==========
+         Classes and weekly items are added and edited on the schedule page (/setup), so there's one place for them.
+         #kind is "task" when adding; editing a one-time "other" item sets it to "other" (public/dashboard.js). -->
     <div class="section-head">
-      <h2 class="add-heading">
-        <select id="kind" class="kind-select" aria-label="What do you want to add?">
-          <option value="class">Add a Class</option>
-          <option value="task">Add a Task</option>
-          <option value="other">Add Other</option>
-        </select>
-      </h2>
-      <button type="button" class="collapse-toggle" data-target="add-body" data-name="Add section" data-default="collapsed"></button>
+      <h2 class="add-heading" id="add-heading">Add a one-time task</h2>
+      <input type="hidden" id="kind" value="task">
+      <button type="button" class="collapse-toggle" data-target="add-body" data-name="Add task section" data-default="collapsed"></button>
     </div>
     <div id="add-body" class="collapse-body">
     <!-- Only shows while editing an item from the calendar (pencil → Edit) -->
@@ -61,12 +70,9 @@
       Editing <strong id="edit-name"></strong>
       <button type="button" id="edit-cancel" class="link-button">Cancel</button>
     </p>
-    <p class="catalog-note">
-      <span aria-hidden="true">🎓</span>
-      <span><strong>Every Sac State class is built in.</strong> Click the box to browse by subject or start typing a course (like CSC 20), pick your section,
-        and the days, times and room fill in for you. More schools are coming soon.</span>
-    </p>
-    <form id="add-form" class="add-form">
+    <p class="hint tasks-hint">For things happening once, like an exam, a study session or a deadline. Classes and anything weekly go in
+      <a href="/setup">Edit schedule</a>.</p>
+    <form id="add-form" class="add-form tasks-only">
       <label class="name"><span id="name-label">Class name</span>
         <input id="name" maxlength="60" placeholder="Search, e.g. CSC 20 or Biology" required>
       </label>

@@ -1913,3 +1913,62 @@ html[data-theme="dark"] .day-pick[aria-pressed="true"] .day-pick-name,
 html[data-theme="dark"] .day-pick[aria-pressed="true"] .day-pick-count {
   color: white;
 }
+html[data-theme="dark"] .install-dialog {
+  background: #23262e;
+  color: #e3e7f7;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+html[data-theme="dark"] .install-dialog h2 {
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .install-close {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .install-close:hover {
+  background: #2f3445;
+}
+html[data-theme="dark"] .install-early {
+  background: #3d3418;
+  color: #f2d89b;
+}
+html[data-theme="dark"] .install-steps {
+  color: #c9cfe3;
+}
+html[data-theme="dark"] .install-note {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .install-share {
+  background: #262d45;
+  color: #a9b8f5;
+}
+html[data-theme="dark"] .install-lead {
+  color: #c9cfe3;
+}
+html[data-theme="dark"] .install-address {
+  color: #a9b8f5;
+}
+html[data-theme="dark"] .install-list dt {
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .install-list dd {
+  color: #b3bad3;
+}
+html[data-theme="dark"] .signup-app {
+  background: #232a42;
+  border-color: #343d5e;
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .signup-app strong {
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .signup-app > div > span {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .signup-app-buttons button {
+  background: #1b1f2a;
+  border-color: #3d4766;
+  color: #a9b8f5;
+}
+html[data-theme="dark"] .signup-app-buttons button:hover {
+  background: #262d45;
+}

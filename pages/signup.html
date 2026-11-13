@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="/public/favicon.png">
+  <!-- Installable as an app: public/manifest.webmanifest, public/install.js -->
+  <link rel="manifest" href="/public/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-title" content="StudySync">
+  <script src="/public/install.js" defer></script>
   <script src="/public/theme.js"></script>
   <title>StudySync – Sign up</title>
   <link rel="stylesheet" href="/public/style.css">
@@ -20,7 +27,7 @@
         <span class="field-hint">So your study group knows who you are. Your email stays private.</span>
       </label>
       <label>Email
-        <input name="email" type="email" autocomplete="email" required>
+        <input name="email" type="email" autocomplete="username" required>
       </label>
       <label>Password
         <input name="password" type="password" autocomplete="new-password" minlength="6" required>
@@ -30,6 +37,18 @@
     </form>
     <p class="switch">Already have an account? <a href="/login">Log in</a></p>
     <p class="switch">Not ready yet? <a href="/demo">Try the demo first</a></p>
+    <!-- The early apps: each opens the install window for that kind of device (public/install.js) -->
+    <div class="signup-app" data-install-app-box>
+      <img src="/public/icon-192.png" alt="" width="36" height="36">
+      <div>
+        <strong>Get the early app</strong>
+        <span>Full apps are coming.</span>
+        <div class="signup-app-buttons">
+          <button type="button" data-install-app="phone"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg> Phone</button>
+          <button type="button" data-install-app="computer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg> Computer</button>
+        </div>
+      </div>
+    </div>
     <p id="ai-notice" class="ai-notice" hidden>
       <strong>Early access.</strong> StudySync is still being built, so expect some rough edges.
       AI answers can take a little while, and sometimes the AI is busy or errors out. If that

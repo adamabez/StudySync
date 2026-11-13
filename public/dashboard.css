@@ -65,7 +65,8 @@ a.back-link { text-decoration: none; }
     bottom: 0;
     z-index: 60;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
     background: rgba(255, 255, 255, 0.96);
     border-top: 1px solid #e1e5f2;
@@ -157,6 +158,7 @@ a.back-link { text-decoration: none; }
   text-decoration: none;
 }
 .account-item:hover { background: #eef1fb; }
+.account-item[hidden] { display: none; }
 .account-item:focus-visible { outline: 2px solid #2b4acb; outline-offset: -2px; }
 .account-card { min-width: 190px; }
 
@@ -431,6 +433,14 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   .day-pick[aria-pressed="true"] .day-pick-count { color: white; }
   .day-pick:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 }
+
+/* ---------- Dashboard: the Add form only adds one-time tasks ---------- */
+.tasks-only .repeat-picker { display: none; } /* always "one time" here; weekly items go on the schedule page */
+.tasks-hint { margin: 0 0 12px; }
+.week-title .edit-schedule-btn { padding: 5px 12px; font-size: 13px; }
+.week-title h2, .add-open { white-space: nowrap; }
+/* Phones: the bottom tab bar already has Schedule */
+@media (max-width: 600px) { .week-title .edit-schedule-btn { display: none; } }
 
 /* ---------- "Add a Class / Task / Other" dropdown ---------- */
 .kind-select {

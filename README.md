@@ -173,6 +173,20 @@ To refresh the class list (new semester): `node scripts/import-courses.js`, then
 
 Which sections are collapsed and which chat was last open are stored in your browser only.
 
+## Calendar
+The **Calendar** page (`/calendar`) shows the whole semester a month at a time. Classes repeat from the first to the last day of classes and skip holidays.
+- **Semester dates** come from Sac State's class schedule automatically (`lib/terms.js`). **Holidays aren't in that data:** update `TERMS` in `lib/terms.js` each semester from the official calendar (catalog.csus.edu/academic-calendar), then set `checked: true`.
+- **Add to my calendar:** each student gets a private link that Google Calendar, Apple Calendar or Outlook subscribe to (`routes/calendar.js`, `lib/calendarfeed.js`). It holds classes, weekly items, one-time tasks and study group meetings for the semester. Solo study time isn't in it, because it's planned a week at a time.
+- **Setup:** the link needs `supabase/calendar-feed.sql` run in Supabase (it's also at the end of `schema.sql`). Until then, the page says links aren't set up yet.
+
+## Installing it as an app
+StudySync can be added to a phone's home screen and opens full screen like an app (no app store needed):
+- **iPhone (Safari):** Share → Add to Home Screen. **Android (Chrome):** menu → Install app (or the prompt Chrome shows).
+- It needs the real site over https (e.g. Render). A phone opening your computer's http://… address won't offer to install.
+- Files: `public/manifest.webmanifest` (name, colors, icons), `public/icon-*.png` and `apple-touch-icon.png`, `public/sw.js` (served at `/sw.js`), `public/install.js`, `pages/offline.html`.
+- The service worker only saves the offline page. Every page and API request still goes to the server, so nothing goes stale.
+- **Renaming the app later:** change `name` / `short_name` in the manifest and `apple-mobile-web-app-title` in the pages. Installed copies pick up the new name on their next update.
+
 ## Customizing
 
 - **Calendar colors:** edit `COLOR_FAMILIES` at the top of `public/colors.js`. It's the only place colors are set; the cards and the color key both read from it. Hues: 0 red · 60 yellow · 120 green · 200 blue · 270 purple · 330 pink.

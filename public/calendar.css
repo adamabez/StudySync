@@ -1,0 +1,160 @@
+/* StudySync - the calendar page (pages/calendar.html, public/calendar.js). Dark mode at the bottom. */
+
+/* ---------- Month header: ‹ November 2026 › Today ---------- */
+.cal-head { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
+.cal-head h2 { margin: 0 6px; min-width: 170px; font-size: 22px; color: #1d2a5c; text-align: center; }
+.cal-arrow, .cal-today {
+  padding: 6px 12px;
+  border: 1px solid #d6dcf0;
+  border-radius: 999px;
+  background: white;
+  color: #2b4acb;
+  font-size: 18px;
+  line-height: 1;
+}
+.cal-today { margin-left: auto; font-size: 14px; font-weight: 600; padding: 8px 14px; }
+.cal-arrow:hover, .cal-today:hover { background: #eef1fb; }
+
+/* ---------- The month grid ---------- */
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-loading { grid-column: 1 / -1; margin: 40px 0; text-align: center; color: #888; }
+.cal-weekday { padding: 4px 0; font-size: 12px; font-weight: 700; color: #6b7391; text-align: center; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  min-height: 104px;
+  padding: 6px;
+  border: 1px solid #e3e7f2;
+  border-radius: 10px;
+  background: white;
+  color: #333a55;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+.cal-cell:hover { border-color: #aab3d6; background: white; }
+.cal-cell.other-month { opacity: 0.45; }
+.cal-cell.out-of-term { background: #f7f8fc; }
+.cal-cell.holiday { background: #fff7e0; border-color: #f1dc9c; }
+.cal-cell.today .cal-num { background: #2b4acb; color: white; }
+.cal-cell[aria-pressed="true"] { border-color: #2b4acb; box-shadow: 0 0 0 1px #2b4acb; }
+.cal-cell:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+.cal-num { align-self: flex-start; min-width: 24px; padding: 1px 6px; border-radius: 999px; font-size: 13px; font-weight: 700; text-align: center; }
+.cal-label { font-size: 11px; font-weight: 700; color: #8a5a00; line-height: 1.2; }
+.cal-cell:not(.holiday) .cal-label { color: #2b4acb; }
+
+.cal-chips { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cal-chip {
+  padding: 2px 6px;
+  border-left: 3px solid var(--c, #2b4acb);
+  border-radius: 4px;
+  background: #f3f5fb;
+  font-size: 11.5px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-chip.group { border-left-color: #2b4acb; background: #eef1fd; }
+.cal-chip.study { border-left-color: #e0a100; background: #fff7e0; }
+.cal-more { font-size: 11px; color: #6b7391; padding-left: 4px; }
+.cal-dots { display: none; }
+
+/* Dots: the legend, and the day cells on phones */
+.cal-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c, #2b4acb); }
+.cal-dot.class { background: var(--c, hsl(160, 60%, 40%)); }
+.cal-dot.task { background: var(--c, hsl(350, 60%, 48%)); }
+.cal-dot.other { background: var(--c, hsl(270, 60%, 52%)); }
+.cal-dot.group { background: #2b4acb; }
+.cal-dot.study { background: #e0a100; }
+.cal-dot.holiday { background: #f1dc9c; }
+
+.cal-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0 0; padding: 0; list-style: none; font-size: 13px; color: #555d78; }
+.cal-legend li { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---------- The picked day ---------- */
+.cal-day { margin-top: 20px; padding: 16px 18px; border: 1px solid #e3e7f2; border-radius: 14px; background: #fafbfe; }
+.cal-day h3 { margin: 0 0 10px; font-size: 17px; color: #1d2a5c; }
+.cal-day .hint { margin: 0; }
+.cal-holiday-note { margin: 0 0 10px; padding: 8px 12px; border-radius: 8px; background: #fff7e0; color: #6b4e00; font-size: 14px; }
+.cal-day-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cal-day-item { display: grid; grid-template-columns: 150px 1fr; gap: 2px 12px; padding: 8px 12px; border-left: 4px solid var(--c, #2b4acb); border-radius: 8px; background: white; }
+.cal-day-item.group { border-left-color: #2b4acb; }
+.cal-day-item.study { border-left-color: #e0a100; }
+.cal-day-time { grid-row: span 2; font-size: 14px; color: #555d78; }
+.cal-day-item strong { color: #1d2a5c; }
+.cal-day-note { font-size: 13px; color: #6b7391; }
+
+/* ---------- Add to your calendar ---------- */
+.cal-feed { margin-top: 28px; }
+.cal-feed h2 { margin: 0 0 6px; }
+.cal-feed-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 8px; }
+.cal-feed-btn {
+  display: inline-block;
+  padding: 9px 16px;
+  border: 1.5px solid #2b4acb;
+  border-radius: 10px;
+  background: white;
+  color: #2b4acb;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.cal-feed-btn:hover { background: #eef1fb; }
+.cal-feed-btn.primary { background: #2b4acb; color: white; }
+.cal-feed-btn.primary:hover { background: #2240b0; }
+.cal-feed-note { margin: 0; font-size: 13px; color: #6b7391; }
+.cal-feed-note .link-button { font-size: 13px; }
+
+/* ---------- Phones: dots instead of chips, the day's list underneath does the talking ---------- */
+@media (max-width: 700px) {
+  .cal-head h2 { min-width: 0; font-size: 18px; }
+  .cal-grid { gap: 3px; }
+  .cal-cell { min-height: 58px; padding: 4px; align-items: center; }
+  .cal-num { align-self: center; font-size: 12px; padding: 1px 5px; }
+  .cal-label, .cal-chips { display: none; }
+  .cal-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+  .cal-dots .cal-dot { width: 6px; height: 6px; }
+  .cal-day-item { grid-template-columns: 1fr; }
+  .cal-day-time { grid-row: auto; }
+}
+
+/* ---------- Dark mode ---------- */
+html[data-theme="dark"] .cal-head h2,
+html[data-theme="dark"] .cal-day h3,
+html[data-theme="dark"] .cal-day-item strong { color: #e3e7f7; }
+html[data-theme="dark"] .cal-arrow,
+html[data-theme="dark"] .cal-today { background: #23262e; border-color: #343a4d; color: #a9b8f5; }
+html[data-theme="dark"] .cal-arrow:hover,
+html[data-theme="dark"] .cal-today:hover { background: #2b3040; }
+html[data-theme="dark"] .cal-weekday { color: #8d94ab; }
+html[data-theme="dark"] .cal-cell { background: #23262e; border-color: #343a4d; color: #c9cfe3; }
+html[data-theme="dark"] .cal-cell:hover { border-color: #5a6280; background: #23262e; }
+html[data-theme="dark"] .cal-cell.out-of-term { background: #1c1f27; }
+html[data-theme="dark"] .cal-cell.holiday { background: #352d17; border-color: #5c4c1f; }
+html[data-theme="dark"] .cal-cell.today .cal-num { background: #4a63d6; }
+html[data-theme="dark"] .cal-cell[aria-pressed="true"] { border-color: #8ea0e7; box-shadow: 0 0 0 1px #8ea0e7; }
+html[data-theme="dark"] .cal-label { color: #f2c96b; }
+html[data-theme="dark"] .cal-cell:not(.holiday) .cal-label { color: #a9b8f5; }
+html[data-theme="dark"] .cal-chip { background: #2b3040; }
+html[data-theme="dark"] .cal-chip.group { background: #262d45; border-left-color: #8ea0e7; }
+html[data-theme="dark"] .cal-chip.study { background: #352d17; }
+html[data-theme="dark"] .cal-more,
+html[data-theme="dark"] .cal-legend { color: #a9b0c8; }
+html[data-theme="dark"] .cal-dot.group { background: #8ea0e7; }
+html[data-theme="dark"] .cal-dot.holiday { background: #8a7330; }
+html[data-theme="dark"] .cal-day { background: #1c1f27; border-color: #343a4d; }
+html[data-theme="dark"] .cal-day-item { background: #23262e; }
+html[data-theme="dark"] .cal-day-item.group { border-left-color: #8ea0e7; }
+html[data-theme="dark"] .cal-day-time,
+html[data-theme="dark"] .cal-day-note,
+html[data-theme="dark"] .cal-feed-note { color: #a9b0c8; }
+html[data-theme="dark"] .cal-holiday-note { background: #352d17; color: #f2d89b; }
+html[data-theme="dark"] .cal-feed-btn { background: transparent; border-color: #8ea0e7; color: #a9b8f5; }
+html[data-theme="dark"] .cal-feed-btn:hover { background: #262d45; }
+html[data-theme="dark"] .cal-feed-btn.primary { background: #4a63d6; border-color: #4a63d6; color: white; }

@@ -361,3 +361,79 @@ button:hover { background: #2240b0; }
   animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- "Get the early app" window (public/install.js) ---------- */
+.install-dialog {
+  width: min(380px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 28px 24px 22px;
+  border: none;
+  border-radius: 16px;
+  background: white;
+  color: #1d2a5c;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(20, 30, 70, 0.3);
+}
+.install-dialog::backdrop { background: rgba(15, 20, 40, 0.45); }
+.install-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #6b7391;
+  font-size: 22px;
+  line-height: 1;
+}
+.install-close:hover { background: #eef1fb; }
+.install-icon { display: block; margin: 0 auto 10px; border-radius: 16px; box-shadow: 0 2px 8px rgba(20, 30, 70, 0.15); }
+.install-dialog h2 { margin: 0 0 8px; font-size: 20px; color: #1d2a5c; }
+.install-early { margin: 0 0 16px; padding: 10px 12px; border-radius: 10px; background: #fff7e0; color: #6b4e00; font-size: 14px; line-height: 1.45; text-align: left; }
+.install-go { width: 100%; }
+.install-note { margin: 10px 0 0; font-size: 13px; color: #6b7391; line-height: 1.45; }
+.install-steps { margin: 0; padding-left: 22px; text-align: left; font-size: 15px; line-height: 1.5; color: #333a55; }
+.install-steps li + li { margin-top: 8px; }
+.install-share { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 6px; background: #eef1fb; color: #2b4acb; font-weight: 600; white-space: nowrap; vertical-align: middle; }
+/* The install window, for the other kind of device: "On your phone, open ... then:" */
+.install-lead { margin: 0 0 10px; font-size: 14.5px; color: #333a55; text-align: left; }
+.install-address { color: #2b4acb; word-break: break-all; }
+.install-list { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; text-align: left; font-size: 14px; }
+.install-list dt { font-weight: 700; color: #1d2a5c; }
+.install-list dd { margin: 0; color: #4a5372; line-height: 1.45; }
+
+/* Sign-up page: "Get the early app" with Phone / Computer buttons (public/install.js) */
+.signup-app {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #d6dcf6;
+  border-radius: 10px;
+  background: #f6f8ff;
+  color: #1d2a5c;
+  font-size: 14px;
+  text-align: left;
+}
+.signup-app img { flex: none; border-radius: 8px; }
+.signup-app strong { display: block; color: #1d2a5c; }
+.signup-app > div > span { display: block; margin-top: 1px; font-size: 12.5px; color: #6b7391; }
+.signup-app-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.signup-app-buttons button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid #c9d2f6;
+  border-radius: 999px;
+  background: white;
+  color: #2b4acb;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.signup-app-buttons button:hover { background: #eef1fd; }
+.signup-app-buttons button[hidden] { display: none; }
+.signup-app[hidden] { display: none; }

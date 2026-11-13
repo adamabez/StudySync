@@ -11,8 +11,21 @@ const ai = require("../lib/ai");
 const feedback = require("../lib/feedback");
 const onboarding = require("../lib/onboarding");
 const demo = require("../lib/demo");
+const terms = require("../lib/terms");
+const fs = require("fs");
+const path = require("path");
 const { siteUrl, sendPage, sendJson, redirect, readBody, readJson } = require("../lib/http");
 const { feedbackLimited } = require("../lib/limits");
+
+// Someone who has logged in on this device before: the front page goes straight to the login
+// form (so the browser fills in their password) instead of the welcome page. Set when they log
+// in or sign up; it isn't a login itself, just "show this device the login page".
+const RETURNING = "ss_returning";
+const returningCookie = () => {
+  const secure = (process.env.PUBLIC_URL || "").trim().startsWith("https://") ? "; Secure" : "";
+  return `${RETURNING}=1; Path=/; HttpOnly; SameSite=Lax; Max-Age=${400 * 24 * 60 * 60}${secure}`;
+};
+const isReturning = (req) => (req.headers.cookie || "").split(";").some((part) => part.trim() === RETURNING + "=1");
 
 // Pages only for students with an account or a demo (others go to the login page)
 const appPage = (fileName, { demoBanner = "full" } = {}) => ({ res, loggedIn, inDemo, demoMode }) => {
@@ -33,6 +46,20 @@ module.exports = [
     redirect(res, target, { "Set-Cookie": demo.startCookie(demo.start()) });
   }],
 
+  // This semester's dates (lib/terms.js): first / last day of classes and holidays. Not private,
+  // so it works for everyone, the demo too.
+  ["GET", "/api/term", async ({ res }) => sendJson(res, await terms.getTerm())],
+
+  // Installing StudySync as an app: the service worker has to come from the top of the site
+  // (not /public/) to cover every page. no-cache: phones check for a new version each visit.
+  ["GET", "/sw.js", ({ res }) => {
+    res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache" });
+    res.end(fs.readFileSync(path.join(__dirname, "..", "public", "sw.js")));
+  }],
+
+  // What the installed app shows when there's no connection (saved by public/sw.js)
+  ["GET", "/offline", ({ res }) => sendPage(res, "offline.html")],
+
   // Whether to show the "Demo version" AI notice on login / sign-up
   ["GET", "/ai-status", ({ res }) => {
     sendJson(res, { freeTier: ai.providerInfo().freeTier }); // shown even before the key is added
@@ -41,11 +68,13 @@ module.exports = [
   // Front page: what StudySync is, with the live demo and sign-up (skipped if logged in).
   // Older links (email confirmation, errors, "account deleted") pointed at /?..., so those
   // go to the login page with the same query; the browser keeps any #... part.
-  ["GET", "/", ({ res, url, loggedIn }) => {
+  // Returning students go to the login form too; /?about=1 shows them the welcome page anyway.
+  ["GET", "/", ({ req, res, url, loggedIn, inDemo }) => {
     if (loggedIn) return redirect(res, "/home");
     if (["error", "checkEmail", "confirmed", "deleted"].some((key) => url.searchParams.has(key))) {
       return redirect(res, "/login" + url.search);
     }
+    if (isReturning(req) && !inDemo && !url.searchParams.has("about")) return redirect(res, "/login");
     sendPage(res, "welcome.html");
   }],
 
@@ -58,7 +87,7 @@ module.exports = [
     const form = new URLSearchParams(body);
     const result = await auth.logIn((form.get("email") || "").trim(), form.get("password") || "");
     if (result.error) return redirect(res, `/login?error=${result.error}`);
-    redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
+    redirect(res, "/home", { "Set-Cookie": [...[].concat(endDemo(result.cookies)), returningCookie()] });
   })],
 
   ["GET", "/signup", ({ res, loggedIn }) => {
@@ -72,8 +101,8 @@ module.exports = [
     if (name.error) return redirect(res, `/signup?error=${name.code}`);
     const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value, `${siteUrl(req)}/?confirmed=1`);
     if (result.error) return redirect(res, `/signup?error=${result.error}`);
-    if (result.confirmEmail) return redirect(res, "/login?checkEmail=1");
-    redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
+    if (result.confirmEmail) return redirect(res, "/login?checkEmail=1", { "Set-Cookie": returningCookie() });
+    redirect(res, "/home", { "Set-Cookie": [...[].concat(endDemo(result.cookies)), returningCookie()] });
   })],
 
   // Loading screen, then the dashboard (logged-in users only)
@@ -101,7 +130,8 @@ module.exports = [
   ["GET", "/setup", appPage("setup.html")], // "Edit schedule" works in the demo too (always with the banner)
   ["GET", "/landing", appPage("landing.html", { demoBanner: "auto" })],
   ["GET", "/dashboard", appPage("dashboard.html", { demoBanner: "auto" })],
-  ["GET", "/group", appPage("group.html", { demoBanner: "auto" })], // one study group: /group?id=<group id>
+  ["GET", "/group", appPage("group.html", { demoBanner: "auto" })],
+  ["GET", "/calendar", appPage("calendar.html", { demoBanner: "auto" })], // the semester, month by month // one study group: /group?id=<group id>
 
   // Account settings: change email / password, dark mode, delete account
   ["GET", "/account", ({ res, loggedIn, inDemo }) => {

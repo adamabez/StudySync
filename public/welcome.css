@@ -61,6 +61,25 @@ body.welcome {
 .wl-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
 .wl-fine { margin: 14px 0 0; font-size: 14px; color: #777; }
 
+/* "Get the early app on your phone" under the hero (public/install.js) */
+.wl-apps[hidden] { display: none; }
+.wl-apps { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; }
+.wl-apps-label { font-size: 14px; color: #6b7391; }
+.wl-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid #d6dcf6;
+  border-radius: 999px;
+  background: white;
+  color: #2b4acb;
+  font-size: 14px;
+  font-weight: 600;
+}
+.wl-install:hover { background: #eef1fd; }
+.wl-install[hidden] { display: none; }
+
 /* ---------- How it works ---------- */
 .wl-steps, .wl-features, .wl-final { padding: 40px 0; }
 .wl-steps h2, .wl-features h2, .wl-final h2 { margin: 0 0 24px; font-size: 28px; text-align: center; }
@@ -139,6 +158,9 @@ html[data-theme="dark"] body.welcome { color: #e3e7f7; }
 html[data-theme="dark"] .welcome h1,
 html[data-theme="dark"] .welcome h2,
 html[data-theme="dark"] .welcome h3 { color: #e3e7f7; }
+html[data-theme="dark"] .wl-apps-label { color: #8d94ab; }
+html[data-theme="dark"] .wl-install { background: #23262e; border-color: #343d5e; color: #a9b8f5; }
+html[data-theme="dark"] .wl-install:hover { background: #262d45; }
 html[data-theme="dark"] .wl-soon { background: #3d3418; color: #f2c96b; }
 html[data-theme="dark"] .wl-lead { color: #b3bad3; }
 html[data-theme="dark"] .wl-fine { color: #8d94ab; }
