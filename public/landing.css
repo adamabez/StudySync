@@ -66,24 +66,56 @@
   font-size: 14px;
 }
 
-.added-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
-.added-empty { color: #999; font-size: 14px; }
+/* Setup page: the schedule so far, under headings, color coded like the dashboard (setup.js) */
+.added-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 18px; }
+.added-empty { padding: 16px; border: 1.5px dashed #d5d9e6; border-radius: 12px; color: #888; font-size: 14px; text-align: center; }
+.added-heading { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 16px; color: #1d2a5c; }
+.added-heading-icon { font-size: 18px; }
+.added-count { min-width: 22px; padding: 1px 8px; border-radius: 999px; background: #eef1fd; color: #2b4acb; font-size: 12.5px; font-weight: 700; text-align: center; }
+.added-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 .added-item {
+  --c: hsl(160, 60%, 40%);
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  background: white;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  background: #fff;
   border: 1px solid #e3e6f0;
-  border-left: 4px solid hsl(160, 60%, 40%);
-  border-radius: 8px;
+  border-left: 5px solid var(--c);
+  border-radius: 12px;
   font-size: 14px;
   overflow-wrap: anywhere;
+  transition: box-shadow 0.15s, transform 0.15s;
 }
-.added-item.other { border-left-color: hsl(270, 60%, 50%); }
-.added-item strong { display: block; color: #222; }
-.added-item span { color: #666; font-size: 13px; }
+.added-item:hover { box-shadow: 0 4px 14px rgba(20, 30, 70, 0.08); transform: translateY(-1px); }
+.added-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.added-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.added-top strong { font-size: 15.5px; color: #1f2937; }
+.added-tag { padding: 1px 7px; border-radius: 5px; background: #eef0f6; color: #555; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.added-when { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.added-day { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--c) 14%, #fff); color: color-mix(in srgb, var(--c) 75%, #000); font-size: 12px; font-weight: 600; }
+.added-time { color: #4b5563; font-size: 13px; }
+.added-where { color: #6b7280; font-size: 13px; }
+.added-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 4px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #b42318;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.added-remove:hover { background: #fdecec; border-color: #f5c2c2; }
+.added-remove:focus-visible { outline: 2px solid #c62828; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .added-item, .added-item:hover { transition: none; transform: none; } }
 
 .choice-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 /* Group / Solo: icon, title + line, and a check circle that fills in when picked */
@@ -263,10 +295,6 @@
 .group-name { font-size: 16px; color: #222; }
 .group-card .meta { color: #666; }
 .group-card .hint { margin: 4px 0 0; font-size: 13px; }
-/* "This week: Tue · Already studied?" on a group card (study-log.js buttons) */
-.group-week { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 4px; }
-.group-week-label { font-size: 13px; color: #666; }
-.group-week .study-check { margin-top: 0; }
 .member-list { margin: 6px 0 0; padding-left: 18px; color: #444; font-size: 13px; }
 
 /* Group cards open the group's page */

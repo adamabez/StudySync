@@ -219,22 +219,6 @@ function groupCard(group) {
     card.appendChild(note);
   }
 
-  // "This week: [Tue · Already studied?] [Thu · Studied]" (study-log.js)
-  if (window.studyLog.ready && Array.isArray(group.days) && group.days.length && group.start && group.end) {
-    const week = document.createElement("div");
-    week.className = "group-week";
-    const label = document.createElement("span");
-    label.className = "group-week-label";
-    label.textContent = "This week:";
-    week.appendChild(label);
-    const dayName = Object.fromEntries(DAYS.map(([key, name]) => [key, name.slice(0, 3)]));
-    for (const day of DAYS.map(([key]) => key).filter((key) => group.days.includes(key))) {
-      const session = { day, start: group.start, end: group.end, kind: "group", groupId: group.id };
-      week.appendChild(window.studyLog.button(session, { off: dayName[day] + " · Already studied?", on: dayName[day] + " · Studied" }));
-    }
-    card.appendChild(week);
-  }
-
   const open = document.createElement("span");
   open.className = "group-open";
   open.textContent = "Open group notes →";

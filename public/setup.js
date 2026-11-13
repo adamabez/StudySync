@@ -45,37 +45,103 @@ function updateForm() {
   $("form-error").textContent = "";
 }
 
+// The schedule so far, grouped under headings (Classes / Tasks / Work, clubs & other),
+// each item in its own calendar color, same as the dashboard (public/colors.js)
+const GROUPS = [
+  { kind: "class", title: "Classes", icon: "📚" },
+  { kind: "task", title: "Tasks", icon: "📝" },
+  { kind: "other", title: "Work, clubs & other", icon: "🗓️" },
+];
+const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
 function renderList() {
   const list = $("added-list");
   list.innerHTML = "";
   if (items.length === 0) {
     const empty = document.createElement("li");
     empty.className = "added-empty";
-    empty.textContent = "Nothing added yet.";
+    empty.textContent = "Nothing added yet. Your classes and other plans will show up here.";
     list.appendChild(empty);
     return;
   }
-  for (const item of items) {
-    const li = document.createElement("li");
-    li.className = "added-item " + (item.kind || "class");
+  for (const group of GROUPS) {
+    const mine = items
+      .filter((item) => (item.kind || "class") === group.kind)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (!mine.length) continue;
 
-    const text = document.createElement("div");
-    const name = document.createElement("strong");
-    name.textContent = item.name;
-    const meta = document.createElement("span");
-    meta.textContent = describe(item) + (item.location ? " · " + item.location : "") + (item.category ? " · " + item.category : "");
-    text.append(name, meta);
+    const section = document.createElement("li");
+    section.className = "added-group added-group-" + group.kind;
+    const heading = document.createElement("h3");
+    heading.className = "added-heading";
+    heading.innerHTML = '<span class="added-heading-icon" aria-hidden="true">' + group.icon + "</span>";
+    heading.append(group.title);
+    const count = document.createElement("span");
+    count.className = "added-count";
+    count.textContent = mine.length;
+    heading.appendChild(count);
+    section.appendChild(heading);
 
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "link-button danger";
-    remove.textContent = "Remove";
-    remove.setAttribute("aria-label", "Remove " + item.name);
-    remove.addEventListener("click", () => removeItem(item));
-
-    li.append(text, remove);
-    list.appendChild(li);
+    const cards = document.createElement("ul");
+    cards.className = "added-cards";
+    for (const item of mine) cards.appendChild(itemCard(item));
+    section.appendChild(cards);
+    list.appendChild(section);
   }
+}
+
+function itemCard(item) {
+  const li = document.createElement("li");
+  li.className = "added-item " + (item.kind || "class");
+  li.style.setProperty("--c", window.studyColors.colorFor(item));
+
+  const text = document.createElement("div");
+  text.className = "added-text";
+  const top = document.createElement("div");
+  top.className = "added-top";
+  const name = document.createElement("strong");
+  name.textContent = item.name;
+  top.appendChild(name);
+  // Tag for tasks and "other" (WORK, GYM...), like on the dashboard
+  if ((item.kind || "class") !== "class") {
+    const tag = document.createElement("span");
+    tag.className = "added-tag";
+    tag.textContent = item.kind === "task" ? "Task" : item.category || "Other";
+    top.appendChild(tag);
+  }
+  text.appendChild(top);
+
+  // When: day chips + the time (or "Asynchronous")
+  const when = document.createElement("div");
+  when.className = "added-when";
+  for (const day of DAY_ORDER.filter((d) => item.days.includes(d))) {
+    const chip = document.createElement("span");
+    chip.className = "added-day";
+    chip.textContent = DAY_LABELS[day];
+    when.appendChild(chip);
+  }
+  const time = document.createElement("span");
+  time.className = "added-time";
+  time.textContent = item.start ? formatTime(item.start) + " – " + formatTime(item.end) : "Asynchronous";
+  when.appendChild(time);
+  text.appendChild(when);
+
+  if (item.location) {
+    const where = document.createElement("span");
+    where.className = "added-where";
+    where.textContent = item.location;
+    text.appendChild(where);
+  }
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "added-remove";
+  remove.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Remove</span>';
+  remove.setAttribute("aria-label", "Remove " + item.name);
+  remove.addEventListener("click", () => removeItem(item));
+
+  li.append(text, remove);
+  return li;
 }
 
 async function removeItem(item) {

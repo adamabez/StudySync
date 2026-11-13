@@ -463,17 +463,46 @@ html[data-theme="dark"] .segmented label:has(input:focus-visible) {
   outline: 2px solid #5871dc;
 }
 html[data-theme="dark"] .added-empty {
+  border: 1.5px dashed #404453;
   color: #8c8c8c;
+}
+html[data-theme="dark"] .added-heading {
+  color: #8394d8;
+}
+html[data-theme="dark"] .added-count {
+  background: #131a35;
+  color: #8ea0e7;
 }
 html[data-theme="dark"] .added-item {
   background: #23262e;
   border: 1px solid #42485a;
 }
-html[data-theme="dark"] .added-item strong {
-  color: #dddddd;
+html[data-theme="dark"] .added-top strong {
+  color: #c8d2e0;
 }
-html[data-theme="dark"] .added-item span {
-  color: #999999;
+html[data-theme="dark"] .added-tag {
+  background: #1c1f29;
+  color: #aaaaaa;
+}
+html[data-theme="dark"] .added-day {
+  background: color-mix(in srgb, var(--c) 14%, #23262e);
+  color: color-mix(in srgb, var(--c) 75%, #ebebeb);
+}
+html[data-theme="dark"] .added-time {
+  color: #9ca6b4;
+}
+html[data-theme="dark"] .added-where {
+  color: #828997;
+}
+html[data-theme="dark"] .added-remove {
+  color: #ec786f;
+}
+html[data-theme="dark"] .added-remove:hover {
+  background: #351212;
+  border-color: #632e2e;
+}
+html[data-theme="dark"] .added-remove:focus-visible {
+  outline: 2px solid #dc5050;
 }
 html[data-theme="dark"] .choice-card {
   border: 2px solid #42485a;
@@ -596,9 +625,6 @@ html[data-theme="dark"] .group-name {
   color: #dddddd;
 }
 html[data-theme="dark"] .group-card .meta {
-  color: #999999;
-}
-html[data-theme="dark"] .group-week-label {
   color: #999999;
 }
 html[data-theme="dark"] .member-list {
@@ -1502,6 +1528,12 @@ html[data-theme="dark"] .solo-hero .groups-hero-features li { background: rgba(4
 /* Ticked "Studied" checkmark: keep the filled green circle */
 html[data-theme="dark"] .study-check.on .study-check-box { border: none; background: none; color: #4cc46a; }
 html[data-theme="dark"] .study-check span:not(.study-check-box) { color: inherit; }
+/* Setup page schedule list: day chips tinted from each item's own color */
+html[data-theme="dark"] .added-day { background: color-mix(in srgb, var(--c) 22%, #23262e); color: color-mix(in srgb, var(--c) 55%, #fff); }
+html[data-theme="dark"] .added-top strong { color: #e3e7f7; }
+html[data-theme="dark"] .added-item { border-left: 5px solid var(--c); }
+html[data-theme="dark"] .added-remove { color: #ff8a80; background: transparent; }
+html[data-theme="dark"] .added-remove:hover { background: #3a2226; border-color: #5c2b31; }
 /* Group / Solo option cards: picked icon fills in, white tick in the circle, softer teal */
 html[data-theme="dark"] .choice-card .choice-text strong { color: #e3e7f7; }
 html[data-theme="dark"] .choice-card:has(input:checked) .choice-icon { background: #3b56d6; color: #fff; }

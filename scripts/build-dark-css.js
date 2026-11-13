@@ -211,6 +211,12 @@ ${PREFIX} .solo-hero .groups-hero-features li { background: rgba(4, 40, 48, 0.28
 /* Ticked "Studied" checkmark: keep the filled green circle */
 ${PREFIX} .study-check.on .study-check-box { border: none; background: none; color: #4cc46a; }
 ${PREFIX} .study-check span:not(.study-check-box) { color: inherit; }
+/* Setup page schedule list: day chips tinted from each item's own color */
+${PREFIX} .added-day { background: color-mix(in srgb, var(--c) 22%, #23262e); color: color-mix(in srgb, var(--c) 55%, #fff); }
+${PREFIX} .added-top strong { color: #e3e7f7; }
+${PREFIX} .added-item { border-left: 5px solid var(--c); }
+${PREFIX} .added-remove { color: #ff8a80; background: transparent; }
+${PREFIX} .added-remove:hover { background: #3a2226; border-color: #5c2b31; }
 /* Group / Solo option cards: picked icon fills in, white tick in the circle, softer teal */
 ${PREFIX} .choice-card .choice-text strong { color: #e3e7f7; }
 ${PREFIX} .choice-card:has(input:checked) .choice-icon { background: #3b56d6; color: #fff; }
