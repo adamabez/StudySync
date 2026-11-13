@@ -97,24 +97,53 @@
 .added-when { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .added-day { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--c) 14%, #fff); color: color-mix(in srgb, var(--c) 75%, #000); font-size: 12px; font-weight: 600; }
 .added-time { color: #4b5563; font-size: 13px; }
+/* "↻ Every week" vs "📅 Once · Sat, Nov 15" */
+.added-repeat { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.added-repeat.weekly { background: #f1f2f6; color: #5b6275; }
+.added-repeat.once { background: #e8f0fe; color: #1a56c4; }
+.added-item.once { border-left-style: dashed; }
+.added-item.past { opacity: 0.6; }
 .added-where { color: #6b7280; font-size: 13px; }
+/* Round ✕ to remove an item, then a quick "Remove …?" on the card itself */
 .added-remove {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: grid;
+  place-items: center;
   flex: none;
-  padding: 4px 9px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: transparent;
-  color: #b42318;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1.5px solid #e3e6f0;
+  border-radius: 50%;
+  background: #fff;
+  color: #8a93ad;
   cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
-.added-remove:hover { background: #fdecec; border-color: #f5c2c2; }
+.added-remove:hover { background: #fdecec; border-color: #f5c2c2; color: #c62828; }
 .added-remove:focus-visible { outline: 2px solid #c62828; outline-offset: 2px; }
+.added-remove[hidden] { display: none; }
+.added-item.confirming { border-color: #f5c2c2; background: #fffafa; }
+.added-confirm {
+  position: absolute;
+  inset: auto 8px 8px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(20, 30, 70, 0.14);
+  font-size: 13.5px;
+}
+.added-confirm[hidden] { display: none; }
+.added-confirm span { margin-right: auto; color: #1f2937; font-weight: 600; }
+.added-confirm button { height: auto; padding: 5px 12px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.added-confirm-yes { border: none; background: #c62828; color: #fff; }
+.added-confirm-yes:hover { background: #a91f1f; }
+.added-confirm-no { border: 1px solid #d5d9e6; background: #fff; color: #444; }
+.added-confirm-no:hover { background: #f4f6fc; }
 @media (prefers-reduced-motion: reduce) { .added-item, .added-item:hover { transition: none; transform: none; } }
 
 .choice-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
@@ -194,6 +223,47 @@
 .setup-actions .skip-button { background: #fff; color: #2b4acb; border: 1px solid #c9d1ef; }
 .setup-actions .skip-button:hover { background: #eef1fb; }
 
+/* "← Back" above the heading when editing the schedule later (setup.js) */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 8px -6px;
+  padding: 5px 12px 5px 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #2b4acb;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.back-link:hover { background: #eef1fb; }
+.back-link[hidden] { display: none; }
+
+/* "Leave without saving?" (setup.js) */
+.leave-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 24px;
+  border: none;
+  border-radius: 16px;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 24px 60px rgba(20, 30, 70, 0.3);
+}
+.leave-dialog::backdrop { background: rgba(15, 20, 40, 0.45); }
+.leave-dialog h2 { margin: 0 0 8px; font-size: 20px; color: #1d2a5c; }
+.leave-dialog p { margin: 0 0 18px; color: #4b5563; line-height: 1.45; }
+.leave-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.leave-actions button { padding: 10px 16px; border-radius: 10px; font-size: 14.5px; font-weight: 600; }
+.leave-keep { background: #fff; color: #2b4acb; border: 1px solid #c9d1ef; }
+.leave-keep:hover { background: #eef1fb; }
+.leave-revert { background: #c62828; }
+.leave-revert:hover { background: #a91f1f; }
+.leave-dialog .error { margin: 10px 0 0; text-align: right; }
+.leave-dialog .error:empty { display: none; }
+
 /* Weekly study goal options (reuse the day-chip pill look) */
 .hours-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .length-question { margin: 18px 0 8px; font-weight: 600; color: #222; }
@@ -229,11 +299,32 @@
 /* ---------- Landing: study times (on my own) ---------- */
 .alone-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 28px 0 12px; }
 .alone-head h2 { margin: 0; }
+.alone-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .goal-picker { display: inline-flex; align-items: center; gap: 8px; }
 .plan-pickers { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .goal-picker[hidden] { display: none; }
 .goal-picker select { font: inherit; padding: 6px 8px; border: 1px solid #ccd; border-radius: 8px; background: white; }
-.study-total { margin: 0 0 12px; color: #2b4acb; font-weight: 600; }
+.study-total { margin: 0 0 12px; color: #8a5a00; font-size: 14px; font-weight: 600; }
+.study-total[hidden] { display: none; }
+
+/* How the weekly goal splits (landing.js showSplit): group blue, solo teal, didn't fit striped */
+.plan-split { max-width: 520px; margin: 4px 0 14px; }
+.plan-split[hidden] { display: none; }
+.plan-split-bar { display: flex; height: 10px; border-radius: 999px; background: #e3e7f5; overflow: hidden; }
+.plan-split-bar .seg { height: 100%; transition: width 0.4s ease; }
+.seg-group { background: #3b56d6; }
+.seg-solo { background: #0f9488; }
+.seg-skipped { background: #c9e9e5; }
+.seg-missing { background: repeating-linear-gradient(135deg, #d5d9e6 0 4px, #eceff7 4px 8px); }
+.plan-split-key { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 6px; font-size: 13px; color: #4b5563; }
+.plan-split-key .key { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.plan-split-key .key::before { content: ""; width: 9px; height: 9px; border-radius: 50%; }
+.key-group::before { background: #3b56d6; }
+.key-solo::before { background: #0f9488; }
+.key-skipped::before { background: #c9e9e5; }
+.key-missing::before { background: #c9cede; }
+.key-total { margin-left: auto; color: #6b7280; }
+@media (prefers-reduced-motion: reduce) { .plan-split-bar .seg { transition: none; } }
 .study-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
 .study-day { background: #f7f8fc; border-radius: 8px; padding: 10px 8px; min-height: 120px; }
 .study-day.today { outline: 2px solid #2b4acb; }
@@ -403,6 +494,10 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
   box-shadow: 0 2px 10px rgba(20, 30, 70, 0.05);
   text-align: left;
 }
+/* Which class and group the session is for: "CSC 130 · Group A" (group.js renderNext) */
+.ns-for { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.ns-class { padding: 3px 10px; border-radius: 999px; background: #2b4acb; color: #fff; font-size: 13px; font-weight: 700; }
+.ns-group { padding: 3px 10px; border-radius: 999px; background: #eef1fd; color: #2b4acb; font-size: 13px; font-weight: 700; }
 .ns-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; }
 .ns-when { display: flex; flex-direction: column; gap: 2px; }
 .ns-soon { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5b6aa8; }

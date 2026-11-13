@@ -83,6 +83,8 @@ function render() {
   const week = document.getElementById("week");
   week.innerHTML = "";
   const todayKey = DAYS[(new Date().getDay() + 6) % 7][0]; // JS weeks start on Sunday
+  // Weekly items, plus one-time items happening this week (repeat-picker.js)
+  const thisWeek = window.studyDates.thisWeek(classes);
 
   for (const [key, label] of DAYS) {
     const col = document.createElement("div");
@@ -91,7 +93,7 @@ function render() {
     const title = document.createElement("h3");
     title.textContent = label;
     // 📚 on class days, 🏋️ on gym / sports days (day-emoji.js)
-    const badges = window.dayEmoji ? window.dayEmoji.badges(classes, key) : "";
+    const badges = window.dayEmoji ? window.dayEmoji.badges(thisWeek, key) : "";
     if (badges) {
       const badge = document.createElement("span");
       badge.className = "day-badges";
@@ -101,11 +103,11 @@ function render() {
     }
     col.appendChild(title);
 
-    const todays = [...classes, ...studyTimes]
+    const todays = [...thisWeek, ...studyTimes]
       .filter((c) => c.days.includes(key))
       .sort((a, b) => (a.start || "").localeCompare(b.start || "")); // async (no time) first
 
-    if (todays.length === 0) {
+    if (todays.length === 0 && !(studyLoading && !studyTimes.length)) {
       const empty = document.createElement("p");
       empty.className = "empty";
       const icon = window.dayEmoji ? window.dayEmoji.rest(key) : "☀️";
@@ -114,6 +116,13 @@ function render() {
     }
 
     for (const c of todays) col.appendChild(c.type ? makeStudyCard(c, key) : makeCard(c));
+    // Study times still loading: the same shimmering placeholder as the study plan page
+    if (studyLoading && !studyTimes.length) {
+      const ghost = document.createElement("div");
+      ghost.className = "study-ghost";
+      ghost.setAttribute("aria-hidden", "true");
+      col.appendChild(ghost);
+    }
     col.appendChild(makeDayAdd(key, label));
     week.appendChild(col);
   }
@@ -141,6 +150,15 @@ function makeCard(c) {
     tag.className = "kind-tag";
     tag.textContent = kindOf(c) === "task" ? "Task" : c.category;
     card.appendChild(tag);
+  }
+  // One-time item (not every week): its own tag and a dashed edge
+  if (c.date) {
+    card.classList.add("once");
+    card.title = "One time: " + window.studyDates.label(c.date);
+    const once = document.createElement("span");
+    once.className = "once-tag";
+    once.textContent = "📅 Once";
+    card.appendChild(once);
   }
   const meta = document.createElement("div");
   meta.className = "meta";
@@ -196,6 +214,13 @@ function makeStudyCard(s, dayKey = s.days[0]) {
   meta.textContent = formatTime(s.start) + " – " + formatTime(s.end) + (s.note ? " · " + s.note : "");
 
   card.append(sparkle, hidden, tag, name, meta);
+  // ✎ on solo sessions: move, change length or skip this week (study-edit.js)
+  if (s.type === "study" && s.editable && s.key && window.studyEdit) {
+    card.classList.add("has-edit");
+    card.appendChild(window.studyEdit.button({ key: s.key, day: dayKey, start: s.start, end: s.end, edited: s.edited }, loadStudyTimes));
+  }
+  if (s.edited) card.classList.add("edited");
+
   // Check off a solo session ("Mark done") or a group meeting ("Already studied?") (study-log.js)
   if (window.studyLog && window.studyLog.ready) {
     const session = { day: dayKey, start: s.start, end: s.end };
@@ -321,6 +346,7 @@ function startEditing(c) {
   document.getElementById("end").value = c.end || "";
   for (const [key] of DAYS) document.getElementById("day-" + key).checked = c.days.includes(key);
   updateFormForAsync();
+  window.repeatPicker.set(c); // every week, or one time on its date
 
   document.getElementById("edit-name").textContent = c.name;
   document.getElementById("edit-banner").hidden = false;
@@ -353,7 +379,12 @@ if (window.studyLog) {
 
 // Study times depend on the schedule, so reload them after every change.
 // If they can't load (e.g. the database setup is out of date), the calendar just goes without.
+let studyLoading = false; // true while study times load: badge + a placeholder in each day
 async function loadStudyTimes() {
+  const loading = document.getElementById("study-loading");
+  loading.hidden = false;
+  studyLoading = true;
+  if (!studyTimes.length) render(); // show the placeholders (an existing plan just stays until the new one)
   try {
     const [res] = await Promise.all([fetch("/api/study-times"), window.studyLog ? window.studyLog.load() : null]);
     if (!res.ok) return;
@@ -361,11 +392,14 @@ async function loadStudyTimes() {
     if (window.studyLog) {
       window.studyLog.clearButtons();
       // This week's sessions for the progress bar (a group meeting counts once per day it meets)
-      window.studyLog.progress.setPlanned(studyTimes.flatMap((s) => s.days.map((day) => ({ day, start: s.start, end: s.end }))));
+      window.studyLog.progress.setPlanned(studyTimes.flatMap((s) => s.days.map((day) => ({ day, start: s.start, end: s.end, kind: s.type === "group" ? "group" : "solo" }))));
     }
     render();
   } catch {
     // offline or server restarting: keep what's shown
+  } finally {
+    loading.hidden = true;
+    if (studyLoading) { studyLoading = false; render(); }
   }
 }
 
@@ -386,7 +420,9 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
 
   const kind = document.getElementById("kind").value;
   const isAsync = isAsyncChosen();
+  const once = window.repeatPicker.isOnce();
   const newClass = {
+    ...window.repeatPicker.value(), // { repeat: "once", date } for one-time items
     kind,
     async: isAsync,
     category: kind === "other" ? document.getElementById("category").value.trim() : "",
@@ -401,7 +437,8 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   if (section) newClass.section = section;
 
   if (kind === "other" && !newClass.category) return (error.textContent = "Say what it is (e.g. Work).");
-  if (!isAsync && newClass.days.length === 0) return (error.textContent = "Pick at least one day.");
+  if (once && !newClass.date) return (error.textContent = "Pick the date it happens.");
+  if (!isAsync && !once && newClass.days.length === 0) return (error.textContent = "Pick at least one day.");
   if (!isAsync && newClass.end <= newClass.start) return (error.textContent = "End time must be after the start time.");
 
   // Editing → PUT to /api/classes/<id>; adding → POST to /api/classes

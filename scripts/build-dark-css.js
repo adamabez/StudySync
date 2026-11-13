@@ -215,8 +215,62 @@ ${PREFIX} .study-check span:not(.study-check-box) { color: inherit; }
 ${PREFIX} .added-day { background: color-mix(in srgb, var(--c) 22%, #23262e); color: color-mix(in srgb, var(--c) 55%, #fff); }
 ${PREFIX} .added-top strong { color: #e3e7f7; }
 ${PREFIX} .added-item { border-left: 5px solid var(--c); }
-${PREFIX} .added-remove { color: #ff8a80; background: transparent; }
-${PREFIX} .added-remove:hover { background: #3a2226; border-color: #5c2b31; }
+${PREFIX} .study-ghost { background: linear-gradient(90deg, #262b38 0%, #313747 50%, #262b38 100%); background-size: 200% 100%; }
+${PREFIX} .study-loading { background: #3a2e14; color: #f5c46b; }
+${PREFIX} .ns-class { background: #3b56d6; color: #fff; }
+/* Add form: dark card, same accent colors (a touch brighter) */
+${PREFIX} .add-form { --accent: #22b88f; --accent-dark: #6fe0bf; --accent-soft: #15302a; border-color: #343a4d; border-top-color: var(--accent); background: linear-gradient(180deg, var(--accent-soft) 0, #23262e 64px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+${PREFIX} .add-form[data-kind="task"] { --accent: #e5638f; --accent-dark: #f7a3c0; --accent-soft: #35202a; }
+${PREFIX} .add-form[data-kind="other"] { --accent: #9670ea; --accent-dark: #c6b0ff; --accent-soft: #261f3a; }
+${PREFIX} .add-form > label { color: var(--accent-dark); }
+${PREFIX} .add-form { border-top: 4px solid var(--accent); }
+${PREFIX} .kind-picker label:has(input[value="class"]:checked) { background: #0f9d78; color: #fff; }
+${PREFIX} .kind-picker label:has(input[value="other"]:checked) { background: #7c4ddb; color: #fff; }
+${PREFIX} .add-form > label input, ${PREFIX} .add-form > label select { background: #1b1e26; border-color: #3a4054; color: #e3e7f7; }
+${PREFIX} .add-form > button[type="submit"] { background: var(--accent); color: #0d1512; }
+${PREFIX} .add-form .days { background: color-mix(in srgb, var(--accent-soft) 70%, #23262e); border-color: color-mix(in srgb, var(--accent) 25%, #343a4d); }
+${PREFIX} .add-form .day-chip label { background: #1b1e26; border-color: #3a4054; color: #c3cae6; }
+${PREFIX} .add-form .day-chip input:checked + label { background: var(--accent); border-color: var(--accent); color: #0d1512; }
+${PREFIX} .add-form .repeat-picker { background: #1b1e26; border-color: #3a4054; }
+${PREFIX} .add-form .repeat-picker label:has(input:checked) span { background: var(--accent); color: #0d1512; }
+${PREFIX} .add-form .async-toggle, ${PREFIX} .add-form .once-date, ${PREFIX} .add-form .days #days-label { color: var(--accent-dark); }
+${PREFIX} .kind-select:has(option[value="class"]:checked) { color: #6fe0bf; }
+${PREFIX} .kind-select:has(option[value="task"]:checked) { color: #f7a3c0; }
+${PREFIX} .kind-select:has(option[value="other"]:checked) { color: #c6b0ff; }
+${PREFIX} .se-menu { background: #23262e; border-color: #343a4d; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55); }
+${PREFIX} .se-title { color: #e3e7f7; }
+${PREFIX} .se-move, ${PREFIX} .se-length { background: #2b2f3a; border-color: #3a4054; color: #e3e7f7; }
+${PREFIX} .se-move:hover, ${PREFIX} .se-length:hover { background: #3a2e14; border-color: #7a5a1c; }
+${PREFIX} .se-move strong { color: #f5c46b; }
+${PREFIX} .se-length.current { background: #f0a020; border-color: #f0a020; color: #1f1a0e; }
+${PREFIX} .se-footer { border-color: #343a4d; }
+${PREFIX} .se-button { color: #d9b46a; }
+${PREFIX} .se-button:hover, ${PREFIX} .se-button[aria-expanded="true"] { background: #3a2e14; color: #f5c46b; }
+${PREFIX} .se-skipped { background: #2b2f3a; color: #c3cae6; }
+${PREFIX} .se-skipped-undo { background: #3a4058; color: #a9b8ff; }
+${PREFIX} .se-toast { background: #e3e7f7; color: #1f2937; }
+${PREFIX} .se-toast-undo { background: rgba(0, 0, 0, 0.08); color: #1f2937; }
+${PREFIX} .ns-group { background: #1e2747; color: #a9b8ff; }
+${PREFIX} .seg-group, ${PREFIX} .fill-group, ${PREFIX} .key-group::before { background: #5a74f0; }
+${PREFIX} .seg-solo, ${PREFIX} .fill-solo, ${PREFIX} .key-solo::before { background: #22b8a8; }
+${PREFIX} .seg-missing { background: repeating-linear-gradient(135deg, #3a4054 0 4px, #2b3040 4px 8px); }
+${PREFIX} .seg-skipped, ${PREFIX} .key-skipped::before { background: #1f4a46; }
+${PREFIX} .plan-split-bar, ${PREFIX} .study-progress-track { background: #2b3040; }
+${PREFIX} .leave-dialog { background: #23262e; color: #e3e7f7; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); }
+${PREFIX} .leave-dialog h2 { color: #e3e7f7; }
+${PREFIX} .leave-dialog p { color: #a9b0c4; }
+${PREFIX} .leave-revert { background: #c62828; color: #fff; }
+${PREFIX} .leave-save { background: #3b56d6; color: #fff; }
+${PREFIX} .added-item.once, ${PREFIX} .class-card.once { border-left-style: dashed; }
+${PREFIX} .added-repeat.once, ${PREFIX} .once-tag { background: #1e2c4a; color: #8fb4ff; }
+${PREFIX} .repeat-picker label:has(input:checked) span { background: #3a4058; color: #c7d2ff; }
+${PREFIX} .added-remove { color: #9aa3bd; background: transparent; border-color: #3a4054; }
+${PREFIX} .added-remove:hover { background: #3a2226; border-color: #5c2b31; color: #ff8a80; }
+${PREFIX} .added-item.confirming { border-color: #5c2b31; background: #2a2226; }
+${PREFIX} .added-confirm { background: #2b2f3a; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45); }
+${PREFIX} .added-confirm span { color: #e3e7f7; }
+${PREFIX} .added-confirm-yes { background: #c62828; color: #fff; }
+${PREFIX} .added-confirm-no { background: transparent; border-color: #4a5063; color: #c3cae6; }
 /* Group / Solo option cards: picked icon fills in, white tick in the circle, softer teal */
 ${PREFIX} .choice-card .choice-text strong { color: #e3e7f7; }
 ${PREFIX} .choice-card:has(input:checked) .choice-icon { background: #3b56d6; color: #fff; }

@@ -111,14 +111,27 @@ function itemCard(item) {
   }
   text.appendChild(top);
 
-  // When: day chips + the time (or "Asynchronous")
+  // When: "↻ Every week" + day chips, or "📅 Once · Sat, Nov 15"; then the time (or "Asynchronous")
   const when = document.createElement("div");
   when.className = "added-when";
-  for (const day of DAY_ORDER.filter((d) => item.days.includes(d))) {
-    const chip = document.createElement("span");
-    chip.className = "added-day";
-    chip.textContent = DAY_LABELS[day];
-    when.appendChild(chip);
+  const repeat = document.createElement("span");
+  if (item.date) {
+    const past = window.studyDates.isPast(item.date);
+    li.classList.add("once");
+    li.classList.toggle("past", past);
+    repeat.className = "added-repeat once";
+    repeat.textContent = "📅 Once · " + window.studyDates.label(item.date) + (past ? " (past)" : "");
+    when.appendChild(repeat);
+  } else {
+    repeat.className = "added-repeat weekly";
+    repeat.textContent = "↻ Every week";
+    when.appendChild(repeat);
+    for (const day of DAY_ORDER.filter((d) => item.days.includes(d))) {
+      const chip = document.createElement("span");
+      chip.className = "added-day";
+      chip.textContent = DAY_LABELS[day];
+      when.appendChild(chip);
+    }
   }
   const time = document.createElement("span");
   time.className = "added-time";
@@ -133,28 +146,157 @@ function itemCard(item) {
     text.appendChild(where);
   }
 
+  // Round ✕ in the corner → asks on the card first ("Remove CSC 130?  Yes, remove · Cancel")
   const remove = document.createElement("button");
   remove.type = "button";
   remove.className = "added-remove";
-  remove.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Remove</span>';
+  remove.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  remove.title = "Remove";
   remove.setAttribute("aria-label", "Remove " + item.name);
-  remove.addEventListener("click", () => removeItem(item));
 
-  li.append(text, remove);
+  const confirmBar = document.createElement("div");
+  confirmBar.className = "added-confirm";
+  confirmBar.hidden = true;
+  confirmBar.setAttribute("role", "group");
+  const question = document.createElement("span");
+  question.textContent = "Remove " + item.name + "?";
+  const yes = document.createElement("button");
+  yes.type = "button";
+  yes.className = "added-confirm-yes";
+  yes.textContent = "Yes, remove";
+  const no = document.createElement("button");
+  no.type = "button";
+  no.className = "added-confirm-no";
+  no.textContent = "Cancel";
+  confirmBar.append(question, yes, no);
+
+  const ask = (on) => {
+    confirmBar.hidden = !on;
+    remove.hidden = on;
+    li.classList.toggle("confirming", on);
+    (on ? no : remove).focus();
+  };
+  remove.addEventListener("click", () => ask(true));
+  no.addEventListener("click", () => ask(false));
+  confirmBar.addEventListener("keydown", (event) => { if (event.key === "Escape") ask(false); });
+  yes.addEventListener("click", async () => {
+    yes.disabled = true;
+    yes.textContent = "Removing…";
+    const ok = await removeItem(item);
+    if (!ok) { yes.disabled = false; yes.textContent = "Yes, remove"; }
+  });
+
+  li.append(text, remove, confirmBar);
   return li;
 }
 
 async function removeItem(item) {
-  const res = await fetch("/api/classes/" + item.id, { method: "DELETE" });
-  if (!res.ok) return alert("Couldn't remove that. Try again.");
+  const res = await fetch("/api/classes/" + item.id, { method: "DELETE" }).catch(() => null);
+  if (!res || !res.ok) {
+    alert("Couldn't remove that. Try again.");
+    return false;
+  }
   items = items.filter((i) => i.id !== item.id);
+  // Remember it so Cancel can put it back (something added this visit just disappears)
+  if (addedIds.has(item.id)) addedIds.delete(item.id);
+  else removedItems.push(item);
   renderList();
+  return true;
 }
+
+// ---------- Back / Cancel (editing later, not first-time setup) ----------
+// Adding and removing items saves straight away; the study settings below only save with Save.
+// So leaving with changes asks: keep editing, revert (undo the adds/removes, drop the settings),
+// or save and go back.
+const addedIds = new Set(); // items added this visit
+const removedItems = [];    // items removed this visit (to re-add on revert)
+let savedSettings = "";     // the study settings as loaded
+
+function currentSettings() {
+  return JSON.stringify({
+    preference: (document.querySelector('input[name="preference"]:checked') || {}).value || "",
+    hours: chosenHours() || 0,
+    length: (document.querySelector('input[name="length"]:checked') || {}).value || "",
+    notes: $("study-notes").value.trim(),
+  });
+}
+
+// Where Back goes: the page they came from (study plan or dashboard), else the study plan
+function backTo() {
+  try {
+    const from = new URL(document.referrer);
+    if (from.origin === location.origin && ["/dashboard", "/landing"].includes(from.pathname)) return from.pathname;
+  } catch {
+    // no referrer
+  }
+  return "/landing";
+}
+
+function changeSummary() {
+  const parts = [];
+  if (addedIds.size) parts.push("added " + addedIds.size + (addedIds.size === 1 ? " item" : " items"));
+  if (removedItems.length) parts.push("removed " + removedItems.length + (removedItems.length === 1 ? " item" : " items"));
+  const settings = currentSettings() !== savedSettings;
+  if (!parts.length && !settings) return "";
+  let text = parts.length ? "You " + parts.join(" and ") + (settings ? ", and changed your study settings." : ".") : "You changed your study settings.";
+  return text + " Revert puts everything back the way it was.";
+}
+
+function leave() {
+  const summary = changeSummary();
+  if (!summary) return (window.location.href = backTo());
+  $("leave-summary").textContent = summary;
+  $("leave-error").textContent = "";
+  $("leave-dialog").showModal();
+  $("leave-keep").focus();
+}
+
+// Undo this visit's schedule changes: delete what was added, re-add what was removed
+async function revertChanges() {
+  const asBody = (item) => ({
+    kind: item.kind || "class",
+    name: item.name,
+    category: item.category || "",
+    location: item.location || "",
+    days: item.days,
+    start: item.start,
+    end: item.end,
+    async: !item.start,
+    ...(item.date ? { repeat: "once", date: item.date } : { repeat: "weekly" }),
+  });
+  const results = await Promise.all([
+    ...[...addedIds].map((id) => fetch("/api/classes/" + id, { method: "DELETE" }).then((r) => r.ok).catch(() => false)),
+    ...removedItems.map((item) => fetch("/api/classes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(asBody(item)),
+    }).then((r) => r.ok).catch(() => false)),
+  ]);
+  return results.every(Boolean);
+}
+
+$("back-top").addEventListener("click", leave);
+$("cancel-bottom").addEventListener("click", leave);
+$("leave-keep").addEventListener("click", () => $("leave-dialog").close());
+$("leave-revert").addEventListener("click", async () => {
+  const button = $("leave-revert");
+  button.disabled = true;
+  button.textContent = "Reverting…";
+  if (await revertChanges()) return (window.location.href = backTo());
+  button.disabled = false;
+  button.textContent = "Revert changes";
+  $("leave-error").textContent = "Couldn't undo everything. Check your schedule and try again.";
+});
+$("leave-save").addEventListener("click", () => {
+  $("leave-dialog").close();
+  $("finish").click(); // saves the settings, then goes back
+});
 
 $("add-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const kind = chosenKind();
   const body = {
+    ...window.repeatPicker.value(), // { repeat: "once", date } for one-time items
     kind,
     name: $("name").value,
     start: $("start").value,
@@ -179,6 +321,7 @@ $("add-form").addEventListener("submit", async (event) => {
   }
   const { extra = [], ...saved } = data; // extra: the section's other time blocks, also saved
   items.push(saved, ...extra);
+  for (const item of [saved, ...extra]) addedIds.add(item.id); // so Cancel can undo it
   renderList();
   // Clear the name (keep the days and times: the next class is often similar)
   $("name").value = "";
@@ -227,7 +370,7 @@ $("finish").addEventListener("click", async () => {
     $("finish").disabled = false;
     return;
   }
-  window.location.href = "/landing";
+  window.location.href = editing ? backTo() : "/landing";
 });
 
 // ---------- Skip for now (first time only) ----------
@@ -298,9 +441,18 @@ async function load() {
     $("notes-field").hidden = !profile.aiScheduling;
     $("study-notes").value = profile.studyNotes || "";
     if (profile.onboarded) $("finish").textContent = "Save";
-    // Skipping only makes sense the first time through
+    // Skipping only makes sense the first time through; Back / Cancel only when editing later
     $("skip-top").hidden = profile.onboarded;
     $("skip-bottom").hidden = profile.onboarded;
+    editing = Boolean(profile.onboarded);
+    $("back-top").hidden = !editing;
+    $("cancel-bottom").hidden = !editing;
+    if (editing) {
+      $("setup-title").textContent = "Edit your schedule";
+      $("setup-intro").textContent = "Change your classes and plans, and how you like to study.";
+    }
   }
+  savedSettings = currentSettings();
 }
+let editing = false; // true when changing an existing schedule (not first-time setup)
 load();

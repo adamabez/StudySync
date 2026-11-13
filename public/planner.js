@@ -174,7 +174,26 @@
     return null;
   }
 
-  const api = { DAY_KEYS, SETTINGS, SESSION_LENGTHS, DEFAULT_LENGTH, lengthFor, CALM_TIMES, isTime, toMinutes, toTime, labelFor, freeWindows, planStudyTimes, checkPlan };
+  // This week's Monday as "2026-11-09" (week of `now`)
+  function weekStart(now = new Date()) {
+    const pad = (n) => String(n).padStart(2, "0");
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+    return monday.getFullYear() + "-" + pad(monday.getMonth() + 1) + "-" + pad(monday.getDate());
+  }
+
+  // Weekly items, plus one-time items (item.date) that fall in the week of `now` (Mon–Sun).
+  // Everything that plans a week uses this, so a one-off only counts in its own week.
+  function thisWeek(calendar, now = new Date()) {
+    const pad = (n) => String(n).padStart(2, "0");
+    const iso = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+    const from = iso(monday);
+    const to = iso(sunday);
+    return calendar.filter((item) => !item.date || (item.date >= from && item.date <= to));
+  }
+
+  const api = { DAY_KEYS, SETTINGS, thisWeek, weekStart, freeGaps, calmScore, SESSION_LENGTHS, DEFAULT_LENGTH, lengthFor, CALM_TIMES, isTime, toMinutes, toTime, labelFor, freeWindows, planStudyTimes, checkPlan };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.StudyPlanner = api;
 })(this);

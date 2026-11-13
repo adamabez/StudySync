@@ -165,6 +165,7 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 .day-chip input:focus-visible + label { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
 #form-error { grid-column: 1 / -1; text-align: left; }
+#form-error:empty { display: none; }
 
 /* "Asynchronous (no set time)" checkbox, at the end of the Days row */
 .async-toggle {
@@ -449,6 +450,152 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 }
 .class-card.study-time .kind-tag { color: #8a5a00; background: #fde3a7; }
 
+/* "Planning your study times…" by the week heading while they load (dashboard.js) */
+.study-loading { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: #fff6e0; color: #8a5a00; font-size: 13px; font-weight: 600; }
+.study-loading[hidden] { display: none; }
+.study-loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #f0a020; animation: study-pulse 1s ease-in-out infinite; }
+@keyframes study-pulse { 0%, 100% { opacity: 0.35; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .study-loading-dot { animation: none; } }
+
+/* Loading study times: a shimmering placeholder in each day, on the study plan and the dashboard */
+.study-ghost {
+  height: 64px;
+  margin-top: 4px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eceff7 0%, #f6f7fb 50%, #eceff7 100%);
+  background-size: 200% 100%;
+  animation: study-shimmer 1.2s ease-in-out infinite;
+}
+.study-day:nth-child(even) .study-ghost, .day-col:nth-child(even) .study-ghost { height: 44px; }
+@keyframes study-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.study-week.refreshing { opacity: 0.55; transition: opacity 0.2s; }
+@media (prefers-reduced-motion: reduce) { .study-ghost { animation: none; } }
+
+/* ---- ✎ quick edits to solo study sessions (study-edit.js) ---- */
+.se-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #a0782a;
+  cursor: pointer;
+}
+.se-button:hover, .se-button[aria-expanded="true"] { background: #fde9bf; color: #7a4f00; }
+.se-button:focus-visible { outline: 2px solid #2b4acb; outline-offset: 1px; }
+/* the sparkle moves left to make room */
+.study-block.has-edit .study-sparkle, .class-card.has-edit .study-sparkle { right: 30px; }
+/* a session the student changed: dashed edge */
+.study-block.edited, .class-card.study-time.edited { border-left-style: dashed; }
+
+.se-menu {
+  position: fixed;
+  z-index: 60;
+  width: min(300px, calc(100vw - 16px));
+  padding: 12px;
+  border: 1px solid #e3e6f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(20, 30, 70, 0.2);
+  font-size: 14px;
+  text-align: left;
+}
+.se-title { margin-bottom: 8px; font-weight: 700; color: #1d2a5c; }
+.se-body { color: #6b7280; }
+.se-label { margin: 10px 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #8a93ad; }
+.se-moves { display: grid; gap: 4px; }
+.se-move {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  padding: 8px 10px;
+  border: 1px solid #e3e6f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.se-move:hover { border-color: #f0c675; background: #fff8e8; }
+.se-move strong { color: #8a5a00; }
+.se-move em { font-size: 12px; font-style: normal; color: #8a93ad; }
+.se-none { margin: 0; font-size: 13px; color: #8a93ad; }
+.se-lengths { display: flex; flex-wrap: wrap; gap: 6px; }
+.se-length {
+  height: auto;
+  padding: 5px 12px;
+  border: 1px solid #e3e6f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.se-length:hover { border-color: #f0c675; background: #fff8e8; }
+.se-length.current { border-color: #f0a020; background: #f0a020; color: #fff; cursor: default; }
+.se-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eef0f6; }
+.se-skip, .se-reset { height: auto; padding: 6px 10px; border: none; border-radius: 8px; background: none; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.se-skip { color: #b42318; }
+.se-skip:hover { background: #fdecec; }
+.se-reset { color: #2b4acb; }
+.se-reset:hover { background: #eef1fb; }
+.se-menu button:disabled { opacity: 0.55; cursor: default; }
+.se-error { margin: 8px 0 0; color: #c62828; font-size: 13px; }
+.se-error:empty { display: none; }
+
+/* "Skipped this week: Fri 1:00 PM [Undo]" under the plan */
+.se-skipped-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: -4px 0 12px; font-size: 13px; color: #6b7280; }
+.se-skipped-row[hidden] { display: none; }
+.se-skipped { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px 2px 10px; border-radius: 999px; background: #f1f2f6; color: #4b5563; font-weight: 600; }
+.se-skipped-undo { height: auto; padding: 2px 8px; border: none; border-radius: 999px; background: #fff; color: #2b4acb; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+/* "Moved to Tue 1:00 PM." / "Skipped … [Undo]" */
+.se-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 12px;
+  background: #1f2937;
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transform: translateX(-50%);
+}
+.se-toast-undo { height: auto; padding: 4px 10px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.15); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.se-toast-undo:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* "Every week / One time" in the Add form (repeat-picker.js): tasks and other only */
+.repeat-picker { display: inline-flex; gap: 2px; padding: 3px; margin-right: 8px; border-radius: 999px; background: #eef0f6; }
+.repeat-picker[hidden] { display: none; }
+.repeat-picker label { position: relative; cursor: pointer; }
+.repeat-picker input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.repeat-picker span { display: block; padding: 5px 12px; border-radius: 999px; font-size: 13.5px; color: #555; white-space: nowrap; }
+.repeat-picker label:has(input:checked) span { background: #fff; color: #2b4acb; font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.repeat-picker label:has(input:focus-visible) span { outline: 2px solid #2b4acb; outline-offset: 1px; }
+.once-date { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #444; }
+.once-date[hidden] { display: none; }
+.once-date input { width: auto; height: 36px; padding: 0 8px; }
+/* One time: a date instead of the day buttons */
+.add-form.is-once .day-chip, .add-form.is-once #days-label { display: none; }
+
+/* One-time items on the calendar: dashed edge and a "📅 Once" tag */
+.class-card.once { border-left-style: dashed; }
+.once-tag { display: inline-block; margin: 0 0 3px 4px; padding: 1px 6px; border-radius: 4px; background: #e8f0fe; color: #1a56c4; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+
 /* "Mark studied" checkmark on solo study sessions (study-log.js), here and on the study plan */
 .study-check {
   display: inline-flex;
@@ -497,11 +644,14 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 .study-progress-text { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; margin-bottom: 8px; font-size: 14px; }
 .study-progress-text strong { color: #2b4acb; font-size: 15px; }
 .study-progress-text span { color: #555; }
-.study-progress-track { height: 10px; border-radius: 999px; background: #e3e7f5; overflow: hidden; }
-.study-progress-fill { width: 0; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2b4acb, #5a7cf0); transition: width 0.4s ease; }
+.study-progress-track { display: flex; height: 10px; border-radius: 999px; background: #e3e7f5; overflow: hidden; }
+/* Studied time: group meetings blue, solo teal (same colors as the plan's split bar) */
+.study-progress-fill { width: 0; height: 100%; transition: width 0.4s ease; }
+.fill-group { background: #3b56d6; }
+.fill-solo { background: #0f9488; }
 .study-progress.reached { border-color: #b7e0c0; background: #f1faf3; }
 .study-progress.reached .study-progress-text strong { color: #1b5e20; }
-.study-progress.reached .study-progress-fill { background: linear-gradient(90deg, #2e9d48, #5cc472); }
+/* Goal reached: the colors stay, the box turns green */
 @media (prefers-reduced-motion: reduce) { .study-progress-fill { transition: none; } }
 
 /* Done: the star pops in only on the one just clicked */
@@ -544,3 +694,112 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ===================================================================================
+   The Add form (dashboard and setup page): a white card whose accent color follows what's
+   being added: classes teal-green (like their calendar colors), tasks rose, work / other
+   violet. data-kind on the form is set by dashboard.js / setup.js.
+   =================================================================================== */
+.add-form {
+  --accent: #0f9d78;
+  --accent-dark: #0b6b53;
+  --accent-soft: #e6f6f0;
+  position: relative;
+  padding: 20px 18px 16px;
+  border: 1.5px solid #dfe3f0;
+  border-top: 4px solid var(--accent);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--accent-soft) 0, #fff 64px);
+  box-shadow: 0 4px 16px rgba(20, 30, 70, 0.06);
+  transition: border-color 0.2s, background 0.2s;
+}
+.add-form[data-kind="task"] { --accent: #d9467a; --accent-dark: #a3284f; --accent-soft: #fdebf1; }
+.add-form[data-kind="other"] { --accent: #7c4ddb; --accent-dark: #5a31b0; --accent-soft: #f1ebfd; }
+
+/* Field labels: small, bold, in the accent color; the box underneath */
+.add-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent-dark);
+}
+.add-form .course-hint { font-weight: 500; letter-spacing: 0; }
+.add-form > label[hidden] { display: none; } /* Room only for classes, "What is it?" only for other */
+.add-form > label input,
+.add-form > label select {
+  height: 42px;
+  padding: 0 12px;
+  border: 1.5px solid #d5d9e6;
+  border-radius: 10px;
+  background: #fff;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.add-form > label input:hover { border-color: #b9c0d6; }
+.add-form > label input:focus,
+.add-form > label select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Add button in the accent color */
+.add-form > button[type="submit"] {
+  align-self: end;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background: var(--accent);
+  font-weight: 700;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+}
+.add-form > button[type="submit"]:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+/* Days: their own tinted strip; chosen days fill with the accent */
+.add-form .days {
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, #e3e6f0);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 60%, #fff);
+}
+.add-form .days #days-label { font-size: 12.5px; font-weight: 700; color: var(--accent-dark); }
+.add-form .day-chip label {
+  min-width: 46px;
+  padding: 6px 12px;
+  border: 1.5px solid #d5d9e6;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+  text-align: center;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.add-form .day-chip label:hover { border-color: var(--accent); color: var(--accent-dark); }
+.add-form .day-chip input:checked + label { border-color: var(--accent); background: var(--accent); color: #fff; }
+.add-form .day-chip input:focus-visible + label { outline: 2px solid var(--accent); }
+.add-form .async-toggle { color: var(--accent-dark); font-weight: 600; }
+.add-form .async-toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+.add-form .repeat-picker { background: #fff; border: 1px solid #e3e6f0; }
+.add-form .repeat-picker label:has(input:checked) span { background: var(--accent); color: #fff; box-shadow: none; }
+.add-form .once-date { color: var(--accent-dark); font-weight: 600; }
+.add-form .once-date input { border: 1.5px solid #d5d9e6; border-radius: 10px; }
+
+/* "Add a Class ▾" heading on the dashboard follows the same color */
+.kind-select:has(option[value="class"]:checked) { color: #0b6b53; }
+.kind-select:has(option[value="task"]:checked) { color: #a3284f; }
+.kind-select:has(option[value="other"]:checked) { color: #5a31b0; }
+
+/* Setup page: Class / Work, club or other as colored pills */
+.kind-picker { gap: 6px; padding: 5px; border-radius: 14px; }
+.kind-picker label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; font-weight: 600; color: #4b5563; }
+.kind-picker .kind-icon { font-size: 16px; }
+.kind-picker label:has(input[value="class"]:checked) { background: #0f9d78; color: #fff; box-shadow: 0 3px 10px rgba(15, 157, 120, 0.3); }
+.kind-picker label:has(input[value="other"]:checked) { background: #7c4ddb; color: #fff; box-shadow: 0 3px 10px rgba(124, 77, 219, 0.3); }
+@media (prefers-reduced-motion: reduce) { .add-form, .add-form > button[type="submit"] { transition: none; } .add-form > button[type="submit"]:hover { transform: none; } }
