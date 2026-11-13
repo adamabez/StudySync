@@ -61,8 +61,8 @@
     }
   }
 
-  // A drawn star for a finished session: sharp at any size, unlike a "★" character
-  const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.6l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>';
+  // A finished session: a filled green circle with a white checkmark (drawn, so it's sharp at any size)
+  const CHECK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   // A round checkmark button for a session card ({ day, start, end, kind?, groupId? }).
   // labels: { off, on } (default "Mark done" / "Done")
@@ -72,7 +72,7 @@
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "study-check";
-    let shown = null; // only redraw when this button's own state changes (no re-animating every star)
+    let shown = null; // only redraw when this button's own state changes (no re-animating every check)
     const draw = () => {
       const on = isDone(session);
       if (on === shown) return;
@@ -80,14 +80,14 @@
       btn.classList.toggle("on", on);
       btn.setAttribute("aria-pressed", String(on));
       btn.title = on ? "You studied this session. Click to undo." : "Click when you've studied this session";
-      btn.innerHTML = '<span class="study-check-box" aria-hidden="true">' + (on ? STAR_SVG : "") + "</span><span>" + (on ? onLabel : offLabel) + "</span>";
+      btn.innerHTML = '<span class="study-check-box" aria-hidden="true">' + (on ? CHECK_SVG : "") + "</span><span>" + (on ? onLabel : offLabel) + "</span>";
       btn.closest(".study-block, .study-time")?.classList.toggle("studied", on);
     };
     btn.addEventListener("click", (event) => {
       event.preventDefault();  // e.g. inside a group card that links to the group's page
       event.stopPropagation();
       const on = !isDone(session);
-      btn.classList.toggle("pop", on); // the star pops in, only on the one just clicked
+      btn.classList.toggle("pop", on); // the check pops in, only on the one just clicked
       set(session, on);
     });
     btn.addEventListener("animationend", () => btn.classList.remove("pop"));
