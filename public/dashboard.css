@@ -402,9 +402,34 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   .week { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .day-col { min-height: 0; }
 }
-/* Phones: two days per row */
+/* Phones: one day at a time, picked with the day buttons above the week (dashboard.js) */
+.day-picker { display: none; }
 @media (max-width: 600px) {
-  .week { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .week { grid-template-columns: minmax(0, 1fr); }
+  .day-col:not(.picked) { display: none; }
+  .day-col.today { outline: none; } /* the day buttons already mark today */
+  .day-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 10px; }
+  .day-pick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 7px 0 6px;
+    border: 1px solid #dfe3f0;
+    border-radius: 10px;
+    background: white;
+    color: #4a5372;
+    font: inherit;
+    cursor: pointer;
+  }
+  .day-pick-name { font-size: 13px; font-weight: 700; }
+  .day-pick-count { font-size: 11px; color: #8a91aa; }
+  .day-pick.today { border-color: #2b4acb; }
+  .day-pick.today .day-pick-name { color: #2b4acb; }
+  .day-pick[aria-pressed="true"] { background: #2b4acb; border-color: #2b4acb; color: white; }
+  .day-pick[aria-pressed="true"] .day-pick-name,
+  .day-pick[aria-pressed="true"] .day-pick-count { color: white; }
+  .day-pick:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 }
 
 /* ---------- "Add a Class / Task / Other" dropdown ---------- */

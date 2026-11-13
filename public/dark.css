@@ -1891,3 +1891,25 @@ html[data-theme="dark"] .app-tabbar-item[aria-current="page"] {
   color: #c9d3ff;
   background: #262d45;
 }
+html[data-theme="dark"] .day-pick {
+  background: #23262e;
+  border-color: #343a4d;
+  color: #c3cae6;
+}
+html[data-theme="dark"] .day-pick-count {
+  color: #8d94ab;
+}
+html[data-theme="dark"] .day-pick.today {
+  border-color: #8ea0e7;
+}
+html[data-theme="dark"] .day-pick.today .day-pick-name {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .day-pick[aria-pressed="true"] {
+  background: #4a63d6;
+  border-color: #4a63d6;
+}
+html[data-theme="dark"] .day-pick[aria-pressed="true"] .day-pick-name,
+html[data-theme="dark"] .day-pick[aria-pressed="true"] .day-pick-count {
+  color: white;
+}
