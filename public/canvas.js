@@ -54,7 +54,7 @@
       body: body ? JSON.stringify(body) : undefined,
     });
     if (res.status === 401) {
-      window.location.href = "/"; // logged out of StudySync
+      window.location.href = "/login"; // logged out of StudySync
       throw new Error("Not logged in");
     }
     let data = {};

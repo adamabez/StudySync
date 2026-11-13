@@ -258,7 +258,7 @@ async function meetupRequest(path, method = "POST", body) {
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (res.status === 401) { location.href = "/"; throw new Error("Not logged in"); }
+  if (res.status === 401) { location.href = "/login"; throw new Error("Not logged in"); }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (data.notSetUp) notSetUp(data.error);

@@ -13,7 +13,7 @@ function showMessage(id, text, ok) {
 async function post(url, body) {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (res.status === 401) {
-    window.location.href = "/";
+    window.location.href = "/login";
     return null;
   }
   const data = await res.json().catch(() => ({}));
@@ -84,7 +84,7 @@ handle("delete-form", "delete-message", async () => {
   if ($("delete-confirm").value.trim() !== "DELETE") throw new Error("Type DELETE (in capitals) to confirm.");
   if (!confirm("Delete your StudySync account for good? This can't be undone.")) return;
   const data = await post("/api/account/delete", { password: $("delete-password").value, confirm: "DELETE" });
-  if (data) window.location.href = "/?deleted=1";
+  if (data) window.location.href = "/login?deleted=1";
 });
 
 // ---------- Who's logged in ----------

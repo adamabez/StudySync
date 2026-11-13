@@ -28,7 +28,7 @@
       <button type="submit">Log in</button>
     </form>
     <p class="switch"><a href="/forgot">Forgot password?</a></p>
-    <p class="switch">New here? <a href="/signup">Create an account</a></p>
+    <p class="switch">New here? <a href="/signup">Create an account</a> or <a href="/">see what StudySync does</a></p>
     <p class="or-divider">or</p>
     <a href="/demo" class="demo-try">Try the demo
       <span class="demo-try-hint">No sign-up. Look around with sample data.</span>
@@ -41,42 +41,11 @@
       products. AI answers can also be wrong, so check them against your materials.
     </p>
   </div>
-
-  <!-- Live demo: the real demo in a box, to scroll and click around (public/preview.js) -->
-  <section class="preview" id="preview" aria-labelledby="preview-title">
-    <div class="preview-head">
-      <span class="preview-eyebrow">Live demo</span>
-      <h2 id="preview-title">Try StudySync right here</h2>
-      <p id="preview-text">A sample student's week. Scroll and click around: nothing you change is saved.</p>
-    </div>
-    <!-- Jump to a part of the demo (or just scroll inside it) -->
-    <nav class="preview-tabs" id="preview-tabs" aria-label="Parts of the demo">
-      <button type="button" data-page="landing" aria-current="true">Study groups</button>
-      <button type="button" data-page="dashboard" data-target=".week-heading">Schedule</button>
-      <button type="button" data-page="dashboard" data-target=".hw-head">Homework</button>
-      <button type="button" data-page="dashboard" data-target=".nb-heading">AI notebook</button>
-    </nav>
-    <div class="preview-screen">
-      <div class="preview-chrome">
-        <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
-        <a href="/demo" class="preview-full">Open full screen ↗</a>
-      </div>
-      <div class="preview-viewport" id="preview-viewport">
-        <p class="preview-loading" id="preview-loading">Loading a sample week…</p>
-        <iframe id="preview-frame" title="StudySync live demo"></iframe>
-      </div>
-    </div>
-    <div class="preview-foot">
-      <span class="preview-hint">It's the real app with sample data.</span>
-      <a href="/signup" class="preview-try">Make it yours: create a free account →</a>
-    </div>
-  </section>
   </main>
   <script src="/public/ai-notice.js"></script>
-  <script src="/public/preview.js"></script>
 
   <script>
-    // The server sends you back to /?error=<code> when logging in fails
+    // The server sends you back to /login?error=<code> when logging in fails
     const MESSAGES = {
       invalid: "Wrong email or password.",
       unconfirmed: "Confirm your email first. Check your inbox for the link.",
@@ -130,7 +99,7 @@
         notice.textContent = "Email confirmed! Log in to get started.";
         notice.hidden = false;
       }
-      history.replaceState(null, "", "/");
+      history.replaceState(null, "", "/login");
     }
   </script>
   <script src="/public/feedback.js"></script>

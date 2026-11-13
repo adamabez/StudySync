@@ -1,7 +1,8 @@
-// StudySync - the live demo box next to the login form (runs in the browser).
+// StudySync - the live demo box on the welcome page (runs in the browser).
 //
 // One frame shows the real demo (demo.js) that visitors can scroll and click around in.
-// The tabs above it jump to each part: the study groups page, or a section of the dashboard.
+// The tabs above it jump to each part: the study groups page, a section of the dashboard, or
+// one sample group's page (its shared notes).
 // Pages opened inside the frame stay in "embed" mode (no demo banner; see server.js), and
 // links that leave the demo (sign up, log in, exit) open in the whole window (demo.js).
 //
@@ -18,7 +19,7 @@
   const viewport = $("preview-viewport");
   const tabs = [...$("preview-tabs").querySelectorAll("button")];
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const PATHS = { landing: "/landing", dashboard: "/dashboard" };
+  const PATHS = { landing: "/landing", dashboard: "/dashboard", group: null }; // group: looked up below
 
   let pendingTarget = null; // a section to scroll to once the dashboard has loaded
   let dashboardPrepared = false;
@@ -50,6 +51,7 @@
   function currentPage() {
     const doc = frameDoc();
     const path = doc && doc.location ? doc.location.pathname : "";
+    if (path.startsWith("/group")) return "group";
     return path.startsWith("/dashboard") ? "dashboard" : path.startsWith("/landing") ? "landing" : "";
   }
 
@@ -86,10 +88,22 @@
     tabs.forEach((t) => t.setAttribute("aria-current", String(t === match)));
   }
 
+  // The sample student's first study group (the one with shared notes), for the Group notes tab
+  async function groupPath() {
+    if (PATHS.group) return PATHS.group;
+    try {
+      const groups = await (await fetch("/api/groups/match", { method: "POST" })).json();
+      if (Array.isArray(groups) && groups[0]) PATHS.group = "/group?id=" + encodeURIComponent(groups[0].id);
+    } catch {
+      // no groups: stay on the study groups page
+    }
+    return PATHS.group || PATHS.landing;
+  }
+
   // ---------- Tabs ----------
 
   tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
+    tab.addEventListener("click", async () => {
       const page = tab.dataset.page;
       const target = tab.dataset.target || null;
       markTab(page, target);
@@ -98,7 +112,7 @@
       } else {
         pendingTarget = target;
         $("preview-loading").hidden = false;
-        frame.src = PATHS[page];
+        frame.src = page === "group" ? await groupPath() : PATHS[page];
       }
     });
   });
