@@ -74,7 +74,7 @@ async function handleRequest(req, res) {
   const loggedIn = auth.isLoggedIn(req);
   // Trying the demo (lib/demo.js): no account, sample data. A real login always wins.
   const inDemo = !loggedIn && demo.hasDemo(req);
-  // The login page's live demo box: the demo without its banner. It starts at ?embed=1;
+  // The welcome page's live demo box: the demo without its banner. It starts at ?embed=1;
   // pages visitors click to inside the box stay embedded (browsers mark frame loads with
   // Sec-Fetch-Dest: iframe), so the banner never shows up inside it.
   const inFrame = url.searchParams.get("embed") === "1" || req.headers["sec-fetch-dest"] === "iframe";

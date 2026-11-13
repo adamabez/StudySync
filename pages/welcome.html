@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/public/favicon.png">
+  <script src="/public/theme.js"></script>
+  <title>StudySync – Study smarter, together</title>
+  <meta name="description" content="StudySync plans your study time around your Sac State classes and matches you with a study group for each class. Try it with a sample week, no sign-up.">
+  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/demo.css">
+  <link rel="stylesheet" href="/public/welcome.css">
+  <link rel="stylesheet" href="/public/feedback.css">
+  <link rel="stylesheet" href="/public/dark.css">
+</head>
+<body class="welcome">
+  <!-- The first page new visitors see: what StudySync does, the live demo, then sign up -->
+  <header class="wl-top">
+    <a href="/" class="wl-brand" aria-label="StudySync home">
+      <img src="/public/logo.png" alt="StudySync" class="logo">
+      <span class="beta-tag" title="StudySync is still in development">Beta</span>
+    </a>
+    <nav class="head-links wl-nav" aria-label="Account">
+      <a href="/login" class="wl-login">Log in</a>
+      <a href="/signup" class="wl-btn wl-btn-small">Sign up free</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="wl-hero">
+      <p class="wl-eyebrow">For Sac State students</p>
+      <h1>Your classes, study time and study group, sorted.</h1>
+      <p class="wl-lead">
+        Add your classes once. StudySync finds the free time in your week to study, and matches
+        you with classmates who are free at the same time, one group for each class.
+      </p>
+      <div class="wl-ctas">
+        <a href="/demo" class="wl-btn">Try it now: no sign-up</a>
+        <a href="/signup" class="wl-btn wl-btn-ghost">Create a free account</a>
+      </div>
+      <p class="wl-fine">The demo is the real app with a sample student's week. Nothing you change is saved.</p>
+    </section>
+
+    <section class="wl-steps" aria-labelledby="steps-title">
+      <h2 id="steps-title">How it works</h2>
+      <ol>
+        <li>
+          <span class="wl-step-num" aria-hidden="true">1</span>
+          <h3>Add your classes</h3>
+          <p>Pick them from the Sac State catalog and choose your section. Days and times fill in for you.</p>
+        </li>
+        <li>
+          <span class="wl-step-num" aria-hidden="true">2</span>
+          <h3>Get a weekly study plan</h3>
+          <p>Set how many hours a week you want to study. StudySync puts sessions in the gaps around your classes.</p>
+        </li>
+        <li>
+          <span class="wl-step-num" aria-hidden="true">3</span>
+          <h3>Meet your study group</h3>
+          <p>Want company? You're matched with up to 3 classmates in each class, at a weekly time you're all free.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Live demo: the real demo in a box, to scroll and click around (public/preview.js) -->
+    <section class="preview wl-preview" id="preview" aria-labelledby="preview-title">
+      <div class="preview-head">
+        <span class="preview-eyebrow">Live demo</span>
+        <h2 id="preview-title">Click around a sample week</h2>
+        <p id="preview-text">This is the real app. Scroll, click, add a class: nothing you change is saved.</p>
+      </div>
+      <nav class="preview-tabs" id="preview-tabs" aria-label="Parts of the demo">
+        <button type="button" data-page="landing" aria-current="true">Study groups</button>
+        <button type="button" data-page="dashboard" data-target=".week-heading">Schedule</button>
+        <button type="button" data-page="dashboard" data-target=".hw-head">Homework</button>
+        <button type="button" data-page="dashboard" data-target=".nb-heading">AI study assistant</button>
+      </nav>
+      <div class="preview-screen">
+        <div class="preview-chrome">
+          <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+          <a href="/demo" class="preview-full">Open full screen ↗</a>
+        </div>
+        <div class="preview-viewport" id="preview-viewport">
+          <p class="preview-loading" id="preview-loading">Loading a sample week…</p>
+          <iframe id="preview-frame" title="StudySync live demo"></iframe>
+        </div>
+      </div>
+      <div class="preview-foot">
+        <span class="preview-hint">Like it? Your own week takes about two minutes to set up.</span>
+        <a href="/signup" class="preview-try">Make it yours: create a free account →</a>
+      </div>
+    </section>
+
+    <section class="wl-features" aria-labelledby="features-title">
+      <h2 id="features-title">Everything for the week in one place</h2>
+      <div class="wl-grid">
+        <article>
+          <h3>Study groups that actually meet</h3>
+          <p>Your group gets a weekly time when everyone is free. Each member taps Going, Running late or Can't make it, and if a week doesn't work, one tap moves it to a time that does.</p>
+        </article>
+        <article>
+          <h3>A study plan that fits your week</h3>
+          <p>Short, medium or long sessions, spread across your free time. Move or skip a session when plans change, and check it off when you're done.</p>
+        </article>
+        <article>
+          <h3>Homework from Canvas</h3>
+          <p>Link Canvas to see what's missing, what's due soon and what you've finished, right next to your schedule.</p>
+        </article>
+        <article>
+          <h3>An AI study assistant</h3>
+          <p>Add your notes or lecture PDFs and ask questions about them. Answers point to where in your materials they came from.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wl-final">
+      <h2>Ready to plan your week?</h2>
+      <p>It's free. Add your classes and you'll see your study plan and groups right away.</p>
+      <div class="wl-ctas">
+        <a href="/signup" class="wl-btn">Create a free account</a>
+        <a href="/demo" class="wl-btn wl-btn-ghost">Try the demo first</a>
+      </div>
+      <p class="wl-fine">Already have an account? <a href="/login">Log in</a></p>
+    </section>
+  </main>
+
+  <footer class="wl-footer">
+    <p id="ai-notice" class="ai-notice" hidden>
+      <strong>Early access.</strong> StudySync is still being built, so expect some rough edges.
+      AI answers can take a little while, and sometimes the AI is busy or errors out. If that
+      happens, wait a minute and try again. The AI runs on Google Gemini's free tier, so don't
+      upload private or sensitive material: Google may use what's sent to the AI to improve its
+      products. AI answers can also be wrong, so check them against your materials.
+    </p>
+  </footer>
+
+  <script>
+    // Supabase password-reset links can land on the front page: pass them along
+    if (location.hash.includes("type=recovery")) location.replace("/reset-password" + location.hash);
+  </script>
+  <script src="/public/ai-notice.js"></script>
+  <script src="/public/preview.js"></script>
+  <script src="/public/feedback.js"></script>
+</body>
+</html>

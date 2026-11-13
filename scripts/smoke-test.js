@@ -78,7 +78,7 @@ async function run() {
   };
 
   // --- Logged out: pages and redirects ---
-  for (const page of ["/", "/signup", "/forgot", "/reset-password", "/home", "/start", "/setup", "/landing",
+  for (const page of ["/", "/login", "/?error=invalid", "/?confirmed=1", "/?deleted=1", "/signup", "/forgot", "/reset-password", "/home", "/start", "/setup", "/landing",
     "/dashboard", "/account", "/group", "/nope", "/public/style.css", "/public/planner.js", "/public/logo.png",
     "/public/../server.js", "/public/missing.js"]) {
     await record("out GET " + page, "GET", page);
@@ -97,7 +97,7 @@ async function run() {
   await record("demo GET /demo embed", "GET", "/demo?embed=1&to=dashboard");
   const opts = { cookie };
 
-  for (const page of ["/", "/home", "/start", "/setup", "/landing", "/dashboard", "/account", "/group",
+  for (const page of ["/", "/login", "/home", "/start", "/setup", "/landing", "/dashboard", "/account", "/group",
     "/landing?embed=1", "/dashboard?embed=1"]) {
     await record("demo GET " + page, "GET", page, opts);
   }
@@ -145,6 +145,7 @@ async function run() {
 
   // --- Ending the demo ---
   await record("demo GET /logout", "GET", "/logout", opts);
+  await record("out GET /logout", "GET", "/logout");
   return results;
 }
 

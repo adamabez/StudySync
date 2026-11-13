@@ -1,0 +1,143 @@
+/* StudySync - the welcome page (pages/welcome.html): what new visitors see first.
+   The live demo box itself is styled in demo.css (.preview). Dark mode is at the bottom. */
+
+body.welcome {
+  display: block;
+  padding: 0 16px;
+  line-height: 1.5;
+  color: #1d2a5c;
+}
+.welcome main { max-width: 1100px; margin: 0 auto; }
+.welcome h1, .welcome h2, .welcome h3 { color: #1d2a5c; }
+
+/* ---------- Top bar ---------- */
+.wl-top {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 0;
+}
+.wl-brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; line-height: 0; }
+.wl-brand .logo { height: auto; max-height: 36px; width: auto; max-width: 160px; }
+.wl-nav { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+.wl-login { font-size: 15px; font-weight: 600; text-decoration: none; }
+.wl-login:hover { text-decoration: underline; }
+
+/* ---------- Buttons ---------- */
+.wl-btn {
+  display: inline-block;
+  padding: 12px 20px;
+  border: 1.5px solid #2b4acb;
+  border-radius: 10px;
+  background: #2b4acb;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.wl-btn:hover { background: #2240b0; border-color: #2240b0; }
+.wl-btn:focus-visible { outline: 2px solid #2b4acb; outline-offset: 3px; }
+.wl-btn-small { padding: 8px 14px; font-size: 14px; }
+.wl-btn-ghost { background: transparent; color: #2b4acb; }
+.wl-btn-ghost:hover { background: #eef1fd; border-color: #2b4acb; }
+
+/* ---------- Hero ---------- */
+.wl-hero { max-width: 760px; margin: 0 auto; padding: 48px 0 40px; text-align: center; }
+.wl-eyebrow, .welcome .preview-eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2b4acb;
+}
+.wl-hero h1 { margin: 10px 0 16px; font-size: clamp(32px, 5.5vw, 52px); line-height: 1.1; letter-spacing: -0.02em; }
+.wl-lead { margin: 0 auto; max-width: 620px; font-size: 18px; color: #4a5372; }
+.wl-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+.wl-fine { margin: 14px 0 0; font-size: 14px; color: #777; }
+
+/* ---------- How it works ---------- */
+.wl-steps, .wl-features, .wl-final { padding: 40px 0; }
+.wl-steps h2, .wl-features h2, .wl-final h2 { margin: 0 0 24px; font-size: 28px; text-align: center; }
+.wl-steps ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.wl-steps li, .wl-grid article {
+  padding: 22px;
+  border: 1px solid #e1e5f2;
+  border-radius: 14px;
+  background: white;
+}
+.wl-steps h3, .wl-grid h3 { margin: 0 0 6px; font-size: 18px; }
+.wl-steps p, .wl-grid p { margin: 0; font-size: 15px; color: #555d78; }
+.wl-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: #eef1fd;
+  color: #2b4acb;
+  font-weight: 700;
+}
+
+/* ---------- Live demo ---------- */
+.wl-preview { max-width: none; margin: 0 auto; padding: 40px 0; }
+.wl-preview .preview-head { text-align: center; }
+.wl-preview .preview-head h2 { font-size: 28px; }
+.wl-preview .preview-tabs { justify-content: center; }
+
+/* ---------- Features ---------- */
+.wl-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+/* ---------- Last call to sign up ---------- */
+.wl-final { text-align: center; }
+.wl-final h2 { margin-bottom: 8px; }
+.wl-final > p { margin: 0; font-size: 16px; }
+.wl-final .wl-ctas { margin-top: 20px; }
+
+.wl-footer { max-width: 760px; margin: 0 auto; padding: 16px 0 48px; }
+
+/* ---------- Phones and narrow windows ---------- */
+@media (max-width: 800px) {
+  .wl-steps ol, .wl-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .wl-top { padding: 12px 0; }
+  .wl-brand .logo { max-height: 30px; max-width: 120px; }
+  .wl-nav { gap: 10px; }
+  .wl-hero { padding: 28px 0 24px; }
+  .wl-lead { font-size: 16px; }
+  .wl-ctas .wl-btn { flex: 1 1 100%; }
+  .wl-steps, .wl-features, .wl-final, .wl-preview { padding: 28px 0; }
+  .wl-steps h2, .wl-features h2, .wl-final h2, .wl-preview .preview-head h2 { font-size: 22px; }
+  .wl-preview .preview-viewport { height: 70vh; min-height: 420px; }
+  .wl-preview .preview-foot { justify-content: center; text-align: center; }
+}
+@media (max-width: 420px) {
+  .wl-brand .beta-tag { display: none; } /* room for Log in, Sign up and the theme button */
+}
+
+/* ---------- Dark mode ---------- */
+html[data-theme="dark"] body.welcome { color: #e3e7f7; }
+html[data-theme="dark"] .welcome h1,
+html[data-theme="dark"] .welcome h2,
+html[data-theme="dark"] .welcome h3 { color: #e3e7f7; }
+html[data-theme="dark"] .wl-eyebrow { color: #8ea0e7; }
+html[data-theme="dark"] .wl-lead { color: #b3bad3; }
+html[data-theme="dark"] .wl-fine { color: #8d94ab; }
+html[data-theme="dark"] .wl-login { color: #8ea2f5; }
+html[data-theme="dark"] .wl-btn { background: #4a63d6; border-color: #4a63d6; color: white; }
+html[data-theme="dark"] .wl-btn:hover { background: #5871dc; border-color: #5871dc; }
+html[data-theme="dark"] .wl-btn-ghost { background: transparent; border-color: #8ea0e7; color: #8ea0e7; }
+html[data-theme="dark"] .wl-btn-ghost:hover { background: #262d45; }
+html[data-theme="dark"] .wl-steps li,
+html[data-theme="dark"] .wl-grid article { background: #23262e; border-color: #343a4d; }
+html[data-theme="dark"] .wl-steps p,
+html[data-theme="dark"] .wl-grid p { color: #a9b0c8; }
+html[data-theme="dark"] .wl-step-num { background: #262d45; color: #8ea0e7; }

@@ -10,13 +10,14 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 - Sign up and log in with email and password (Supabase Auth), followed by a short loading screen, then the dashboard.
 
 **Try the demo (no account)**
-- **Try the demo** on the login page, or any link to **`/demo`** (handy for a QR code), opens the real app with a sample student's week: classes, two study groups with notes, course materials, a saved notebook chat and Canvas homework.
+- **The welcome page** (`/`, `pages/welcome.html`) is what new visitors see first: what StudySync does, a live demo box they can click around in, and sign-up. Returning students log in at `/login`.
+- **Try the demo** on the welcome page, or any link to **`/demo`** (handy for a QR code), opens the real app with a sample student's week: classes, two study groups with notes, course materials, a saved notebook chat and Canvas homework.
 - Visitors can click around and change things; it's kept in server memory only (per visitor, for 3 hours) and never saved to Supabase. A banner on every page links to sign-up.
 - The notebook gives real AI answers about the sample materials, limited to 8 questions per visitor and 120 an hour overall (`lib/demo.js`). PDF uploads, feedback and linking a real Canvas need an account.
 
 **Feedback and feature ideas (on every page)**
 - A **💡 Suggest a feature** button in the bottom corner of every main page (and *Suggest a feature · Report a bug* in the dashboard footer) opens a short form: feature idea, something broke, or general feedback.
-- Works without an account too (login page, the demo): those reports have no user and an optional email, limited to 5 per visitor every 10 minutes. This needs the latest `supabase/schema.sql`.
+- Works without an account too (welcome / login page, the demo): those reports have no user and an optional email, limited to 5 per visitor every 10 minutes. This needs the latest `supabase/schema.sql`.
 - A link ending in `#feedback` (e.g. `https://your-site/#feedback`) opens the form right away.
 - Read everything in Supabase → Table Editor → `feedback`. Demo visitors' reports have `[demo]` in the page column.
 

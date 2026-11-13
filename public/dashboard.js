@@ -357,7 +357,7 @@ function stopEditing() {
 
 async function loadClasses() {
   const res = await fetch("/api/classes");
-  if (res.status === 401) return (window.location.href = "/");
+  if (res.status === 401) return (window.location.href = "/login");
   classes = await res.json();
   render();
   loadStudyTimes();
@@ -400,7 +400,7 @@ async function loadStudyTimes() {
 async function removeClass(c) {
   if (!confirm("Remove " + c.name + " from every day it's on?")) return;
   const res = await fetch("/api/classes/" + c.id, { method: "DELETE" });
-  if (res.status === 401) return (window.location.href = "/");
+  if (res.status === 401) return (window.location.href = "/login");
   classes = classes.filter((x) => x.id !== c.id);
   if (editingId === c.id) stopEditing(); // deleted the item being edited
   render();
@@ -441,7 +441,7 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newClass),
   });
-  if (res.status === 401) return (window.location.href = "/");
+  if (res.status === 401) return (window.location.href = "/login");
   const data = await res.json();
   if (!res.ok) return (error.textContent = data.error || "Couldn't save that class.");
 

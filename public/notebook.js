@@ -82,7 +82,7 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 async function api(path, options) {
   const res = await fetch(path, options);
   if (res.status === 401) {
-    window.location.href = "/";
+    window.location.href = "/login";
     throw new Error("Not logged in");
   }
   const data = await res.json().catch(() => ({}));

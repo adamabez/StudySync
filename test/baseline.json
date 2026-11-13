@@ -1,7 +1,26 @@
 {
   "out GET /": {
     "status": 200,
+    "title": "StudySync – Study smarter, together"
+  },
+  "out GET /login": {
+    "status": 200,
     "title": "StudySync – Log in"
+  },
+  "out GET /?error=invalid": {
+    "status": 302,
+    "location": "/login",
+    "type": ""
+  },
+  "out GET /?confirmed=1": {
+    "status": 302,
+    "location": "/login",
+    "type": ""
+  },
+  "out GET /?deleted=1": {
+    "status": 302,
+    "location": "/login",
+    "type": ""
   },
   "out GET /signup": {
     "status": 200,
@@ -17,37 +36,37 @@
   },
   "out GET /home": {
     "status": 302,
-    "location": "/",
+    "location": "/login",
     "type": ""
   },
   "out GET /start": {
     "status": 302,
-    "location": "/",
+    "location": "/login",
     "type": ""
   },
   "out GET /setup": {
     "status": 302,
-    "location": "/",
+    "location": "/login",
     "type": ""
   },
   "out GET /landing": {
     "status": 302,
-    "location": "/",
+    "location": "/login",
     "type": ""
   },
   "out GET /dashboard": {
     "status": 302,
-    "location": "/",
+    "location": "/login",
     "type": ""
   },
   "out GET /account": {
     "status": 302,
-    "location": "/",
+    "location": "/login",
     "type": ""
   },
   "out GET /group": {
     "status": 302,
-    "location": "/",
+    "location": "/login",
     "type": ""
   },
   "out GET /nope": {
@@ -120,6 +139,10 @@
     "type": ""
   },
   "demo GET /": {
+    "status": 200,
+    "title": "StudySync – Study smarter, together"
+  },
+  "demo GET /login": {
     "status": 200,
     "title": "StudySync – Log in"
   },
@@ -588,6 +611,11 @@
   "demo GET /logout": {
     "status": 302,
     "location": "/",
+    "type": ""
+  },
+  "out GET /logout": {
+    "status": 302,
+    "location": "/login",
     "type": ""
   }
 }

@@ -1,4 +1,4 @@
-// StudySync - the live demo box next to the login form (runs in the browser).
+// StudySync - the live demo box on the welcome page (runs in the browser).
 //
 // One frame shows the real demo (demo.js) that visitors can scroll and click around in.
 // The tabs above it jump to each part: the study groups page, or a section of the dashboard.

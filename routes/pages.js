@@ -3,7 +3,7 @@
 //
 // ctx (from server.js): { req, res, url, loggedIn, inDemo, demoMode, endDemo }
 //   inDemo   → trying the demo (no account, sample data; a real login always wins)
-//   demoMode → like inDemo, but "embed" inside the login page's live preview (no banner)
+//   demoMode → like inDemo, but "embed" inside the welcome page's live demo box (no banner)
 //   endDemo(cookies) → adds the cookie that ends the demo, if there is one
 
 const auth = require("../lib/auth");
@@ -16,14 +16,14 @@ const { feedbackLimited } = require("../lib/limits");
 
 // Pages only for students with an account or a demo (others go to the login page)
 const appPage = (fileName, { demoBanner = "full" } = {}) => ({ res, loggedIn, inDemo, demoMode }) => {
-  if (!loggedIn && !inDemo) return redirect(res, "/");
+  if (!loggedIn && !inDemo) return redirect(res, "/login");
   sendPage(res, fileName, 200, demoBanner === "full" ? inDemo : demoMode);
 };
 
 module.exports = [
-  // "Try the demo" (the login page's button, or a QR code pointing here): straight to the
+  // "Try the demo" (the welcome page's buttons, or a QR code pointing here): straight to the
   // landing page with a sample student's week, no sign-up.
-  // The login page's live preview loads /demo?embed=1&to=dashboard in a frame: same demo,
+  // The welcome page's live demo box loads /demo?embed=1&to=landing in a frame: same demo,
   // without the banner.
   ["GET", "/demo", ({ res, url, loggedIn, inDemo }) => {
     const embed = url.searchParams.get("embed") === "1";
@@ -38,8 +38,18 @@ module.exports = [
     sendJson(res, { freeTier: ai.providerInfo().freeTier }); // shown even before the key is added
   }],
 
-  // Front page: the login form (skipped if already logged in)
-  ["GET", "/", ({ res, loggedIn }) => {
+  // Front page: what StudySync is, with the live demo and sign-up (skipped if logged in).
+  // Older links (email confirmation, errors, "account deleted") pointed at /?..., so those
+  // go to the login page with the same query; the browser keeps any #... part.
+  ["GET", "/", ({ res, url, loggedIn }) => {
+    if (loggedIn) return redirect(res, "/home");
+    if (["error", "checkEmail", "confirmed", "deleted"].some((key) => url.searchParams.has(key))) {
+      return redirect(res, "/login" + url.search);
+    }
+    sendPage(res, "welcome.html");
+  }],
+
+  ["GET", "/login", ({ res, loggedIn }) => {
     if (loggedIn) return redirect(res, "/home");
     sendPage(res, "login.html");
   }],
@@ -47,7 +57,7 @@ module.exports = [
   ["POST", "/login", ({ req, res, endDemo }) => readBody(req, res, 10_000, async (body) => {
     const form = new URLSearchParams(body);
     const result = await auth.logIn((form.get("email") || "").trim(), form.get("password") || "");
-    if (result.error) return redirect(res, `/?error=${result.error}`);
+    if (result.error) return redirect(res, `/login?error=${result.error}`);
     redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
   })],
 
@@ -62,14 +72,14 @@ module.exports = [
     if (name.error) return redirect(res, `/signup?error=${name.code}`);
     const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value, `${siteUrl(req)}/?confirmed=1`);
     if (result.error) return redirect(res, `/signup?error=${result.error}`);
-    if (result.confirmEmail) return redirect(res, "/?checkEmail=1");
+    if (result.confirmEmail) return redirect(res, "/login?checkEmail=1");
     redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
   })],
 
   // Loading screen, then the dashboard (logged-in users only)
   ["GET", "/home", ({ res, loggedIn, inDemo }) => {
     if (inDemo) return redirect(res, "/landing");
-    if (!loggedIn) return redirect(res, "/");
+    if (!loggedIn) return redirect(res, "/login");
     sendPage(res, "loading.html");
   }],
 
@@ -77,7 +87,7 @@ module.exports = [
   // (Finishing the schedule screen shows the landing page once: study plan + groups.)
   ["GET", "/start", async ({ req, res, loggedIn, inDemo }) => {
     if (inDemo) return redirect(res, "/landing");
-    if (!loggedIn) return redirect(res, "/");
+    if (!loggedIn) return redirect(res, "/login");
     try {
       const profile = await onboarding.getProfile(auth.supabaseFor(req), auth.getUserId(req));
       redirect(res, profile.onboarded ? "/dashboard" : "/setup");
@@ -96,7 +106,7 @@ module.exports = [
   // Account settings: change email / password, dark mode, delete account
   ["GET", "/account", ({ res, loggedIn, inDemo }) => {
     if (inDemo) return redirect(res, "/signup"); // no account to change in the demo
-    if (!loggedIn) return redirect(res, "/");
+    if (!loggedIn) return redirect(res, "/login");
     sendPage(res, "account.html");
   }],
 
@@ -123,14 +133,16 @@ module.exports = [
     sendJson(res, { ok: true });
   })],
 
-  // Log out (also ends the demo: "Exit demo" in the demo banner comes here)
-  ["GET", "/logout", async ({ req, res, endDemo }) => {
+  // Log out → the login page. Also ends the demo: "Exit demo" in the demo banner comes
+  // here, and goes back to the welcome page.
+  ["GET", "/logout", async ({ req, res, loggedIn, endDemo }) => {
+    const wasDemo = !loggedIn && demo.hasDemo(req);
     if (demo.hasDemo(req)) demo.end(req);
-    redirect(res, "/", { "Set-Cookie": endDemo(await auth.logOut(req)) });
+    redirect(res, wasDemo ? "/" : "/login", { "Set-Cookie": endDemo(await auth.logOut(req)) });
   }],
 
   // Feedback / bug reports / feature ideas: from every page, account or not.
-  // Logged in: saved as that user, with their email. Otherwise (login page, the demo):
+  // Logged in: saved as that user, with their email. Otherwise (welcome / login page, the demo):
   // saved without a user, with an email only if they typed one, and rate limited.
   ["POST", "/api/feedback", ({ req, res, loggedIn, inDemo }) => readJson(req, res, 20_000, async (input) => {
     if (!loggedIn && feedbackLimited(req)) {
