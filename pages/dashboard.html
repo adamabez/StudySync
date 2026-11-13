@@ -15,27 +15,9 @@
 </head>
 <body>
   <div class="box wide">
-    <div class="dash-header">
-      <div class="brand">
-        <h1><a href="/landing" class="logo-link" title="Go to your study plan" aria-label="StudySync: go to your study plan"><img src="/public/logo.png" alt="StudySync" class="logo"></a></h1>
-        <p id="dash-welcome">Welcome to your dashboard!</p>
-      </div>
-      <a href="/landing" class="home-link"><span aria-hidden="true">✦</span> Study plan &amp; groups</a>
-      <div class="account" id="account">
-        <button type="button" class="avatar" id="account-button" aria-label="Account" aria-expanded="false" aria-controls="account-menu">
-          <span id="account-initial" aria-hidden="true">?</span>
-        </button>
-        <div class="account-menu" id="account-menu">
-          <div class="account-card">
-            <span class="account-label">Logged in as</span>
-            <span class="account-name" id="account-name" hidden></span>
-            <span class="account-email" id="account-email">your account</span>
-            <a href="/account" class="logout account-settings-link">Account settings</a>
-            <a href="/logout" class="logout">Log out</a>
-          </div>
-        </div>
-      </div>
-    </div>
+    <nav id="app-nav" data-page="dashboard"></nav>
+    <script src="/public/nav.js"></script>
+    <p id="dash-welcome" class="page-sub">Welcome to your dashboard!</p>
 
     <!-- Weekly study goal progress: time checked off this week (public/study-log.js) -->
     <div id="week-progress" hidden></div>
@@ -398,56 +380,13 @@
   <script src="/public/collapse.js"></script>
   <script src="/public/feedback.js"></script>
   <script>
-    // ---------- Account circle ----------
-    // Computers: hovering or tabbing to the circle opens the card (done in CSS).
-    // Phones: tapping the circle opens it; tapping elsewhere or pressing Escape closes it.
-    const account = document.getElementById("account");
-    const accountButton = document.getElementById("account-button");
-
-    function setAccountOpen(open) {
-      account.classList.toggle("open", open);
-      accountButton.setAttribute("aria-expanded", String(open));
-    }
-    accountButton.addEventListener("click", () => setAccountOpen(!account.classList.contains("open")));
-    document.addEventListener("click", (event) => {
-      if (!account.contains(event.target)) setAccountOpen(false);
+    // Greeting under the header (public/nav.js asks who's logged in). No name yet → a nudge to add one.
+    window.studyNav.me.then((me) => {
+      if (!me || !me.email) return;
+      const welcome = document.getElementById("dash-welcome");
+      if (me.name) welcome.textContent = "Welcome back, " + me.name.split(" ")[0] + "!";
+      else if (!me.demo) welcome.innerHTML = 'Welcome! <a href="/account#name">Add your full name</a> so your study group knows who you are.';
     });
-    // Escape closes it and puts focus back on the circle. "dismissed" keeps it closed
-    // until you tab away or move the mouse off, so it doesn't pop right back open.
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-      if (!account.contains(document.activeElement) && !account.classList.contains("open")) return;
-      setAccountOpen(false);
-      account.classList.add("dismissed");
-      accountButton.focus();
-    });
-    account.addEventListener("focusout", (event) => {
-      if (!account.contains(event.relatedTarget)) account.classList.remove("dismissed");
-    });
-    account.addEventListener("mouseleave", () => account.classList.remove("dismissed"));
-    accountButton.addEventListener("click", () => account.classList.remove("dismissed"));
-
-    // Fill in the name, initial and email. No name yet → a nudge to add one.
-    fetch("/api/me")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((me) => {
-        if (!me || !me.email) return;
-        const label = me.name || me.email;
-        document.getElementById("account-initial").textContent = label[0].toUpperCase();
-        document.getElementById("account-email").textContent = me.email;
-        document.getElementById("account-email").title = me.email; // full address, in case it's cut off
-        accountButton.setAttribute("aria-label", "Account: " + label);
-        if (me.name) {
-          const nameLine = document.getElementById("account-name");
-          nameLine.textContent = me.name;
-          nameLine.hidden = false;
-          document.getElementById("dash-welcome").textContent = "Welcome back, " + me.name.split(" ")[0] + "!";
-        } else if (!me.demo) {
-          const welcome = document.getElementById("dash-welcome");
-          welcome.innerHTML = 'Welcome! <a href="/account#name">Add your full name</a> so your study group knows who you are.';
-        }
-      })
-      .catch(() => {});
   </script>
   <script src="/public/password-toggle.js"></script>
 </body>

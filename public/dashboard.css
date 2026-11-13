@@ -1,26 +1,45 @@
 /* StudySync - dashboard and weekly calendar */
 
-/* ---------- Header: StudySync on the left, account circle on the right ---------- */
-.dash-header {
+/* ---------- Header on every logged-in page (public/nav.js) ----------
+   Logo · Study plan | Dashboard tabs · light/dark switch · account circle */
+.app-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 8px 20px;
+  margin-bottom: 20px;
 }
-.dash-header .brand { min-width: 0; }
-/* "← Home" back to the landing page, next to the account circle */
-.home-link {
-  margin-left: auto;
-  padding: 8px 12px;
-  border-radius: 8px;
+.app-logo { flex: none; display: inline-block; border-radius: 8px; line-height: 0; transition: opacity 0.15s; }
+.app-logo .logo { height: auto; max-height: 40px; width: auto; max-width: 170px; }
+.app-logo:hover { opacity: 0.85; }
+.app-logo:focus-visible { outline: 2px solid #2b4acb; outline-offset: 3px; }
+
+.app-tabs { display: flex; gap: 4px; margin-right: auto; padding: 4px; border-radius: 999px; background: #eef1fb; }
+.app-tab {
+  padding: 7px 16px;
+  border-radius: 999px;
+  color: #4a5372;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
-.home-link:hover { background: #eef1fb; }
-.home-link:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
-.dash-header .brand p { margin: 0; }
+.app-tab:hover { color: #2b4acb; }
+.app-tab[aria-current="page"] { background: white; color: #2b4acb; box-shadow: 0 1px 3px rgba(20, 30, 70, 0.15); }
+.app-tab:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+/* The page's title and line under it, below the header */
+.page-title { margin: 0 0 4px; font-size: 26px; color: #1d2a5c; }
+.page-sub { margin: 0 0 16px; color: #666; }
+a.back-link { text-decoration: none; }
+
+/* Phones: the logo on its own row, the tabs and account underneath */
+@media (max-width: 600px) {
+  .app-nav { flex-wrap: wrap; }
+  .app-logo { flex-basis: 100%; }
+  .app-logo .logo { max-height: 32px; }
+  .app-tab { padding: 6px 12px; }
+}
 
 /* The account circle, and the card with your email + Log out that opens from it */
 .account { position: relative; flex: none; }
@@ -77,19 +96,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.account .logout {
+/* The menu's links: Edit schedule, Account settings, Log out */
+.account-links { display: flex; flex-direction: column; gap: 2px; padding-top: 8px; border-top: 1px solid #e3e6f0; }
+.account-item {
   display: block;
-  padding: 7px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
-  border: 1px solid #d5d9e6;
   color: #2b4acb;
   font-size: 14px;
-  text-align: center;
   text-decoration: none;
 }
-.account .logout:hover { background: #eef1fb; }
-.account .account-settings-link { margin-bottom: 6px; }
-.account .logout:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.account-item:hover { background: #eef1fb; }
+.account-item:focus-visible { outline: 2px solid #2b4acb; outline-offset: -2px; }
+.account-card { min-width: 190px; }
 
 /* Open it: tapped open (phones), keyboard focus inside (Tab), or mouse hover (computers) */
 .account.open .account-menu,

@@ -393,14 +393,11 @@ function showLoadError() {
 
 // ---------- Start ----------
 async function load() {
-  const [profileRes, classesRes, meRes] = await Promise.all([fetch("/api/profile"), fetch("/api/classes"), fetch("/api/me")]);
+  // (Who's logged in is in the header's account menu: public/nav.js)
+  const [profileRes, classesRes] = await Promise.all([fetch("/api/profile"), fetch("/api/classes")]);
   if (!profileRes.ok || !classesRes.ok) return showLoadError();
   const profile = await profileRes.json();
   calendar = await classesRes.json();
-  if (meRes.ok) {
-    const me = await meRes.json();
-    if (me.email) $("greeting").textContent = "Logged in as " + me.email;
-  }
 
   $("no-schedule").hidden = calendar.some((item) => item.start);
   preference = profile.preference || "alone";
