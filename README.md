@@ -12,7 +12,7 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 **Try the demo (no account)**
 - **Try the demo** on the login page, or any link to **`/demo`** (handy for a QR code), opens the real app with a sample student's week: classes, two study groups with notes, course materials, a saved notebook chat and Canvas homework.
 - Visitors can click around and change things; it's kept in server memory only (per visitor, for 3 hours) and never saved to Supabase. A banner on every page links to sign-up.
-- The notebook gives real AI answers about the sample materials, limited to 8 questions per visitor and 120 an hour overall (`demo.js`). PDF uploads, feedback and linking a real Canvas need an account.
+- The notebook gives real AI answers about the sample materials, limited to 8 questions per visitor and 120 an hour overall (`lib/demo.js`). PDF uploads, feedback and linking a real Canvas need an account.
 
 **Feedback and feature ideas (on every page)**
 - A **💡 Suggest a feature** button in the bottom corner of every main page (and *Suggest a feature · Report a bug* in the dashboard footer) opens a short form: feature idea, something broke, or general feedback.
@@ -98,39 +98,50 @@ If Supabase has **Confirm email** turned on (Authentication → Sign In / Provid
 
 **When to restart:**
 - Changes in `pages/` and `public/` show up with a browser refresh.
-- Changes to `.js` files in the main folder need a server restart.
+- Changes to `server.js`, `routes/` and `lib/` need a server restart.
+- Run `npm test` after changing server code. It starts its own copy on port 3999 and checks every page and API route against `test/baseline.json`. If you meant to change a route's answer, record the new baseline with `npm test -- --save`.
 
 ## Project structure
 
 ```
 StudySync/
-├── server.js         Starts the server and decides what each URL does (routes)
-├── auth.js           Login with Supabase, who's logged in (getUserId, supabaseFor)
-├── schedule.js       Saves/loads calendar items → Supabase "classes" table
-├── materials.js      Saves/loads notebook sources → Supabase "sources" table + Storage
-├── chats.js          Saves/loads notebook chats → Supabase "chats" table
-├── canvas.js         Links a Canvas account → "canvas_connections" table, loads homework from Canvas
-├── courses.js        The Sac State course catalog students pick their classes from
-├── groups.js         Study groups: one per class, matched by shared free time
+├── server.js         Starts the server, works out who's asking, sends each request to its route
+├── routes/           Which URL does what, one file per part of the app
+│   ├── pages.js        Pages, login / sign-up / password forms, the demo, feedback
+│   ├── account.js      Account settings, who's logged in
+│   ├── study.js        Profile, weekly study plan + quick edits, "I studied" checkmarks
+│   ├── schedule.js     Calendar items, course catalog and sections
+│   ├── groups.js       Study groups, meetups, session chat
+│   ├── notebook.js     Study assistant: materials, saved chats, asking the AI
+│   └── canvas.js       Linking Canvas, loading homework
+├── lib/              The work behind the routes
+│   ├── http.js         Sending pages / JSON, reading requests, the router
+│   ├── auth.js         Login with Supabase, who's logged in (getUserId, supabaseFor)
+│   ├── onboarding.js   Profile: name, alone or in a group, weekly study goal
+│   ├── schedule.js     Calendar items → Supabase "classes" table
+│   ├── courses.js      The Sac State course catalog students pick their classes from
+│   ├── sections.js     Each class's sections from Sac State's class schedule
+│   ├── groups.js       Study groups: one per class, matched by shared free time
+│   ├── meetups.js      Next session, RSVPs, moving a session, meeting spot, session chat
+│   ├── studyplan.js    Weekly study times (AI if there's a key, else public/planner.js)
+│   ├── studylog.js     "I studied" checkmarks
+│   ├── materials.js    Notebook sources → Supabase "sources" table + Storage
+│   ├── chats.js        Notebook chats → Supabase "chats" table
+│   ├── ai.js           Sends sources + questions to the AI (ai-gemini.js / ai-anthropic.js)
+│   ├── canvas.js       Canvas account → "canvas_connections" table, loads homework
+│   ├── feedback.js     Feedback reports → "feedback" table
+│   ├── limits.js       Rate limits
+│   ├── namefilter.js   Word filter for names and chat messages
+│   └── demo.js         "Try the demo": sample data in memory, answers /api/ for demo visitors
+├── pages/            HTML for each page
+├── public/           CSS and browser JavaScript (format.js and colors.js are shared helpers)
 ├── supabase/schema.sql  Creates the tables, security rules and group matching (run in Supabase)
 ├── supabase/courses.sql Every Sac State course, for the class picker (run after schema.sql)
 ├── scripts/import-courses.js  Rebuilds courses.sql from catalog.csus.edu (run each semester or two)
-├── ai.js             Sends sources + questions to the AI, formats citations
-├── demo.js           "Try the demo": sample data in memory, answers /api/ for demo visitors
-├── pages/            HTML for each page (login, signup, loading, dashboard, 404)
-├── public/           CSS and browser JavaScript
-│   ├── style.css       Shared look (card, buttons, inputs, spinner)
-│   ├── dashboard.css   Calendar and Add form
-│   ├── dashboard.js    Calendar logic and colors (COLOR_FAMILIES)
-│   ├── notebook.css    Virtual Notebook
-│   ├── notebook.js     Sources, drop zone, chat and saved chats
-│   ├── canvas.css      Homework section (Canvas)
-│   ├── canvas.js       Connect Canvas form, missing / upcoming / completed homework
-│   └── collapse.js     Collapsible sections (arrow button)
-├── .vscode/launch.json  F5 run setup for VS Code
-├── .env              Your keys: Supabase, Anthropic (you create this; never committed)
+├── scripts/smoke-test.js      npm test: checks every page and API route still answers the same
+├── .env              Your keys: Supabase, Gemini or Anthropic (you create this; never committed)
 ├── .env.example      Template for .env
-└── package.json      Dependencies (@anthropic-ai/sdk)
+└── package.json      Dependencies
 ```
 
 ### Where your data lives
@@ -149,7 +160,7 @@ Students pick their classes from the Sac State catalog (`courses` table), so eve
 
 Each student who wants groups gets one group per class (up to 4 people), meeting weekly in a 90-minute slot when every member is free: weekdays 9 AM – 9 PM, weekends 10 AM – 6 PM. A student's groups never clash with each other or with their schedule. Matching runs in the database (`match_study_group()` in `schema.sql`) whenever a student opens their study plan or changes their schedule.
 
-Each group's page aims to get a group from matched to meeting without anyone having to message each other (`meetups.js`):
+Each group's page aims to get a group from matched to meeting without anyone having to message each other (`lib/meetups.js`):
 - **Next session**: the date, time and place, plus **Going / Running late / Can't make it** for each member.
 - **Find a time that works for everyone**: if someone can't make it, StudySync lists times in the next week when every member is free (their classes, tasks and other groups are checked by `group_free_slots` in the database), and one tap moves that week's session. Everyone answers again for the new time.
 - **Talk it over**: a small chat for each week's session, to settle details like the time. It starts fresh every week, so it stays about the next session instead of becoming a group chat. The page checks for new messages every 5 seconds while it's open; messages go through a light word filter, and members need a name on their account to post.
@@ -163,10 +174,10 @@ Which sections are collapsed and which chat was last open are stored in your bro
 
 ## Customizing
 
-- **Calendar colors:** edit `COLOR_FAMILIES` at the top of `public/dashboard.js`. It's the only place colors are set; the cards and the color key both read from it. Hues: 0 red · 60 yellow · 120 green · 200 blue · 270 purple · 330 pink.
+- **Calendar colors:** edit `COLOR_FAMILIES` at the top of `public/colors.js`. It's the only place colors are set; the cards and the color key both read from it. Hues: 0 red · 60 yellow · 120 green · 200 blue · 270 purple · 330 pink.
 - **Loading screen time:** `LOADING_TIME_MS` in `pages/loading.html`.
-- **AI model and answer depth:** `MODEL` and `effort` in `ai.js`. It defaults to the most capable model at `medium` effort.
-- **AI instructions:** `SYSTEM_PROMPT` in `ai.js`.
+- **AI model and answer depth:** `MODEL` and `effort` in `lib/ai.js`. It defaults to the most capable model at `medium` effort.
+- **AI instructions:** `SYSTEM_PROMPT` in `lib/ai.js`.
 - **Quick buttons (Summarize, Quiz me…):** `QUICK_PROMPTS` in `public/notebook.js`.
 - **Make another section collapsible:** see the comment at the top of `public/collapse.js`.
 
