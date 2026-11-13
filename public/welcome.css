@@ -48,7 +48,7 @@ body.welcome {
 
 /* ---------- Hero ---------- */
 .wl-hero { max-width: 760px; margin: 0 auto; padding: 48px 0 40px; text-align: center; }
-.wl-eyebrow, .welcome .preview-eyebrow {
+.welcome .preview-eyebrow {
   margin: 0;
   font-size: 13px;
   font-weight: 700;
@@ -95,13 +95,24 @@ body.welcome {
 /* ---------- Features ---------- */
 .wl-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 
+/* "Coming soon" next to a feature that isn't built yet */
+.wl-soon {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #8a5a00;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
 /* ---------- Last call to sign up ---------- */
-.wl-final { text-align: center; }
+.wl-final { text-align: center; padding-bottom: 64px; }
 .wl-final h2 { margin-bottom: 8px; }
 .wl-final > p { margin: 0; font-size: 16px; }
 .wl-final .wl-ctas { margin-top: 20px; }
-
-.wl-footer { max-width: 760px; margin: 0 auto; padding: 16px 0 48px; }
 
 /* ---------- Phones and narrow windows ---------- */
 @media (max-width: 800px) {
@@ -128,7 +139,7 @@ html[data-theme="dark"] body.welcome { color: #e3e7f7; }
 html[data-theme="dark"] .welcome h1,
 html[data-theme="dark"] .welcome h2,
 html[data-theme="dark"] .welcome h3 { color: #e3e7f7; }
-html[data-theme="dark"] .wl-eyebrow { color: #8ea0e7; }
+html[data-theme="dark"] .wl-soon { background: #3d3418; color: #f2c96b; }
 html[data-theme="dark"] .wl-lead { color: #b3bad3; }
 html[data-theme="dark"] .wl-fine { color: #8d94ab; }
 html[data-theme="dark"] .wl-login { color: #8ea2f5; }
