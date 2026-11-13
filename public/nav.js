@@ -2,7 +2,7 @@
 //
 // Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan | Calendar tabs · light/dark switch (theme.js puts it next to the
 // account circle) · account circle. The circle opens a menu: who's logged in, Edit schedule,
-// Account settings, Log out. In the demo it offers sign-up and "Exit demo" instead.
+// Account settings, Get the app (early), Log out. In the demo it offers sign-up and "Exit demo" instead.
 //
 // Phones get a tab bar fixed to the bottom of the screen instead of the top tabs: Dashboard,
 // Study plan, Calendar, Schedule, Account, always one tap away (dashboard.css shows it at 600px and under).
@@ -61,7 +61,9 @@
   const editLink = item("/setup", "Edit schedule");
   const settingsLink = item("/account", "Account settings");
   const logoutLink = item("/logout", "Log out");
-  links.append(editLink, settingsLink, logoutLink);
+  const appLink = item("#", "Get the app (early)"); // opens the install window (public/install.js)
+  appLink.setAttribute("data-install-app", "");
+  links.append(editLink, settingsLink, appLink, logoutLink);
   card.append(label, name, email, links);
   menu.append(card);
   account.append(button, menu);
