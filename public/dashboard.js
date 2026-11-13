@@ -70,6 +70,42 @@ function paintColorKey() {
 }
 
 // Draw the Monday–Sunday grid
+// Phones show one day of the week at a time (CSS); the day buttons above it pick which.
+// Starts on today, and stays on the picked day when the calendar redraws.
+let pickedDay = null;
+
+function renderDayPicker(counts, todayKey) {
+  const picker = document.getElementById("day-picker");
+  if (!picker) return;
+  picker.innerHTML = "";
+  for (const [key, label] of DAYS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "day-pick" + (key === todayKey ? " today" : "");
+    button.dataset.day = key;
+    button.setAttribute("aria-pressed", String(key === pickedDay));
+    const n = counts[key] || 0;
+    button.setAttribute("aria-label", label + (key === todayKey ? ", today" : "") + ": " + (n === 1 ? "1 item" : n + " items"));
+    const name = document.createElement("span");
+    name.className = "day-pick-name";
+    name.textContent = label.slice(0, 3);
+    const count = document.createElement("span");
+    count.className = "day-pick-count";
+    count.textContent = n ? String(n) : "–";
+    button.append(name, count);
+    button.addEventListener("click", () => pickDay(key));
+    picker.appendChild(button);
+  }
+}
+
+function pickDay(key) {
+  pickedDay = key;
+  for (const col of document.querySelectorAll("#week .day-col")) col.classList.toggle("picked", col.dataset.day === key);
+  for (const button of document.querySelectorAll("#day-picker .day-pick")) {
+    button.setAttribute("aria-pressed", String(button.dataset.day === key));
+  }
+}
+
 function render() {
   // Let the Virtual Notebook know, so its course list stays up to date
   document.dispatchEvent(new CustomEvent("classes-changed", { detail: classes.filter((c) => kindOf(c) === "class") }));
@@ -77,12 +113,15 @@ function render() {
   const week = document.getElementById("week");
   week.innerHTML = "";
   const todayKey = DAYS[(new Date().getDay() + 6) % 7][0]; // JS weeks start on Sunday
+  if (!pickedDay) pickedDay = todayKey;
+  const counts = {}; // items per day, for the phone's day buttons
   // Weekly items, plus one-time items happening this week (repeat-picker.js)
   const thisWeek = window.studyDates.thisWeek(classes);
 
   for (const [key, label] of DAYS) {
     const col = document.createElement("div");
-    col.className = "day-col" + (key === todayKey ? " today" : "");
+    col.className = "day-col" + (key === todayKey ? " today" : "") + (key === pickedDay ? " picked" : "");
+    col.dataset.day = key;
 
     const title = document.createElement("h3");
     title.textContent = label;
@@ -100,6 +139,7 @@ function render() {
     const todays = [...thisWeek, ...studyTimes]
       .filter((c) => c.days.includes(key))
       .sort((a, b) => (a.start || "").localeCompare(b.start || "")); // async (no time) first
+    counts[key] = todays.length;
 
     if (todays.length === 0 && !(studyLoading && !studyTimes.length)) {
       const empty = document.createElement("p");
@@ -120,6 +160,7 @@ function render() {
     col.appendChild(makeDayAdd(key, label));
     week.appendChild(col);
   }
+  renderDayPicker(counts, todayKey);
 
   // Async classes with no days go in their own row above the week
   const noDays = classes.filter((c) => c.days.length === 0);

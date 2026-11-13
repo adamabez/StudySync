@@ -205,10 +205,22 @@ html[data-theme="dark"] .spinner {
 }
 
 /* ---------- from dashboard.css ---------- */
-html[data-theme="dark"] .home-link:hover {
-  background: #161c31;
+html[data-theme="dark"] .app-tabs {
+  background: #1b1f2a;
 }
-html[data-theme="dark"] .home-link:focus-visible {
+html[data-theme="dark"] .app-tab {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .app-tab:hover {
+  color: #c9d3ff;
+}
+html[data-theme="dark"] .app-tab[aria-current="page"] {
+  background: #3b4466;
+  color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="dark"] .app-logo:focus-visible,
+html[data-theme="dark"] .app-tab:focus-visible {
   outline: 2px solid #5871dc;
 }
 html[data-theme="dark"] .avatar:focus-visible {
@@ -230,14 +242,16 @@ html[data-theme="dark"] .account-name:not([hidden]) + .account-email {
 html[data-theme="dark"] .account-email {
   color: #dddddd;
 }
-html[data-theme="dark"] .account .logout {
-  border: 1px solid #404453;
+html[data-theme="dark"] .account-links {
+  border-top-color: #42485a;
+}
+html[data-theme="dark"] .account-item {
   color: #8ea0e7;
 }
-html[data-theme="dark"] .account .logout:hover {
+html[data-theme="dark"] .account-item:hover {
   background: #161c31;
 }
-html[data-theme="dark"] .account .logout:focus-visible {
+html[data-theme="dark"] .account-item:focus-visible {
   outline: 2px solid #5871dc;
 }
 html[data-theme="dark"] h2 {
@@ -1850,3 +1864,52 @@ html[data-theme="dark"] .choice-solo:has(input:checked) .choice-check { border-c
 /* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
    theme.js swaps the image too, for browsers that ignore content on images. */
 html[data-theme="dark"] img.logo { content: url("/public/logo-dark.png"); }
+
+/* Page title and subtitle under the shared header (dashboard.css) */
+html[data-theme="dark"] .page-title {
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .page-sub {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .edit-schedule-btn {
+  border-color: #8ea0e7;
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .edit-schedule-btn:hover {
+  background: #262d45;
+}
+html[data-theme="dark"] .app-tabbar {
+  background: rgba(27, 31, 42, 0.96);
+  border-top-color: #343a4d;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+}
+html[data-theme="dark"] .app-tabbar-item {
+  color: #8d94ab;
+}
+html[data-theme="dark"] .app-tabbar-item[aria-current="page"] {
+  color: #c9d3ff;
+  background: #262d45;
+}
+html[data-theme="dark"] .day-pick {
+  background: #23262e;
+  border-color: #343a4d;
+  color: #c3cae6;
+}
+html[data-theme="dark"] .day-pick-count {
+  color: #8d94ab;
+}
+html[data-theme="dark"] .day-pick.today {
+  border-color: #8ea0e7;
+}
+html[data-theme="dark"] .day-pick.today .day-pick-name {
+  color: #8ea0e7;
+}
+html[data-theme="dark"] .day-pick[aria-pressed="true"] {
+  background: #4a63d6;
+  border-color: #4a63d6;
+}
+html[data-theme="dark"] .day-pick[aria-pressed="true"] .day-pick-name,
+html[data-theme="dark"] .day-pick[aria-pressed="true"] .day-pick-count {
+  color: white;
+}

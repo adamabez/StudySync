@@ -93,7 +93,7 @@ fetch("/api/me")
   .then((me) => {
     if (!me || !me.email) return;
     $("current-email").textContent = me.email;
-    $("account-email-line").textContent = "Account settings for " + (me.name || me.email);
+    $("account-email-line").textContent = me.name ? me.name + " · " + me.email : me.email;
     $("display-name").value = me.name || "";
     if (!me.name && location.hash === "#name") $("display-name").focus();
   })

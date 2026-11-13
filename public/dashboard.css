@@ -1,26 +1,95 @@
 /* StudySync - dashboard and weekly calendar */
 
-/* ---------- Header: StudySync on the left, account circle on the right ---------- */
-.dash-header {
+/* ---------- Header on every logged-in page (public/nav.js) ----------
+   Logo · Dashboard | Study plan tabs · light/dark switch · account circle */
+.app-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 8px 20px;
+  margin-bottom: 20px;
 }
-.dash-header .brand { min-width: 0; }
-/* "← Home" back to the landing page, next to the account circle */
-.home-link {
-  margin-left: auto;
-  padding: 8px 12px;
-  border-radius: 8px;
+.app-logo { flex: none; display: inline-block; border-radius: 8px; line-height: 0; transition: opacity 0.15s; }
+.app-logo .logo { height: auto; max-height: 40px; width: auto; max-width: 170px; }
+.app-logo:hover { opacity: 0.85; }
+.app-logo:focus-visible { outline: 2px solid #2b4acb; outline-offset: 3px; }
+
+.app-tabs { display: flex; gap: 4px; margin-right: auto; padding: 4px; border-radius: 999px; background: #eef1fb; }
+.app-tab {
+  padding: 7px 16px;
+  border-radius: 999px;
+  color: #4a5372;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.app-tab:hover { color: #2b4acb; }
+.app-tab[aria-current="page"] { background: white; color: #2b4acb; box-shadow: 0 1px 3px rgba(20, 30, 70, 0.15); }
+.app-tab:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+/* The page's title and line under it, below the header */
+.page-title { margin: 0 0 4px; font-size: 26px; color: #1d2a5c; }
+.page-sub { margin: 0 0 16px; color: #666; }
+a.back-link { text-decoration: none; }
+
+/* Subtitle with a button beside it (study plan page: "Edit schedule") */
+.page-sub-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+.page-sub-row .page-sub { margin: 0; }
+.edit-schedule-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid #2b4acb;
+  border-radius: 999px;
+  color: #2b4acb;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
 }
-.home-link:hover { background: #eef1fb; }
-.home-link:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
-.dash-header .brand p { margin: 0; }
+.edit-schedule-btn:hover { background: #eef1fb; }
+.edit-schedule-btn:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+/* Phones' tab bar, fixed to the bottom (public/nav.js). Hidden on wider screens. */
+.app-tabbar { display: none; }
+@media (max-width: 600px) {
+  .app-tabs { display: none; } /* the bottom bar does their job */
+  .app-logo { margin-right: auto; }
+  .app-logo .logo { max-height: 32px; }
+  .app-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid #e1e5f2;
+    box-shadow: 0 -4px 16px rgba(20, 30, 70, 0.08);
+    backdrop-filter: blur(8px);
+  }
+  .app-tabbar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 2px;
+    border-radius: 10px;
+    color: #6b7391;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .app-tabbar-item[aria-current="page"] { color: #2b4acb; background: #eef1fb; }
+  .app-tabbar-item:focus-visible { outline: 2px solid #2b4acb; outline-offset: -2px; }
+  /* Room so the bar never covers the end of the page, and the feedback button sits above it */
+  body.has-tabbar { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  body.has-tabbar .fb-fab { bottom: calc(78px + env(safe-area-inset-bottom)); }
+}
 
 /* The account circle, and the card with your email + Log out that opens from it */
 .account { position: relative; flex: none; }
@@ -77,19 +146,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.account .logout {
+/* The menu's links: Edit schedule, Account settings, Log out */
+.account-links { display: flex; flex-direction: column; gap: 2px; padding-top: 8px; border-top: 1px solid #e3e6f0; }
+.account-item {
   display: block;
-  padding: 7px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
-  border: 1px solid #d5d9e6;
   color: #2b4acb;
   font-size: 14px;
-  text-align: center;
   text-decoration: none;
 }
-.account .logout:hover { background: #eef1fb; }
-.account .account-settings-link { margin-bottom: 6px; }
-.account .logout:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.account-item:hover { background: #eef1fb; }
+.account-item:focus-visible { outline: 2px solid #2b4acb; outline-offset: -2px; }
+.account-card { min-width: 190px; }
 
 /* Open it: tapped open (phones), keyboard focus inside (Tab), or mouse hover (computers) */
 .account.open .account-menu,
@@ -333,9 +402,34 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
   .week { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .day-col { min-height: 0; }
 }
-/* Phones: two days per row */
+/* Phones: one day at a time, picked with the day buttons above the week (dashboard.js) */
+.day-picker { display: none; }
 @media (max-width: 600px) {
-  .week { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .week { grid-template-columns: minmax(0, 1fr); }
+  .day-col:not(.picked) { display: none; }
+  .day-col.today { outline: none; } /* the day buttons already mark today */
+  .day-picker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 10px; }
+  .day-pick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 7px 0 6px;
+    border: 1px solid #dfe3f0;
+    border-radius: 10px;
+    background: white;
+    color: #4a5372;
+    font: inherit;
+    cursor: pointer;
+  }
+  .day-pick-name { font-size: 13px; font-weight: 700; }
+  .day-pick-count { font-size: 11px; color: #8a91aa; }
+  .day-pick.today { border-color: #2b4acb; }
+  .day-pick.today .day-pick-name { color: #2b4acb; }
+  .day-pick[aria-pressed="true"] { background: #2b4acb; border-color: #2b4acb; color: white; }
+  .day-pick[aria-pressed="true"] .day-pick-name,
+  .day-pick[aria-pressed="true"] .day-pick-count { color: white; }
+  .day-pick:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 }
 
 /* ---------- "Add a Class / Task / Other" dropdown ---------- */
