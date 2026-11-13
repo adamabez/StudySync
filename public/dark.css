@@ -1941,3 +1941,29 @@ html[data-theme="dark"] .install-share {
   background: #262d45;
   color: #a9b8f5;
 }
+html[data-theme="dark"] .install-other {
+  border-top-color: #343a4d;
+}
+html[data-theme="dark"] .install-other summary {
+  color: #a9b8f5;
+}
+html[data-theme="dark"] .install-other dt {
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .install-other dd {
+  color: #b3bad3;
+}
+html[data-theme="dark"] .signup-app {
+  background: #232a42;
+  border-color: #343d5e;
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .signup-app:hover {
+  background: #2a3250;
+}
+html[data-theme="dark"] .signup-app strong {
+  color: #a9b8f5;
+}
+html[data-theme="dark"] .signup-app span span {
+  color: #a9b0c8;
+}
