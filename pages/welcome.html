@@ -35,12 +35,38 @@
 
   <main>
     <section class="wl-hero">
-      <h1>Stop trying to find a time.<br><span class="wl-h1-accent">We schedule it for you.</span></h1>
-      <p class="wl-lead">
-        <strong>No more phone tag.</strong> Finding a time to study together usually means days of
-        "when are you free?" texts. StudySync checks everyone's class schedules, puts you in a study group
-        for each class and picks a weekly time when every member is free. You just show up.
-      </p>
+      <!-- The study groups banner (styles: welcome.css, colors kept in dark mode by dark.css) -->
+      <div class="groups-hero">
+        <p class="groups-hero-eyebrow">Study groups</p>
+        <h1 class="groups-hero-title">Stop trying to find a time.<br><span>We schedule it for you.</span></h1>
+        <p class="groups-hero-sub"><strong>No more phone tag.</strong> Finding a time to study together usually means days of
+          "when are you free?" texts. StudySync checks everyone's class schedules, puts you in a study group for each
+          class and picks a weekly time when every member is free. You just show up.</p>
+        <ul class="groups-hero-features">
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <strong>Auto matching</strong>
+            <span>Classmates from each of your classes, grouped for you</span>
+          </li>
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+            </span>
+            <strong>Auto scheduling</strong>
+            <span>A weekly time that fits everyone's classes</span>
+          </li>
+          <li>
+            <span class="groups-hero-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </span>
+            <strong>One-tap rescheduling</strong>
+            <span>Something came up? We find a new time that still works</span>
+          </li>
+        </ul>
+      </div>
+
       <div class="wl-ctas">
         <a href="/demo" class="wl-btn">Try it now</a>
         <a href="/signup" class="wl-btn wl-btn-ghost">Create a free account</a>
@@ -52,30 +78,6 @@
         <button type="button" class="wl-install" data-install-app="phone"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg> Phone</button>
         <button type="button" class="wl-install" data-install-app="computer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg> Computer</button>
       </div>
-      <!-- What StudySync does for your group -->
-      <ul class="wl-hero-features">
-        <li>
-          <span class="wl-hero-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </span>
-          <strong>Auto matching</strong>
-          <span>Classmates from each of your classes, grouped for you</span>
-        </li>
-        <li>
-          <span class="wl-hero-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
-          </span>
-          <strong>Auto scheduling</strong>
-          <span>A weekly time that fits everyone's classes</span>
-        </li>
-        <li>
-          <span class="wl-hero-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          </span>
-          <strong>One-tap rescheduling</strong>
-          <span>Something came up? We find a new time that still works</span>
-        </li>
-      </ul>
     </section>
 
     <section class="wl-steps" aria-labelledby="steps-title">
