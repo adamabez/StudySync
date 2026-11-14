@@ -2,8 +2,8 @@
 // (group.js) and the Notes page (notes.js). Load after members.js.
 //
 // The card: the author's initials, their name and how long ago, the title and the note (long
-// ones fold, with Show more). Yours can be deleted. The Notes page also shows which group it's in,
-// or "Just me" for your solo notes.
+// ones fold, with Show more). Yours can be deleted, or switched between private and shared.
+// The Notes page also shows which group each note is in.
 
 (function () {
   // "Just now", "5 min ago", "3 hours ago", "Yesterday", "Nov 12"
@@ -23,12 +23,13 @@
   const fullDate = (iso) =>
     new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
-  // options: { groupId, onRemoved(), group: { id, course, label, hue } (Notes page: which group),
-  //            solo: true for your private notes (showTag: label it "Just me") }
+  // options: { groupId, onRemoved(), group: { id, course, label, hue } (Notes page: show which group),
+  //            onPrivacy(note) (your notes: the Private / Share switch; answers with the moved note) }
+  // A private note (note.isPrivate) shows a 🔒 Private tag and only its writer ever sees it.
   function card(note, options) {
     const members = window.studyMembers;
     const el = document.createElement("article");
-    el.className = "note-card";
+    el.className = "note-card" + (note.isPrivate ? " is-private" : "");
     el.style.setProperty("--n-hue", members.hueFor(note.author || "you"));
 
     const head = document.createElement("div");
@@ -46,14 +47,28 @@
     head.appendChild(who);
 
     if (note.isYours) {
+      // Private ⇄ shared with the group (a private note needs a group to share with)
+      if (options.onPrivacy && (!note.isPrivate || note.groupId)) {
+        const flip = document.createElement("button");
+        flip.type = "button";
+        flip.className = "note-privacy";
+        flip.textContent = note.isPrivate ? "Share" : "Make private";
+        flip.title = note.isPrivate ? "Share this note with your group" : "Hide this note from your group";
+        flip.setAttribute("aria-label", (note.isPrivate ? "Share " : "Make private: ") + note.title);
+        flip.addEventListener("click", async () => {
+          flip.disabled = true;
+          try { await options.onPrivacy(note); } finally { flip.disabled = false; }
+        });
+        head.appendChild(flip);
+      }
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "note-delete";
       remove.textContent = "Delete";
       remove.setAttribute("aria-label", "Delete " + note.title);
       remove.addEventListener("click", async () => {
-        if (!confirm(options.solo ? "Delete this note?" : "Delete this note for everyone in the group?")) return;
-        const url = options.solo ? "/api/solo-notes/" + note.id : "/api/groups/" + options.groupId + "/notes/" + note.id;
+        if (!confirm(note.isPrivate ? "Delete this note?" : "Delete this note for everyone in the group?")) return;
+        const url = note.isPrivate ? "/api/private-notes/" + note.id : "/api/groups/" + options.groupId + "/notes/" + note.id;
         const res = await fetch(url, { method: "DELETE" });
         if (res.ok) el.remove();
         if (options.onRemoved) options.onRemoved();
@@ -62,21 +77,25 @@
     }
     el.appendChild(head);
 
-    // Notes page: a solo note says it's private; a group note says which group, linking to its page
-    if (options.solo && options.showTag) {
-      const tag = document.createElement("span");
-      tag.className = "note-group solo";
-      tag.textContent = "🔒 Just me";
-      tag.title = "Only you can see this note";
-      el.appendChild(tag);
-    } else if (options.group) {
+    // Tags: which group (Notes page, links to the group's page) and 🔒 Private
+    const tags = document.createElement("div");
+    tags.className = "note-tags";
+    if (options.group) {
       const tag = document.createElement("a");
       tag.className = "note-group";
       tag.href = "/group?id=" + encodeURIComponent(options.group.id);
       tag.style.setProperty("--g-hue", options.group.hue);
       tag.textContent = options.group.course + (options.group.label ? " · " + options.group.label : "");
-      el.appendChild(tag);
+      tags.appendChild(tag);
     }
+    if (note.isPrivate) {
+      const tag = document.createElement("span");
+      tag.className = "note-group private";
+      tag.textContent = "🔒 Private";
+      tag.title = "Only you can see this note";
+      tags.appendChild(tag);
+    }
+    if (tags.children.length) el.appendChild(tags);
 
     const title = document.createElement("h3");
     title.className = "note-title";

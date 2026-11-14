@@ -24,7 +24,7 @@
   <div class="box wide">
     <nav id="app-nav" data-page="notes"></nav>
     <script src="/public/nav.js"></script>
-    <!-- Your solo notes and every note shared in your study groups, in one place (public/notes.js) -->
+    <!-- Your private notes and every note shared in your study groups, in one place (public/notes.js) -->
     <p class="page-sub">Your own notes and your study groups' notes, in one place</p>
 
     <p id="notes-loading" class="hint">Loading your notes…</p>
@@ -56,10 +56,18 @@
 
       <!-- Opens from "+ Add a note" -->
       <form id="note-form" class="note-form note-composer" hidden>
-        <label id="note-place-row">Who sees it
-          <select id="note-place"></select>
-          <span class="note-who" id="note-who"></span>
+        <label id="note-group-row">Group
+          <select id="note-group" class="note-select"></select>
         </label>
+        <!-- Private (only you) or shared with the group: public/notes.js -->
+        <div id="note-visibility-row" class="note-visibility-row">
+          <span class="note-field-label" id="note-visibility-label">Who sees it</span>
+          <div id="note-visibility" class="note-visibility" role="group" aria-labelledby="note-visibility-label">
+            <button type="button" data-value="private" aria-pressed="true">🔒 Private</button>
+            <button type="button" data-value="shared" aria-pressed="false">👥 Shared with group</button>
+          </div>
+          <span class="note-who" id="note-who"></span>
+        </div>
         <label>Title
           <input id="note-title" type="text" maxlength="120" required placeholder="e.g. Chapter 4 review">
         </label>
