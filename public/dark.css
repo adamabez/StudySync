@@ -2130,3 +2130,24 @@ html[data-theme="dark"] .spot { background: #23262e; border-color: #343a4d; box-
 html[data-theme="dark"] .spot.is-the-spot { background: #1c2e24; border-color: #2f5a40; }
 html[data-theme="dark"] .spot-text strong { color: #e3e7f7; }
 html[data-theme="dark"] .spot-text span { color: #a9b0c8; }
+
+/* ---------- Group page: notes (dark), restyled ---------- */
+html[data-theme="dark"] .notes-count { background: #262d45; color: #a9b8f5; }
+html[data-theme="dark"] .notes-add { background: transparent; border-color: #8ea0e7; color: #a9b8f5; }
+html[data-theme="dark"] .notes-add:hover { background: #262d45; }
+html[data-theme="dark"] .note-composer { background: #1f2433; border-color: #343d5e; }
+html[data-theme="dark"] .note-card {
+  --n: hsl(var(--n-hue, 228), 60%, 62%);
+  background: #23262e;
+  border-color: #343a4d;
+  border-top: 4px solid var(--n);
+  border-left: 1px solid #343a4d;
+  box-shadow: none;
+}
+html[data-theme="dark"] .note-who strong,
+html[data-theme="dark"] .note-title { color: #eef0f8; }
+html[data-theme="dark"] .note-when { color: #8d94ab; }
+html[data-theme="dark"] .note-card .note-body { color: #c9cfe3; }
+html[data-theme="dark"] .note-delete { color: #8d94ab; }
+html[data-theme="dark"] .note-delete:hover { background: #3a2124; color: #f0a2a0; }
+html[data-theme="dark"] .note-more { color: #a9b8f5; }

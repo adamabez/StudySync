@@ -154,10 +154,14 @@
       </section>
 
       <section>
-        <h2>Group notes</h2>
+        <div class="notes-head">
+          <h2>Group notes <span id="notes-count" class="notes-count"></span></h2>
+          <button type="button" id="note-open" class="notes-add">+ Add a note</button>
+        </div>
         <p class="hint">Everyone in the group can see these notes. You can delete the ones you added.</p>
 
-        <form id="note-form" class="note-form">
+        <!-- Opens from "+ Add a note" (public/group.js) -->
+        <form id="note-form" class="note-form note-composer" hidden>
           <label>Title
             <input id="note-title" type="text" maxlength="120" required placeholder="e.g. Chapter 4 review">
           </label>
@@ -165,7 +169,10 @@
             <textarea id="note-body" rows="5" maxlength="20000" required placeholder="Write or paste your notes here"></textarea>
           </label>
           <p id="note-error" class="error" hidden></p>
-          <button type="submit" id="note-submit">Add note</button>
+          <div class="note-actions">
+            <button type="submit" id="note-submit">Add note</button>
+            <button type="button" id="note-cancel" class="link-button">Cancel</button>
+          </div>
         </form>
 
         <p id="notes-empty" class="hint" hidden>No notes yet. Add the first one!</p>

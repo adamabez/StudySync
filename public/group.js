@@ -162,21 +162,50 @@ function renderGroup(group) {
   members.remember(group.id, group.members);
 }
 
+// ---------- Group notes ----------
+// Each note: the author's initials (public/members.js), their name and how long ago, the title,
+// and the note (long ones fold, with Show more). Yours can be deleted.
+
+// "Just now", "5 min ago", "3 hours ago", "Yesterday", "Nov 12"
+function timeAgo(iso) {
+  const then = new Date(iso);
+  const minutes = Math.round((Date.now() - then) / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return minutes + " min ago";
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return hours + (hours === 1 ? " hour ago" : " hours ago");
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (then.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return then.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 function noteCard(note) {
   const card = document.createElement("article");
   card.className = "note-card";
+  const author = note.isYours ? "You" : note.author;
+  card.style.setProperty("--n-hue", window.studyMembers.hueFor(note.author || "you"));
 
   const head = document.createElement("div");
   head.className = "note-head";
-  const title = document.createElement("strong");
-  title.textContent = note.title;
-  head.appendChild(title);
+  head.appendChild(window.studyMembers.face({ name: note.author || "You", isYou: note.isYours }, "note-face"));
+  const who = document.createElement("div");
+  who.className = "note-who";
+  const name = document.createElement("strong");
+  name.textContent = author;
+  const when = document.createElement("span");
+  when.className = "note-when";
+  when.textContent = timeAgo(note.createdAt);
+  when.title = formatDate(note.createdAt);
+  who.append(name, when);
+  head.appendChild(who);
 
   if (note.isYours) {
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.className = "link-button danger";
+    remove.className = "note-delete";
     remove.textContent = "Delete";
+    remove.setAttribute("aria-label", "Delete " + note.title);
     remove.addEventListener("click", async () => {
       if (!confirm("Delete this note for everyone in the group?")) return;
       const res = await fetch("/api/groups/" + groupId + "/notes/" + note.id, { method: "DELETE" });
@@ -187,21 +216,49 @@ function noteCard(note) {
   }
   card.appendChild(head);
 
-  const meta = document.createElement("span");
-  meta.className = "meta";
-  meta.textContent = (note.isYours ? "You" : note.author) + " · " + formatDate(note.createdAt);
-  card.appendChild(meta);
+  const title = document.createElement("h3");
+  title.className = "note-title";
+  title.textContent = note.title;
+  card.appendChild(title);
 
   const body = document.createElement("p");
   body.className = "note-body";
   body.textContent = note.body;
   card.appendChild(body);
+
+  // Long notes fold to a few lines, with Show more / Show less
+  if (note.body.length > 360 || note.body.split("\n").length > 8) {
+    body.classList.add("folded");
+    const more = document.createElement("button");
+    more.type = "button";
+    more.className = "note-more";
+    more.textContent = "Show more";
+    more.setAttribute("aria-expanded", "false");
+    more.addEventListener("click", () => {
+      const open = body.classList.toggle("folded") === false;
+      more.textContent = open ? "Show less" : "Show more";
+      more.setAttribute("aria-expanded", String(open));
+    });
+    card.appendChild(more);
+  }
   return card;
 }
 
 function updateEmpty() {
-  $("notes-empty").hidden = $("notes").children.length > 0;
+  const count = $("notes").children.length;
+  $("notes-empty").hidden = count > 0;
+  $("notes-count").textContent = count ? String(count) : "";
 }
+
+// "+ Add a note" opens the form; Cancel or adding one closes it
+function showNoteForm(open) {
+  $("note-form").hidden = !open;
+  $("note-open").hidden = open;
+  if (open) $("note-title").focus();
+  else { $("note-form").reset(); $("note-error").hidden = true; }
+}
+$("note-open").addEventListener("click", () => showNoteForm(true));
+$("note-cancel").addEventListener("click", () => showNoteForm(false));
 
 $("note-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -216,7 +273,7 @@ $("note-form").addEventListener("submit", async (event) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Couldn't save the note. Try again.");
     $("notes").prepend(noteCard(data));
-    $("note-form").reset();
+    showNoteForm(false);
     updateEmpty();
   } catch (error) {
     $("note-error").textContent = error.message;
