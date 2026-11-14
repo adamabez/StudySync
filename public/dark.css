@@ -2145,3 +2145,31 @@ html[data-theme="dark"] .nss-text .nss-title { color: #ece7ff; }
 html[data-theme="dark"] .nss-tag { background: #3d3418; color: #f2c96b; }
 html[data-theme="dark"] .nss-link { background: transparent; border-color: #6f5ca8; color: #c9b8ff; }
 html[data-theme="dark"] .nss-link:hover { background: #2e2650; }
+/* "Share StudySync" window (public/share.js). The QR code keeps its white background. */
+html[data-theme="dark"] .share-lead {
+  color: #b3bad3;
+}
+html[data-theme="dark"] .share-qr-loading {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .share-address,
+html[data-theme="dark"] .share-save {
+  color: #8ea2f5;
+}
+html[data-theme="dark"] .share-copy {
+  background: #2f3445;
+  color: #c9d3ff;
+}
+html[data-theme="dark"] .share-copy:hover {
+  background: #3b4466;
+}
+html[data-theme="dark"] .share-status {
+  color: #7fd39b;
+}
+html[data-theme="dark"] .nav-share {
+  border-color: #6f86ee;
+  color: #a9b8f5;
+}
+html[data-theme="dark"] .nav-share:hover {
+  background: #262d45;
+}

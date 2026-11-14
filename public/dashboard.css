@@ -65,6 +65,11 @@ a.back-link { text-decoration: none; }
   .app-tabs { order: 3; flex: 1 1 100%; margin-right: 0; }
   .app-tab { flex: 1 1 0; padding: 8px 4px; text-align: center; font-size: 13.5px; }
 }
+/* Small phones: a smaller logo, so it still fits on one row with Share, the switch and the circle */
+@media (max-width: 380px) {
+  .app-nav { column-gap: 12px; }
+  .app-logo .logo { max-width: 118px; }
+}
 
 /* The account circle, and the card with your email + Log out that opens from it */
 .account { position: relative; flex: none; }

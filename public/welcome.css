@@ -79,6 +79,7 @@ body.welcome {
 }
 .wl-install:hover { background: #eef1fd; }
 .wl-install[hidden] { display: none; }
+.wl-share { margin-top: 10px; }
 
 /* ---------- How it works ---------- */
 .wl-steps, .wl-features, .wl-final { padding: 40px 0; }

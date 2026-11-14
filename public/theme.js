@@ -83,7 +83,8 @@
       const actions = document.createElement("div");
       actions.className = "header-actions";
       account.parentElement.insertBefore(actions, account);
-      actions.append(button, account);
+      const share = document.getElementById("nav-share"); // the header's Share button (nav.js)
+      actions.append(...[share, button, account].filter(Boolean));
     } else if (links) {
       links.appendChild(button);
     } else if (pageHead) {
