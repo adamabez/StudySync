@@ -11,6 +11,8 @@ const { sendJson, readJson } = require("../lib/http");
 const ACCOUNT_ERRORS = {
   invalid: "That password isn't right.",
   weak: "Pick a new password with at least 6 characters.",
+  weakchars: "Your password needs an uppercase letter, a lowercase letter, a number and a symbol (like ! # or ?).",
+  pwned: "That password has shown up in a data breach, so it isn't safe. Pick a different one.",
   same: "That's already your password. Pick a different one.",
   email: "That email address doesn't look right.",
   sameemail: "That's already your email.",

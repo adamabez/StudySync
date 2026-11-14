@@ -2145,3 +2145,14 @@ html[data-theme="dark"] .nss-text .nss-title { color: #ece7ff; }
 html[data-theme="dark"] .nss-tag { background: #3d3418; color: #f2c96b; }
 html[data-theme="dark"] .nss-link { background: transparent; border-color: #6f5ca8; color: #c9b8ff; }
 html[data-theme="dark"] .nss-link:hover { background: #2e2650; }
+/* Password checklist (public/password-rules.js) */
+html[data-theme="dark"] .pw-rules {
+  color: #a9b0c8;
+}
+html[data-theme="dark"] .pw-rules li::before {
+  border-color: #4f5772;
+}
+html[data-theme="dark"] .pw-rules li.ok,
+html[data-theme="dark"] .pw-rules li.ok::before {
+  color: #7fd39b;
+}
