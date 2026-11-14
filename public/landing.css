@@ -23,6 +23,7 @@
 .head-link:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
 .hint { margin: -4px 0 12px; font-size: 14px; }
+.groups-heading { margin: 12px 0 12px; }
 
 .link-button { background: none; color: #2b4acb; padding: 4px 6px; font-size: 13px; }
 .link-button:hover { background: #e8ebf6; }
