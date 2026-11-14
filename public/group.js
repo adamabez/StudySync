@@ -125,13 +125,41 @@ function renderGroup(group) {
   $("group-when").textContent = "Meets " + group.days.map((d) => DAY_SHORT[d]).join(", ") +
     " · " + formatTime(group.start) + " – " + formatTime(group.end);
 
+  // Members: initials in colored circles (public/members.js, same as the study plan's cards),
+  // with who joined or left since you last opened this group. Opening it counts as seeing them.
+  const members = window.studyMembers;
+  const changed = members.changes(group.id, group.members);
+  const note = $("member-changes");
+  const parts = [];
+  if (changed.joined.length) parts.push(members.listNames(changed.joined) + " joined");
+  if (changed.left.length) parts.push(members.listNames(changed.left) + " left");
+  note.textContent = parts.length ? "Since your last visit: " + parts.join(" · ") + "." : "";
+  note.hidden = !parts.length;
+
   const list = $("group-members");
   list.innerHTML = "";
+  list.style.setProperty("--g-hue", members.hueFor(group.course || String(group.name).split(" | ")[0]));
   for (const member of group.members) {
     const li = document.createElement("li");
-    li.textContent = member.name + (member.isYou ? " (you)" : "");
+    li.className = "member-row";
+    const name = document.createElement("span");
+    name.className = "member-name";
+    name.textContent = member.name;
+    li.append(members.face(member), name);
+    if (member.isYou) {
+      const you = document.createElement("span");
+      you.className = "member-tag you";
+      you.textContent = "You";
+      li.appendChild(you);
+    } else if (changed.joined.includes(member.name)) {
+      const fresh = document.createElement("span");
+      fresh.className = "member-tag new";
+      fresh.textContent = "New";
+      li.appendChild(fresh);
+    }
     list.appendChild(li);
   }
+  members.remember(group.id, group.members);
 }
 
 function noteCard(note) {
@@ -391,6 +419,7 @@ function renderNext() {
     li.innerHTML = '<span class="ns-name"></span><span class="ns-status"></span>';
     li.querySelector(".ns-name").textContent = member.isYou ? "You" : member.name;
     li.querySelector(".ns-status").textContent = status === "none" ? "No answer yet" : STATUS[status].label;
+    li.insertBefore(window.studyMembers.face(member, "small"), li.firstChild); // their initials, after the status dot
     people.appendChild(li);
   }
   const summary = document.createElement("p");

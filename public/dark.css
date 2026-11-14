@@ -1989,3 +1989,32 @@ html[data-theme="dark"] .signup-app-buttons button {
 html[data-theme="dark"] .signup-app-buttons button:hover {
   background: #262d45;
 }
+html[data-theme="dark"] .group-change {
+  background: #3d3418;
+  color: #f2c96b;
+}
+html[data-theme="dark"] .member-rows {
+  --g: hsl(var(--g-hue, 228), 70%, 66%);
+}
+html[data-theme="dark"] .member-row {
+  background: #23262e;
+  border-color: #343a4d;
+}
+html[data-theme="dark"] .member-row .group-face {
+  border-color: #23262e;
+}
+html[data-theme="dark"] .member-name {
+  color: #e3e7f7;
+}
+html[data-theme="dark"] .member-tag.you {
+  background: #262d45;
+  color: #a9b8f5;
+}
+html[data-theme="dark"] .member-tag.new {
+  background: #1f3a26;
+  color: #9fe0ae;
+}
+html[data-theme="dark"] .member-changes {
+  background: #352d17;
+  color: #f2d89b;
+}

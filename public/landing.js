@@ -256,7 +256,9 @@ function describeGroup(group) {
 
 // ---------- Group cards ----------
 // Each card: the class (with its own color), when the group meets and when it's next,
-// who's in it (initials), and a link to the group's page (notes, chat, next session).
+// who's in it (initials) and who joined or left since you last opened it, and a link to the
+// group's page (notes, chat, next session). Initials, colors and member changes: public/members.js.
+const { hueFor, faces: memberFaces, changes: memberChanges } = window.studyMembers;
 
 const DAY_KEYS_JS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]; // Date.getDay() order
 const DAY_PLURAL = { mon: "Mondays", tue: "Tuesdays", wed: "Wednesdays", thu: "Thursdays", fri: "Fridays", sat: "Saturdays", sun: "Sundays" };
@@ -264,13 +266,6 @@ const ICON = {
   clock: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
   next: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
 };
-
-// A steady color for a class from its name (same class → same color every time)
-function hueFor(text) {
-  let h = 0;
-  for (const ch of String(text)) h = (h * 31 + ch.charCodeAt(0)) % 360;
-  return (h + 200) % 360;
-}
 
 // "CSC 130 | Group A" → { course: "CSC 130", label: "Group A" }
 function splitGroupName(group) {
@@ -299,12 +294,6 @@ function nextLabel(next) {
   return next.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + " at " + time;
 }
 
-// "Maya R." → "MR", "Demo student" → "DS"
-function initials(name) {
-  const words = String(name || "?").trim().split(" ").filter(Boolean);
-  return ((words[0] || "?")[0] + (words.length > 1 ? words[words.length - 1][0] : "")).toUpperCase();
-}
-
 function groupCard(group) {
   const { course, label } = splitGroupName(group);
   const hue = hueFor(course);
@@ -328,6 +317,16 @@ function groupCard(group) {
     tag.textContent = label;
     top.appendChild(tag);
   }
+  // Someone joined or left since you last opened the group
+  const changed = memberChanges(group.id, group.members);
+  if (changed.joined.length || changed.left.length) {
+    const badge = document.createElement("span");
+    badge.className = "group-change";
+    badge.textContent = changed.joined.length
+      ? changed.joined.length + (changed.joined.length === 1 ? " new member" : " new members")
+      : "Members changed";
+    top.appendChild(badge);
+  }
   card.appendChild(top);
 
   const facts = document.createElement("div");
@@ -350,23 +349,7 @@ function groupCard(group) {
   // Who's in it: initials in overlapping circles (yours outlined), then the names
   const people = document.createElement("div");
   people.className = "group-people";
-  const faces = document.createElement("span");
-  faces.className = "group-faces";
-  faces.setAttribute("aria-hidden", "true");
-  const shown = group.members.slice(0, 4);
-  for (const member of shown) {
-    const face = document.createElement("span");
-    face.className = "group-face" + (member.isYou ? " you" : "");
-    face.style.setProperty("--f-hue", hueFor(member.name));
-    face.textContent = initials(member.name);
-    faces.appendChild(face);
-  }
-  if (group.members.length > shown.length) {
-    const more = document.createElement("span");
-    more.className = "group-face more";
-    more.textContent = "+" + (group.members.length - shown.length);
-    faces.appendChild(more);
-  }
+  const faces = memberFaces(group.members);
   const names = document.createElement("span");
   names.className = "group-names";
   const count = group.members.length === 1 ? "Just you" : group.members.length + " members";
