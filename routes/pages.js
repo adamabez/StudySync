@@ -14,6 +14,7 @@ const demo = require("../lib/demo");
 const terms = require("../lib/terms");
 const fs = require("fs");
 const path = require("path");
+const QRCode = require("qrcode");
 const { siteUrl, sendPage, sendJson, redirect, readBody, readJson } = require("../lib/http");
 const { feedbackLimited } = require("../lib/limits");
 
@@ -49,6 +50,15 @@ module.exports = [
   // This semester's dates (lib/terms.js): first / last day of classes and holidays. Not private,
   // so it works for everyone, the demo too.
   ["GET", "/api/term", async ({ res }) => sendJson(res, await terms.getTerm())],
+
+  // "Share StudySync" (public/share.js): the site's address and a QR code for it, so a friend
+  // can scan it off your screen. Not private, so it works logged out and in the demo too.
+  ["GET", "/share.json", async ({ req, res }) => {
+    const url = siteUrl(req) + "/";
+    const svg = await QRCode.toString(url, { type: "svg", margin: 2, errorCorrectionLevel: "M", color: { dark: "#1d2a5c", light: "#ffffff" } });
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+    res.end(JSON.stringify({ url, svg }));
+  }],
 
   // Installing StudySync as an app: the service worker has to come from the top of the site
   // (not /public/) to cover every page. no-cache: phones check for a new version each visit.
