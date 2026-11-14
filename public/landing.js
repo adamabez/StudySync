@@ -254,30 +254,126 @@ function describeGroup(group) {
   return "Meets " + group.days.map((d) => DAY_SHORT[d]).join(", ") + " · " + formatTime(group.start) + " – " + formatTime(group.end);
 }
 
+// ---------- Group cards ----------
+// Each card: the class (with its own color), when the group meets and when it's next,
+// who's in it (initials), and a link to the group's page (notes, chat, next session).
+
+const DAY_KEYS_JS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]; // Date.getDay() order
+const DAY_PLURAL = { mon: "Mondays", tue: "Tuesdays", wed: "Wednesdays", thu: "Thursdays", fri: "Fridays", sat: "Saturdays", sun: "Sundays" };
+const ICON = {
+  clock: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  next: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+};
+
+// A steady color for a class from its name (same class → same color every time)
+function hueFor(text) {
+  let h = 0;
+  for (const ch of String(text)) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return (h + 200) % 360;
+}
+
+// "CSC 130 | Group A" → { course: "CSC 130", label: "Group A" }
+function splitGroupName(group) {
+  const [course, ...rest] = String(group.name).split(" | ");
+  return { course: group.course || course, label: rest.join(" | ") };
+}
+
+// The next meeting from now: { date, soon } (soon = within a day). Weekly time, so moved
+// sessions (shown on the group's page) aren't counted here.
+function nextMeeting(group) {
+  const now = new Date();
+  const [h, m] = group.start.split(":").map(Number);
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, h, m);
+    if (group.days.includes(DAY_KEYS_JS[d.getDay()]) && d > now) return { date: d, soon: d - now < 24 * 60 * 60 * 1000 };
+  }
+  return null;
+}
+
+function nextLabel(next) {
+  const now = new Date();
+  const days = Math.round((new Date(next.date.getFullYear(), next.date.getMonth(), next.date.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  const time = next.date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  if (days === 0) return "Today at " + time;
+  if (days === 1) return "Tomorrow at " + time;
+  return next.date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + " at " + time;
+}
+
+// "Maya R." → "MR", "Demo student" → "DS"
+function initials(name) {
+  const words = String(name || "?").trim().split(" ").filter(Boolean);
+  return ((words[0] || "?")[0] + (words.length > 1 ? words[words.length - 1][0] : "")).toUpperCase();
+}
+
 function groupCard(group) {
-  // The whole card opens the group's page (members + shared notes)
+  const { course, label } = splitGroupName(group);
+  const hue = hueFor(course);
+
+  // The whole card opens the group's page (members, next session, notes, chat)
   const card = document.createElement("a");
   card.className = "group-card";
   card.href = "/group?id=" + encodeURIComponent(group.id);
+  card.style.setProperty("--g-hue", hue);
+  card.setAttribute("aria-label", group.name + ". " + describeGroup(group) + ". Open the group's page");
 
-  const name = document.createElement("strong");
-  name.className = "group-name";
-  name.textContent = group.name;
-  card.appendChild(name);
-
-  const when = document.createElement("span");
-  when.className = "meta";
-  when.textContent = describeGroup(group);
-  card.appendChild(when);
-
-  const list = document.createElement("ul");
-  list.className = "member-list";
-  for (const member of group.members) {
-    const li = document.createElement("li");
-    li.textContent = member.name + (member.isYou ? " (you)" : "");
-    list.appendChild(li);
+  const top = document.createElement("div");
+  top.className = "group-top";
+  const title = document.createElement("strong");
+  title.className = "group-name";
+  title.textContent = course;
+  top.appendChild(title);
+  if (label) {
+    const tag = document.createElement("span");
+    tag.className = "group-tag";
+    tag.textContent = label;
+    top.appendChild(tag);
   }
-  card.appendChild(list);
+  card.appendChild(top);
+
+  const facts = document.createElement("div");
+  facts.className = "group-facts";
+  const when = document.createElement("span");
+  when.className = "group-fact";
+  when.innerHTML = ICON.clock;
+  when.append(group.days.map((d) => DAY_PLURAL[d] || DAY_SHORT[d]).join(" & ") + " · " + formatTime(group.start) + " – " + formatTime(group.end));
+  facts.appendChild(when);
+  const next = nextMeeting(group);
+  if (next) {
+    const soon = document.createElement("span");
+    soon.className = "group-fact group-next" + (next.soon ? " soon" : "");
+    soon.innerHTML = ICON.next;
+    soon.append("Next: " + nextLabel(next));
+    facts.appendChild(soon);
+  }
+  card.appendChild(facts);
+
+  // Who's in it: initials in overlapping circles (yours outlined), then the names
+  const people = document.createElement("div");
+  people.className = "group-people";
+  const faces = document.createElement("span");
+  faces.className = "group-faces";
+  faces.setAttribute("aria-hidden", "true");
+  const shown = group.members.slice(0, 4);
+  for (const member of shown) {
+    const face = document.createElement("span");
+    face.className = "group-face" + (member.isYou ? " you" : "");
+    face.style.setProperty("--f-hue", hueFor(member.name));
+    face.textContent = initials(member.name);
+    faces.appendChild(face);
+  }
+  if (group.members.length > shown.length) {
+    const more = document.createElement("span");
+    more.className = "group-face more";
+    more.textContent = "+" + (group.members.length - shown.length);
+    faces.appendChild(more);
+  }
+  const names = document.createElement("span");
+  names.className = "group-names";
+  const count = group.members.length === 1 ? "Just you" : group.members.length + " members";
+  const others = group.members.map((m) => (m.isYou ? "you" : String(m.name).split(" ")[0]));
+  names.textContent = group.members.length === 1 ? count : count + ": " + others.join(", ");
+  people.append(faces, names);
+  card.appendChild(people);
 
   // Everyone else left (e.g. their schedule changed): more people get added automatically
   if (group.members.length < 2) {
@@ -289,7 +385,7 @@ function groupCard(group) {
 
   const open = document.createElement("span");
   open.className = "group-open";
-  open.textContent = "Open group notes →";
+  open.innerHTML = 'Group notes &amp; chat <span aria-hidden="true">→</span>';
   card.appendChild(open);
   return card;
 }

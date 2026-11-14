@@ -874,29 +874,46 @@ html[data-theme="dark"] .study-block span {
   color: #999999;
 }
 html[data-theme="dark"] .group-card {
+  --g: hsl(var(--g-hue, 228), 70%, 66%);
+  --g-soft: hsl(var(--g-hue, 228), 35%, 22%);
   background: #23262e;
-  border: 1px solid #42485a;
-}
-html[data-theme="dark"] .group-card {
-  border-left: 4px solid #5871dc;
+  border-color: #343a4d;
+  box-shadow: none;
 }
 html[data-theme="dark"] .group-name {
-  color: #dddddd;
+  color: #e3e7f7;
 }
-html[data-theme="dark"] .group-card .meta {
-  color: #999999;
+html[data-theme="dark"] .group-fact {
+  color: #b3bad3;
 }
-html[data-theme="dark"] .member-list {
-  color: #bbbbbb;
+html[data-theme="dark"] .group-next.soon {
+  background: #1f3a26;
+  color: #9fe0ae;
 }
-html[data-theme="dark"] a.group-card:hover {
-  border-color: #323a57;
+html[data-theme="dark"] .group-next.soon svg {
+  color: #6fcf86;
 }
-html[data-theme="dark"] a.group-card:focus-visible {
-  outline: 2px solid #5871dc;
+html[data-theme="dark"] .group-face {
+  border-color: #23262e;
+  background: hsl(var(--f-hue, 228), 40%, 42%);
+}
+html[data-theme="dark"] .group-face.more {
+  background: #3a4055;
+  color: #c9cfe3;
+}
+html[data-theme="dark"] .group-names {
+  color: #a9b0c8;
 }
 html[data-theme="dark"] .group-open {
-  color: #8ea0e7;
+  border-top-color: #343a4d;
+  color: #a9b8f5;
+}
+html[data-theme="dark"] a.group-card:hover {
+  border-color: #4a5372;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+html[data-theme="dark"] a.group-card:focus-visible {
+  outline: 2px solid #8ea0e7;
 }
 html[data-theme="dark"] .note-card {
   background: #23262e;
