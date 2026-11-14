@@ -125,30 +125,87 @@ function renderGroup(group) {
   $("group-when").textContent = "Meets " + group.days.map((d) => DAY_SHORT[d]).join(", ") +
     " · " + formatTime(group.start) + " – " + formatTime(group.end);
 
+  // Members: initials in colored circles (public/members.js, same as the study plan's cards),
+  // with who joined or left since you last opened this group. Opening it counts as seeing them.
+  const members = window.studyMembers;
+  const changed = members.changes(group.id, group.members);
+  const note = $("member-changes");
+  const parts = [];
+  if (changed.joined.length) parts.push(members.listNames(changed.joined) + " joined");
+  if (changed.left.length) parts.push(members.listNames(changed.left) + " left");
+  note.textContent = parts.length ? "Since your last visit: " + parts.join(" · ") + "." : "";
+  note.hidden = !parts.length;
+
   const list = $("group-members");
   list.innerHTML = "";
+  list.style.setProperty("--g-hue", members.hueFor(group.course || String(group.name).split(" | ")[0]));
   for (const member of group.members) {
     const li = document.createElement("li");
-    li.textContent = member.name + (member.isYou ? " (you)" : "");
+    li.className = "member-row";
+    const name = document.createElement("span");
+    name.className = "member-name";
+    name.textContent = member.name;
+    li.append(members.face(member), name);
+    if (member.isYou) {
+      const you = document.createElement("span");
+      you.className = "member-tag you";
+      you.textContent = "You";
+      li.appendChild(you);
+    } else if (changed.joined.includes(member.name)) {
+      const fresh = document.createElement("span");
+      fresh.className = "member-tag new";
+      fresh.textContent = "New";
+      li.appendChild(fresh);
+    }
     list.appendChild(li);
   }
+  members.remember(group.id, group.members);
+}
+
+// ---------- Group notes ----------
+// Each note: the author's initials (public/members.js), their name and how long ago, the title,
+// and the note (long ones fold, with Show more). Yours can be deleted.
+
+// "Just now", "5 min ago", "3 hours ago", "Yesterday", "Nov 12"
+function timeAgo(iso) {
+  const then = new Date(iso);
+  const minutes = Math.round((Date.now() - then) / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return minutes + " min ago";
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return hours + (hours === 1 ? " hour ago" : " hours ago");
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (then.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return then.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function noteCard(note) {
   const card = document.createElement("article");
   card.className = "note-card";
+  const author = note.isYours ? "You" : note.author;
+  card.style.setProperty("--n-hue", window.studyMembers.hueFor(note.author || "you"));
 
   const head = document.createElement("div");
   head.className = "note-head";
-  const title = document.createElement("strong");
-  title.textContent = note.title;
-  head.appendChild(title);
+  head.appendChild(window.studyMembers.face({ name: note.author || "You", isYou: note.isYours }, "note-face"));
+  const who = document.createElement("div");
+  who.className = "note-who";
+  const name = document.createElement("strong");
+  name.textContent = author;
+  const when = document.createElement("span");
+  when.className = "note-when";
+  when.textContent = timeAgo(note.createdAt);
+  when.title = formatDate(note.createdAt);
+  who.append(name, when);
+  head.appendChild(who);
 
   if (note.isYours) {
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.className = "link-button danger";
+    remove.className = "note-delete";
     remove.textContent = "Delete";
+    remove.setAttribute("aria-label", "Delete " + note.title);
     remove.addEventListener("click", async () => {
       if (!confirm("Delete this note for everyone in the group?")) return;
       const res = await fetch("/api/groups/" + groupId + "/notes/" + note.id, { method: "DELETE" });
@@ -159,21 +216,49 @@ function noteCard(note) {
   }
   card.appendChild(head);
 
-  const meta = document.createElement("span");
-  meta.className = "meta";
-  meta.textContent = (note.isYours ? "You" : note.author) + " · " + formatDate(note.createdAt);
-  card.appendChild(meta);
+  const title = document.createElement("h3");
+  title.className = "note-title";
+  title.textContent = note.title;
+  card.appendChild(title);
 
   const body = document.createElement("p");
   body.className = "note-body";
   body.textContent = note.body;
   card.appendChild(body);
+
+  // Long notes fold to a few lines, with Show more / Show less
+  if (note.body.length > 360 || note.body.split("\n").length > 8) {
+    body.classList.add("folded");
+    const more = document.createElement("button");
+    more.type = "button";
+    more.className = "note-more";
+    more.textContent = "Show more";
+    more.setAttribute("aria-expanded", "false");
+    more.addEventListener("click", () => {
+      const open = body.classList.toggle("folded") === false;
+      more.textContent = open ? "Show less" : "Show more";
+      more.setAttribute("aria-expanded", String(open));
+    });
+    card.appendChild(more);
+  }
   return card;
 }
 
 function updateEmpty() {
-  $("notes-empty").hidden = $("notes").children.length > 0;
+  const count = $("notes").children.length;
+  $("notes-empty").hidden = count > 0;
+  $("notes-count").textContent = count ? String(count) : "";
 }
+
+// "+ Add a note" opens the form; Cancel or adding one closes it
+function showNoteForm(open) {
+  $("note-form").hidden = !open;
+  $("note-open").hidden = open;
+  if (open) $("note-title").focus();
+  else { $("note-form").reset(); $("note-error").hidden = true; }
+}
+$("note-open").addEventListener("click", () => showNoteForm(true));
+$("note-cancel").addEventListener("click", () => showNoteForm(false));
 
 $("note-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -188,7 +273,7 @@ $("note-form").addEventListener("submit", async (event) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Couldn't save the note. Try again.");
     $("notes").prepend(noteCard(data));
-    $("note-form").reset();
+    showNoteForm(false);
     updateEmpty();
   } catch (error) {
     $("note-error").textContent = error.message;
@@ -322,15 +407,22 @@ function renderNext() {
     card.appendChild(forLine);
   }
 
-  // When + where
+  // The class's color (same as its card on the study plan: public/members.js)
+  if (currentGroup) card.style.setProperty("--g-hue", window.studyMembers.hueFor(currentGroup.course || currentGroup.name.split(" | ")[0]));
+
+  // When + where: a calendar tile, then the day, time and place
   const head = document.createElement("div");
   head.className = "ns-head";
-  head.innerHTML = `<div class="ns-when">
+  head.innerHTML = `<div class="ns-tile" aria-hidden="true"><span class="ns-tile-day"></span><span class="ns-tile-num"></span></div>
+    <div class="ns-when">
       <span class="ns-soon${live ? " live" : ""}"></span>
       <strong class="ns-date"></strong>
       <span class="ns-time"></span>
-    </div>
-    <div class="ns-where"><span aria-hidden="true">📍</span><span class="ns-place"></span></div>`;
+      <div class="ns-where"><span aria-hidden="true">📍</span><span class="ns-place"></span></div>
+    </div>`;
+  const tileDate = atTime(session.date, "12:00");
+  head.querySelector(".ns-tile-day").textContent = DAY_LONG[tileDate.getDay()].slice(0, 3);
+  head.querySelector(".ns-tile-num").textContent = tileDate.getDate();
   head.querySelector(".ns-soon").textContent = live ? "Happening now" : soonText(session.date);
   head.querySelector(".ns-date").textContent = prettyDate(session.date);
   head.querySelector(".ns-time").textContent = formatTime(session.start) + " – " + formatTime(session.end);
@@ -391,6 +483,7 @@ function renderNext() {
     li.innerHTML = '<span class="ns-name"></span><span class="ns-status"></span>';
     li.querySelector(".ns-name").textContent = member.isYou ? "You" : member.name;
     li.querySelector(".ns-status").textContent = status === "none" ? "No answer yet" : STATUS[status].label;
+    li.insertBefore(window.studyMembers.face(member, "small"), li.firstChild); // their initials, after the status dot
     people.appendChild(li);
   }
   const summary = document.createElement("p");

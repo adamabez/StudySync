@@ -35,29 +35,6 @@
     <!-- Weekly study goal progress: time checked off this week (public/study-log.js) -->
     <div id="week-progress" hidden></div>
 
-    <!-- Study alone or in a group? Switching saves the preference, and the page below follows it. -->
-    <div class="pref-picker">
-      <p class="pref-label" id="pref-label">Your study preference <span class="pref-label-hint">Pick one. You can switch any time.</span></p>
-      <div class="choice-cards pref-cards" role="radiogroup" aria-labelledby="pref-label">
-        <label class="choice-card choice-group">
-          <input type="radio" name="preference" value="group">
-          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-          <span class="choice-text"><strong>Group</strong>
-            <span>Matched with classmates, one weekly session</span></span>
-          <span class="choice-check" aria-hidden="true"></span>
-        </label>
-        <label class="choice-card choice-solo">
-          <input type="radio" name="preference" value="alone">
-          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
-          <span class="choice-text"><strong>Solo</strong>
-            <span>Study time planned around your week</span></span>
-          <span class="choice-check" aria-hidden="true"></span>
-        </label>
-      </div>
-      <!-- What StudySync does for the picked preference (public/landing.js) -->
-      <p class="pref-result" id="pref-result" aria-live="polite"><span id="pref-result-text"></span> <span class="pref-saved" id="pref-saved" hidden>✓ Saved</span></p>
-    </div>
-
     <p id="no-schedule" class="notice-box" hidden>
       You haven't added your schedule yet, so everything looks free.
       <a href="/setup">Add your classes</a> to get real suggestions.
@@ -66,6 +43,21 @@
     <!-- ========== Group: matched automatically ========== -->
     <section id="group-view" hidden>
       <!-- The headline feature, before anything else: StudySync does the matching and scheduling -->
+      <h2 class="groups-heading">Your study groups</h2>
+      <div id="my-groups" class="group-grid"></div>
+
+      <!-- Classes that don't have a group yet (when they have at least one group) -->
+      <p id="still-looking" class="still-looking" hidden></p>
+
+      <!-- Nobody's schedule fits yet -->
+      <div id="group-waiting" class="waiting-box" hidden>
+        <strong>You're one of the first StudySync students looking for a group! 🎉</strong>
+        <p>As soon as a classmate joins whose schedule fits yours, we'll add you both to a study group
+          for that class automatically. You don't need to do anything. Check back soon!</p>
+        <p id="waiting-classes" hidden></p>
+      </div>
+
+      <!-- How study groups work, under the student's own groups -->
       <div class="groups-hero">
         <div class="groups-hero-text">
           <p class="groups-hero-eyebrow">Your study groups <span class="early-tag">Early preview</span></p>
@@ -115,18 +107,6 @@
             <button type="button" class="early-box-link" data-feedback-open="idea">Tell us what you want</button></p>
         </div>
       </div>
-      <div id="my-groups" class="group-grid"></div>
-
-      <!-- Classes that don't have a group yet (when they have at least one group) -->
-      <p id="still-looking" class="still-looking" hidden></p>
-
-      <!-- Nobody's schedule fits yet -->
-      <div id="group-waiting" class="waiting-box" hidden>
-        <strong>You're one of the first StudySync students looking for a group! 🎉</strong>
-        <p>As soon as a classmate joins whose schedule fits yours, we'll add you both to a study group
-          for that class automatically. You don't need to do anything. Check back soon!</p>
-        <p id="waiting-classes" hidden></p>
-      </div>
     </section>
 
     <!-- ========== Solo: free times to set aside ========== -->
@@ -166,7 +146,9 @@
           </li>
         </ul>
       </div>
-      <div class="alone-head">
+      <!-- The plan itself, in one panel: header with the pickers, the week's numbers, then the days -->
+      <div class="study-panel">
+      <div class="alone-head study-panel-head">
         <div class="alone-title">
           <h2 id="alone-heading">Times to set aside for studying</h2>
           <span class="study-loading" id="study-loading" role="status" hidden><span class="study-loading-dot" aria-hidden="true"></span>Planning your week…</span>
@@ -185,7 +167,8 @@
           </label>
         </div>
       </div>
-      <p class="hint">Calm afternoons first, then evenings and mornings. <span id="length-hint"></span>
+      <div class="study-panel-body">
+      <p class="hint study-how">Calm afternoons first, then evenings and mornings. <span id="length-hint"></span>
         We leave 15 minutes before and after each class or shift to get there and back.
         <a href="/setup">Change your schedule or study notes</a></p>
       <p id="length-error" class="error" hidden></p>
@@ -197,11 +180,42 @@
         <div class="plan-split-key"></div>
       </div>
       <p id="study-total" class="study-total"></p>
+      <!-- "4 sessions · 6h · Next: Today at 1:00 PM" (public/landing.js) -->
+      <div id="study-summary" class="study-summary" hidden></div>
       <!-- Sessions skipped this week with the ✎ menu, each with Undo (public/study-edit.js) -->
       <div id="skipped-note" class="se-skipped-row" hidden></div>
 
-      <div id="study-times" class="study-week"></div>
+      <!-- Days with study time, one row each; days without it on one line underneath -->
+      <div id="study-times" class="study-agenda"></div>
+      <p id="study-free" class="study-free" hidden></p>
+      </div>
+      </div>
     </section>
+
+    <!-- Group or solo: changed now and then, so below the plan -->
+    <!-- Study alone or in a group? Switching saves the preference, and the page below follows it. -->
+    <div class="pref-picker">
+      <p class="pref-label" id="pref-label">Your study preference <span class="pref-label-hint">Pick one. You can switch any time.</span></p>
+      <div class="choice-cards pref-cards" role="radiogroup" aria-labelledby="pref-label">
+        <label class="choice-card choice-group">
+          <input type="radio" name="preference" value="group">
+          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="choice-text"><strong>Group</strong>
+            <span>Matched with classmates, one weekly session</span></span>
+          <span class="choice-check" aria-hidden="true"></span>
+        </label>
+        <label class="choice-card choice-solo">
+          <input type="radio" name="preference" value="alone">
+          <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
+          <span class="choice-text"><strong>Solo</strong>
+            <span>Study time planned around your week</span></span>
+          <span class="choice-check" aria-hidden="true"></span>
+        </label>
+      </div>
+      <!-- What StudySync does for the picked preference (public/landing.js) -->
+      <p class="pref-result" id="pref-result" aria-live="polite"><span id="pref-result-text"></span> <span class="pref-saved" id="pref-saved" hidden>✓ Saved</span></p>
+    </div>
+
 
     <p id="load-error" class="error" hidden></p>
   </div>
@@ -211,6 +225,7 @@
   <script src="/public/day-emoji.js"></script>
   <script src="/public/study-log.js"></script>
   <script src="/public/study-edit.js"></script>
+  <script src="/public/members.js"></script>
   <script src="/public/landing.js"></script>
   <script src="/public/feedback.js"></script>
 </body>

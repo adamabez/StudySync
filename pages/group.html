@@ -66,7 +66,9 @@
 
       <section>
         <h2>Members</h2>
-        <ul id="group-members" class="member-list"></ul>
+        <!-- Who joined or left since you last opened this group (public/members.js) -->
+        <p id="member-changes" class="member-changes" role="status" hidden></p>
+        <ul id="group-members" class="member-rows"></ul>
       </section>
 
       <!-- The next session: when and where, who's coming, and moving it if it doesn't work (public/group.js) -->
@@ -79,7 +81,7 @@
         <!-- A small chat for this session only, to settle the details. Starts fresh each week. -->
         <div id="session-chat" class="sc" hidden>
           <div class="sc-head">
-            <h3>Talk it over</h3>
+            <h3><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Talk it over</h3>
             <span class="sc-hint">Just for this session · starts fresh each week</span>
           </div>
           <div id="sc-log" class="sc-log" aria-live="polite"></div>
@@ -152,10 +154,25 @@
       </section>
 
       <section>
-        <h2>Group notes</h2>
+        <div class="notes-head">
+          <h2>Group notes <span id="notes-count" class="notes-count"></span></h2>
+          <button type="button" id="note-open" class="notes-add">+ Add a note</button>
+        </div>
         <p class="hint">Everyone in the group can see these notes. You can delete the ones you added.</p>
 
-        <form id="note-form" class="note-form">
+        <!-- Coming soon: every member's notes combined into one study guide -->
+        <aside class="notes-summary-soon" aria-label="Coming soon: group study guide">
+          <span class="nss-icon" aria-hidden="true">✦</span>
+          <div class="nss-text">
+            <p class="nss-title">One study guide from everyone's notes <span class="nss-tag">Coming soon</span></p>
+            <p>StudySync will combine the notes your group shares into one clean summary: the key ideas,
+              definitions and practice points, in one place to review before the exam.</p>
+          </div>
+          <button type="button" class="nss-link" data-feedback-open="idea">Tell us what you'd want in it</button>
+        </aside>
+
+        <!-- Opens from "+ Add a note" (public/group.js) -->
+        <form id="note-form" class="note-form note-composer" hidden>
           <label>Title
             <input id="note-title" type="text" maxlength="120" required placeholder="e.g. Chapter 4 review">
           </label>
@@ -163,7 +180,10 @@
             <textarea id="note-body" rows="5" maxlength="20000" required placeholder="Write or paste your notes here"></textarea>
           </label>
           <p id="note-error" class="error" hidden></p>
-          <button type="submit" id="note-submit">Add note</button>
+          <div class="note-actions">
+            <button type="submit" id="note-submit">Add note</button>
+            <button type="button" id="note-cancel" class="link-button">Cancel</button>
+          </div>
         </form>
 
         <p id="notes-empty" class="hint" hidden>No notes yet. Add the first one!</p>
@@ -173,6 +193,7 @@
   </div>
 
   <script src="/public/format.js"></script>
+  <script src="/public/members.js"></script>
   <script src="/public/group.js"></script>
   <script src="/public/feedback.js"></script>
 </body>

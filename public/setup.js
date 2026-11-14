@@ -213,8 +213,11 @@ function currentSettings() {
   });
 }
 
-// Where Back goes: the page they came from (study plan or dashboard), else the study plan
+// Where leaving goes: a page picked in the header / tab bar (leaveTo), else the page they came
+// from (study plan or dashboard), else the study plan
+let leaveTo = null;
 function backTo() {
+  if (leaveTo) return leaveTo;
   try {
     const from = new URL(document.referrer);
     if (from.origin === location.origin && ["/dashboard", "/landing"].includes(from.pathname)) return from.pathname;
@@ -234,10 +237,12 @@ function changeSummary() {
   return text + " Revert puts everything back the way it was.";
 }
 
-function leave() {
+function leave(target) {
+  leaveTo = typeof target === "string" ? target : null;
   const summary = changeSummary();
   if (!summary) return (window.location.href = backTo());
   $("leave-summary").textContent = summary;
+  $("leave-save").textContent = leaveTo ? "Save & continue" : "Save & go back"; // a header link, or Back
   $("leave-error").textContent = "";
   $("leave-dialog").showModal();
   $("leave-keep").focus();
@@ -267,8 +272,20 @@ async function revertChanges() {
   return results.every(Boolean);
 }
 
-$("back-top").addEventListener("click", leave);
-$("cancel-bottom").addEventListener("click", leave);
+$("back-top").addEventListener("click", () => leave());
+$("cancel-bottom").addEventListener("click", () => leave());
+// Editing later, the shared header and tab bar (public/nav.js) are here too: their links ask
+// first if anything changed, the same as Back. Log out and the app window are left alone.
+document.addEventListener("click", (event) => {
+  if (!editing) return;
+  const link = event.target.closest && event.target.closest(".app-nav a[href], .app-tabbar a[href]");
+  if (!link || link.hasAttribute("data-install-app")) return;
+  const url = new URL(link.href, location.href);
+  if (url.origin !== location.origin || url.pathname === "/logout" || url.pathname === location.pathname) return;
+  if (!changeSummary()) return; // nothing to lose: just go
+  event.preventDefault();
+  leave(url.pathname + url.search);
+});
 $("leave-keep").addEventListener("click", () => $("leave-dialog").close());
 $("leave-revert").addEventListener("click", async () => {
   const button = $("leave-revert");
@@ -438,6 +455,7 @@ async function load() {
     $("skip-bottom").hidden = profile.onboarded;
     editing = Boolean(profile.onboarded);
     $("back-top").hidden = !editing;
+    document.body.classList.toggle("first-setup", !editing); // first time: no header or tab bar, just the steps
     $("cancel-bottom").hidden = !editing;
     if (editing) {
       $("setup-title").textContent = "Edit your schedule";

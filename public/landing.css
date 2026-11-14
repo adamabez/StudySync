@@ -23,6 +23,7 @@
 .head-link:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
 .hint { margin: -4px 0 12px; font-size: 14px; }
+.groups-heading { margin: 12px 0 12px; }
 
 .link-button { background: none; color: #2b4acb; padding: 4px 6px; font-size: 13px; }
 .link-button:hover { background: #e8ebf6; }
@@ -369,30 +370,82 @@
 .study-block .study-reason { margin-top: 2px; color: #444; font-style: italic; }
 .study-block span { color: #666; }
 
-/* ---------- Landing: study groups ---------- */
-.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+/* ---------- Study plan: study group cards (landing.js groupCard) ----------
+   Each class has its own color (--g-hue, from its name): the stripe on top and the tag. */
+.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .group-card {
+  --g: hsl(var(--g-hue, 228), 62%, 46%);
+  --g-soft: hsl(var(--g-hue, 228), 75%, 95%);
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px;
+  gap: 12px;
+  padding: 18px 18px 14px;
   background: white;
   border: 1px solid #e3e6f0;
-  border-radius: 10px;
+  border-radius: 14px;
   font-size: 14px;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  box-shadow: 0 1px 2px rgba(20, 30, 70, 0.04);
 }
-.group-card { border-left: 4px solid #2b4acb; }
-.group-name { font-size: 16px; color: #222; }
-.group-card .meta { color: #666; }
-.group-card .hint { margin: 4px 0 0; font-size: 13px; }
-.member-list { margin: 6px 0 0; padding-left: 18px; color: #444; font-size: 13px; }
+.group-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--g); }
+.group-card .hint { margin: 0; font-size: 13px; }
+
+.group-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.group-name { font-size: 19px; line-height: 1.2; color: #1d2a5c; }
+.group-tag { padding: 3px 10px; border-radius: 999px; background: var(--g-soft); color: var(--g); font-size: 12.5px; font-weight: 700; }
+
+.group-facts { display: flex; flex-direction: column; gap: 6px; }
+.group-fact { display: flex; align-items: center; gap: 8px; color: #4a5372; }
+.group-fact svg { flex: none; color: var(--g); }
+.group-next.soon { align-self: flex-start; padding: 3px 10px 3px 8px; border-radius: 999px; background: #e7f6ea; color: #1b5e20; font-weight: 600; }
+.group-next.soon svg { color: #2e7d32; }
+
+/* Members: initials in overlapping circles, yours outlined */
+.group-people { display: flex; align-items: center; gap: 10px; }
+.group-faces { display: flex; flex: none; }
+.group-face {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: -8px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: hsl(var(--f-hue, 228), 55%, 52%);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+.group-face:first-child { margin-left: 0; }
+.group-face.you { box-shadow: 0 0 0 2px var(--g); }
+.group-face.more { background: #e3e6f0; color: #4a5372; }
+.group-names { min-width: 0; color: #555d78; font-size: 13px; line-height: 1.35; }
+
+.group-open { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; padding-top: 12px; border-top: 1px solid #eef0f6; color: #2b4acb; font-size: 14px; font-weight: 600; }
+.group-open span { transition: transform 0.15s; }
+
+/* "1 new member" on a card: someone joined or left since you last opened the group (members.js) */
+.group-change { margin-left: auto; padding: 3px 10px; border-radius: 999px; background: #fff4d6; color: #8a5a00; font-size: 12px; font-weight: 700; }
+
+/* Group page: the Members list, with the same circles as the cards */
+.member-rows { --g: hsl(var(--g-hue, 228), 62%, 46%); display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.member-row { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border: 1px solid #e3e6f0; border-radius: 999px; background: white; }
+.member-row .group-face { margin-left: 0; }
+.member-name { color: #1d2a5c; font-weight: 600; font-size: 14px; }
+.member-tag { padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.member-tag.you { background: #eef1fd; color: #2b4acb; }
+.member-tag.new { background: #e7f6ea; color: #1b5e20; }
+.member-changes { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: #fff7e0; color: #6b4e00; font-size: 14px; }
+.member-changes[hidden] { display: none; }
 
 /* Group cards open the group's page */
-a.group-card { color: inherit; text-decoration: none; transition: box-shadow 0.15s, border-color 0.15s; }
-a.group-card:hover { border-color: #b9c3ea; box-shadow: 0 2px 10px rgba(43, 74, 203, 0.12); }
+a.group-card { color: inherit; text-decoration: none; transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s; }
+a.group-card:hover { border-color: #c5cdec; box-shadow: 0 8px 24px rgba(43, 74, 203, 0.12); transform: translateY(-1px); }
+a.group-card:hover .group-open span { transform: translateX(3px); }
 a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
-.group-open { margin-top: 8px; color: #2b4acb; font-size: 13px; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { a.group-card, a.group-card:hover, .group-open span { transition: none; transform: none; } }
 
 /* Group page: shared notes */
 .note-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
@@ -537,6 +590,8 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 .ns-person.late::before { background: #e09a1a; }
 .ns-person.cant::before { background: #d9534f; }
 .ns-name { font-weight: 600; color: #1f2547; }
+.ns-person .group-face.small { width: 22px; height: 22px; margin-left: 0; border-width: 0; font-size: 9.5px; }
+.ns-person .group-face.small.you { box-shadow: none; }
 .ns-status { color: #7a8099; }
 
 .ns-move { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #eef0f6; }
@@ -831,4 +886,232 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 }
 @media (max-width: 600px) {
   .study-week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Study plan: the week's study time as an agenda (landing.js renderStudyTimes) ----------
+   One panel: a teal header with the pickers, the week's numbers, then a row per study day. */
+.study-panel { margin-top: 24px; border: 1px solid #d7ece9; border-radius: 16px; background: white; overflow: hidden; box-shadow: 0 2px 10px rgba(15, 148, 136, 0.06); }
+.study-panel-head.alone-head { margin: 0; padding: 16px 18px; background: linear-gradient(135deg, #e6f6f3 0%, #eef4ff 100%); border-bottom: 1px solid #d7ece9; }
+.study-panel-head h2 { color: #0b5f57; font-size: 19px; }
+.study-panel-head .goal-picker select { background: white; }
+.study-panel-body { padding: 14px 18px 18px; }
+.study-panel-body .study-how { margin: 0 0 12px; color: #5f6b80; }
+.study-panel-body .plan-split { margin-bottom: 12px; }
+
+/* "4 sessions · 6h of solo study · Next: Today at 1:00 PM" */
+.study-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.study-summary[hidden] { display: none; }
+.study-stat { padding: 6px 12px; border-radius: 999px; background: #f2f5fb; color: #4a5372; font-size: 13.5px; }
+.study-stat strong { color: #1d2a5c; }
+.study-stat.next { background: #e6f6f3; color: #0b5f57; }
+.study-stat.next strong { color: #0b5f57; }
+
+/* A row per day: date badge on the left, its sessions on the right */
+.study-agenda { display: flex; flex-direction: column; gap: 10px; }
+.study-agenda.refreshing { opacity: 0.55; transition: opacity 0.2s; }
+.agenda-day { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: start; }
+.agenda-day.past { opacity: 0.6; }
+.agenda-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  border-radius: 14px;
+  background: #f2f5fb;
+  color: #4a5372;
+}
+.agenda-weekday { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.agenda-num { font-size: 22px; font-weight: 800; line-height: 1.1; color: #1d2a5c; }
+.agenda-day.today .agenda-date { background: #0f9488; color: white; box-shadow: 0 4px 12px rgba(15, 148, 136, 0.3); }
+.agenda-day.today .agenda-num { color: white; }
+.agenda-sessions { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.agenda-ghost { height: 64px; margin: 0; border-radius: 14px; }
+
+/* One session: time and chips on the left, Mark done and ✎ on the right */
+.study-agenda .study-block {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 12px 12px 16px;
+  border: 1px solid #f3dfb6;
+  border-left: 5px solid #f0a020;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffaf0 0%, #fff4f8 100%);
+  box-shadow: 0 1px 4px rgba(240, 160, 32, 0.12);
+  font-size: 14px;
+}
+.study-agenda .agenda-day.today .study-block { border-color: #f0c46a; box-shadow: 0 4px 14px rgba(240, 160, 32, 0.22); }
+.study-block-main { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.study-agenda .study-time-range { font-size: 16px; color: #1d2a5c; white-space: nowrap; }
+.study-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.study-agenda .study-chip { padding: 2px 8px; border-radius: 999px; background: rgba(240, 160, 32, 0.14); color: #8a5a00; font-size: 12px; font-weight: 600; }
+.study-agenda .study-chip.edited { background: #eef1fd; color: #2b4acb; }
+.study-agenda .study-reason { color: #6b5a3a; font-size: 13px; font-style: normal; }
+.study-block-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.study-agenda .study-check { width: auto; padding: 6px 12px; white-space: nowrap; }
+.study-agenda .se-button { position: static; }
+.study-agenda .study-block.studied { border-color: #b7e0c0 !important; border-left-color: #2e9d48 !important; }
+
+/* Days without study time, on one line */
+.study-free { margin: 12px 0 0; padding-top: 12px; border-top: 1px dashed #e3e6f0; color: #6b7391; font-size: 13.5px; }
+.study-free[hidden] { display: none; }
+
+/* Phones: a smaller date badge; Mark done drops under the time */
+@media (max-width: 600px) {
+  .study-panel-head.alone-head, .study-panel-body { padding-left: 14px; padding-right: 14px; }
+  .agenda-day { grid-template-columns: 48px 1fr; gap: 10px; }
+  .agenda-date { height: 54px; border-radius: 12px; }
+  .agenda-weekday { font-size: 10.5px; }
+  .agenda-num { font-size: 18px; }
+  .study-agenda .study-block { flex-wrap: wrap; padding: 10px 10px 10px 12px; }
+  .study-block-actions { width: 100%; justify-content: space-between; }
+  .study-agenda .study-check { flex: 1; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .study-agenda.refreshing { transition: none; } }
+
+/* ---------- Group page: the next session, chat and meeting spot, restyled ----------
+   (overrides the earlier .ns- / .sc- / .spot rules above) */
+.ns-card {
+  --g: hsl(var(--g-hue, 228), 62%, 46%);
+  --g-soft: hsl(var(--g-hue, 228), 75%, 95%);
+  position: relative;
+  overflow: hidden;
+  padding: 22px 20px 18px;
+}
+.ns-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--g); }
+.ns-class { background: var(--g); }
+.ns-group { background: var(--g-soft); color: var(--g); }
+
+/* A calendar tile, then the day, time and place */
+.ns-head { flex-wrap: nowrap; align-items: center; justify-content: flex-start; gap: 16px; }
+.ns-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  width: 68px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e3e6f0;
+  box-shadow: 0 2px 8px rgba(20, 30, 70, 0.08);
+}
+.ns-tile-day { width: 100%; padding: 3px 0; background: var(--g); color: white; font-size: 12px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; }
+.ns-tile-num { padding: 4px 0 6px; font-size: 26px; font-weight: 800; color: #1d2a5c; line-height: 1.1; }
+.ns-when { gap: 3px; min-width: 0; }
+.ns-soon { color: var(--g); }
+.ns-date { font-size: 21px; }
+.ns-where { align-self: flex-start; margin-top: 6px; padding: 4px 12px 4px 8px; background: #f2f4fa; font-size: 13.5px; }
+
+/* RSVP: each answer in its own color; yours filled in */
+.ns-rsvp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
+.ns-choice { justify-content: center; padding: 10px 12px; border-width: 1.5px; font-size: 14.5px; }
+.ns-choice.going { border-color: #bfe5cf; color: #17633b; background: #f3fbf6; }
+.ns-choice.late { border-color: #f3d9a6; color: #7a4f00; background: #fffaf0; }
+.ns-choice.cant { border-color: #f1c4c2; color: #9b2420; background: #fdf5f5; }
+.ns-choice.going:hover { background: #e7f6ee; }
+.ns-choice.late:hover { background: #fff3dc; }
+.ns-choice.cant:hover { background: #fceaea; }
+.ns-choice.going[aria-pressed="true"] { background: #2fa36b; border-color: #2fa36b; color: white; }
+.ns-choice.late[aria-pressed="true"] { background: #e09a1a; border-color: #e09a1a; color: white; }
+.ns-choice.cant[aria-pressed="true"] { background: #d9534f; border-color: #d9534f; color: white; }
+
+.ns-summary { margin-top: 18px; font-weight: 600; color: #4a5372; }
+.ns-person { padding: 4px 12px 4px 6px; background: white; border: 1px solid #e6e9f2; }
+.ns-person.going { border-color: #bfe5cf; background: #f3fbf6; }
+.ns-person.late { border-color: #f3d9a6; background: #fffaf0; }
+.ns-person.cant { border-color: #f1c4c2; background: #fdf5f5; }
+.ns-move { margin-top: 18px; }
+
+/* Talk it over: filled bubbles */
+.sc { margin-top: 14px; padding: 16px 18px 18px; background: white; box-shadow: 0 2px 10px rgba(20, 30, 70, 0.05); }
+.sc-head h3 { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; }
+.sc-head h3 svg { color: #2b4acb; }
+.sc-log { gap: 4px; padding: 4px 2px; }
+.sc-msg:not(.mine) .sc-bubble { background: #f0f2f8; border-color: #f0f2f8; color: #1f2547; }
+.sc-idea { background: #f5f7fc; border-color: #e3e7f2; }
+
+/* Where we're meeting: ideas as cards; the chosen spot tinted green */
+.spot { background: white; border: 1px solid #e3e6f0; box-shadow: 0 1px 3px rgba(20, 30, 70, 0.04); }
+.spot.is-the-spot { background: #f1faf3; border-color: #b7e0c0; }
+
+@media (max-width: 600px) {
+  .ns-card { padding: 20px 14px 16px; }
+  .ns-tile { width: 56px; }
+  .ns-tile-num { font-size: 22px; }
+  .ns-date { font-size: 18px; }
+  .ns-rsvp { grid-template-columns: 1fr 1fr; }
+  .ns-choice.cant { grid-column: 1 / -1; }
+}
+
+/* ---------- Group page: notes, restyled (overrides the earlier .note- rules) ---------- */
+.notes-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.notes-head h2 { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.notes-count { padding: 1px 9px; border-radius: 999px; background: #eef1fd; color: #2b4acb; font-size: 13px; font-weight: 700; }
+.notes-count:empty { display: none; }
+.notes-add { padding: 8px 14px; border: 1.5px solid #2b4acb; border-radius: 10px; background: white; color: #2b4acb; font-size: 14px; font-weight: 600; }
+.notes-add:hover { background: #eef1fd; }
+.notes-add[hidden] { display: none; }
+
+/* The form, when open: a card of its own */
+.note-composer { margin: 4px 0 18px; padding: 16px; border: 1px solid #dfe4f3; border-radius: 14px; background: #f7f9ff; }
+.note-composer[hidden] { display: none; }
+.note-actions { display: flex; align-items: center; gap: 12px; }
+
+/* The notes: cards in two columns on wide screens */
+.note-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.note-card {
+  --n: hsl(var(--n-hue, 228), 58%, 50%);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 16px 18px;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-top: 4px solid var(--n);
+  border-left: 1px solid #e3e6f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(20, 30, 70, 0.05);
+}
+.note-head { display: flex; align-items: center; gap: 10px; }
+.note-card .note-face { width: 34px; height: 34px; margin-left: 0; border: none; font-size: 12.5px; }
+.note-card .note-face.you { box-shadow: none; }
+.note-who { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.note-who strong { color: #1d2a5c; font-size: 14px; }
+.note-when { color: #8a90a8; font-size: 12.5px; }
+.note-delete { padding: 4px 10px; border-radius: 8px; background: none; color: #8a90a8; font-size: 13px; }
+.note-delete:hover { background: #fdecec; color: #c62828; }
+.note-title { margin: 12px 0 6px; font-size: 17px; color: #1d2a5c; }
+.note-card .note-body { margin: 0; color: #3d4562; font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-body.folded { max-height: 9.6em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 65%, transparent); mask-image: linear-gradient(#000 65%, transparent); }
+.note-more { align-self: flex-start; margin-top: 6px; padding: 2px 0; background: none; color: #2b4acb; font-size: 13.5px; font-weight: 600; }
+.note-more:hover { background: none; text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .note-list { grid-template-columns: 1fr; }
+}
+
+/* Coming soon: the group's notes combined into one study guide */
+.notes-summary-soon {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 4px 14px;
+  margin: 4px 0 16px;
+  padding: 14px 16px;
+  border: 1.5px dashed #c9b6f2;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f6f1ff 0%, #eef4ff 100%);
+}
+.nss-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #7c4dff, #3b6cf6); color: white; font-size: 18px; }
+.nss-text p { margin: 0; color: #4a4f6e; font-size: 14px; line-height: 1.5; }
+.nss-text .nss-title { margin-bottom: 2px; color: #2a2357; font-size: 15px; font-weight: 700; }
+.nss-tag { margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: #fff4d6; color: #8a5a00; font-size: 11.5px; font-weight: 700; vertical-align: middle; }
+.nss-link { padding: 7px 12px; border: 1px solid #c9b6f2; border-radius: 10px; background: white; color: #5b34c9; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.nss-link:hover { background: #f3edff; }
+@media (max-width: 700px) {
+  .notes-summary-soon { grid-template-columns: auto 1fr; }
+  .nss-link { grid-column: 1 / -1; justify-self: start; }
 }
