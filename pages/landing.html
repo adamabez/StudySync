@@ -146,7 +146,9 @@
           </li>
         </ul>
       </div>
-      <div class="alone-head">
+      <!-- The plan itself, in one panel: header with the pickers, the week's numbers, then the days -->
+      <div class="study-panel">
+      <div class="alone-head study-panel-head">
         <div class="alone-title">
           <h2 id="alone-heading">Times to set aside for studying</h2>
           <span class="study-loading" id="study-loading" role="status" hidden><span class="study-loading-dot" aria-hidden="true"></span>Planning your week…</span>
@@ -165,7 +167,8 @@
           </label>
         </div>
       </div>
-      <p class="hint">Calm afternoons first, then evenings and mornings. <span id="length-hint"></span>
+      <div class="study-panel-body">
+      <p class="hint study-how">Calm afternoons first, then evenings and mornings. <span id="length-hint"></span>
         We leave 15 minutes before and after each class or shift to get there and back.
         <a href="/setup">Change your schedule or study notes</a></p>
       <p id="length-error" class="error" hidden></p>
@@ -177,10 +180,16 @@
         <div class="plan-split-key"></div>
       </div>
       <p id="study-total" class="study-total"></p>
+      <!-- "4 sessions · 6h · Next: Today at 1:00 PM" (public/landing.js) -->
+      <div id="study-summary" class="study-summary" hidden></div>
       <!-- Sessions skipped this week with the ✎ menu, each with Undo (public/study-edit.js) -->
       <div id="skipped-note" class="se-skipped-row" hidden></div>
 
-      <div id="study-times" class="study-week"></div>
+      <!-- Days with study time, one row each; days without it on one line underneath -->
+      <div id="study-times" class="study-agenda"></div>
+      <p id="study-free" class="study-free" hidden></p>
+      </div>
+      </div>
     </section>
 
     <!-- Group or solo: changed now and then, so below the plan -->

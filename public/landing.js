@@ -58,23 +58,128 @@ function updatePlanned() {
   window.studyLog.progress.setPlanned([...meetings, ...shownSessions]);
 }
 
-// While the plan loads: each day gets a shimmering placeholder, so it doesn't look empty
+// ---------- The week's study time, as an agenda ----------
+// One row per day that has study time (date badge, then its sessions: time, length, why,
+// Mark done, ✎), days without study time on one line underneath, and a summary on top.
+
+// Dates of this week's days (Mon–Sun): { mon: Date, ... }
+function thisWeekDates() {
+  const now = new Date();
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  return Object.fromEntries(DAYS.map(([key], i) => [key, new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)]));
+}
+
+// While the plan loads: a few shimmering rows, so it doesn't look empty
 function showPlanLoading() {
   const week = $("study-times");
   if (week.querySelector(".study-block")) { week.classList.add("refreshing"); return; } // keep the old plan, dimmed
   week.innerHTML = "";
-  for (const [, label] of DAYS) {
-    const col = document.createElement("div");
-    col.className = "study-day";
-    const title = document.createElement("h3");
-    title.textContent = label;
+  for (let i = 0; i < 3; i++) {
     const ghost = document.createElement("div");
-    ghost.className = "study-ghost";
+    ghost.className = "study-ghost agenda-ghost";
     ghost.setAttribute("aria-hidden", "true");
-    col.append(title, ghost);
-    week.appendChild(col);
+    week.appendChild(ghost);
   }
   week.setAttribute("aria-busy", "true");
+  $("study-free").hidden = true;
+}
+
+// Why a day has no study time: classes, the gym, or a rest day (day-emoji.js)
+function freeReason(key) {
+  const { classes, workout } = window.dayEmoji.of(window.studyDates.thisWeek(calendar), key);
+  return classes && workout ? "classes + gym" : classes ? "class day" : workout ? "gym day" : "rest day";
+}
+
+function sessionRow(session, plan) {
+  const card = document.createElement("div");
+  card.className = "study-block";
+  card.title = "Planned for you by StudySync";
+
+  const main = document.createElement("div");
+  main.className = "study-block-main";
+  const time = document.createElement("strong");
+  time.className = "study-time-range";
+  time.textContent = formatTime(session.start) + " – " + formatTime(session.end);
+  const chips = document.createElement("span");
+  chips.className = "study-chips";
+  for (const text of [formatLength(toMinutes(session.end) - toMinutes(session.start)), session.label]) {
+    if (!text) continue;
+    const chip = document.createElement("span");
+    chip.className = "study-chip";
+    chip.textContent = text;
+    chips.appendChild(chip);
+  }
+  if (session.edited) {
+    const chip = document.createElement("span");
+    chip.className = "study-chip edited";
+    chip.textContent = "Changed";
+    chips.appendChild(chip);
+  }
+  main.append(time, chips);
+  if (session.reason) {
+    const reason = document.createElement("span");
+    reason.className = "study-reason";
+    reason.textContent = session.reason;
+    main.appendChild(reason);
+  }
+  card.appendChild(main);
+
+  const actions = document.createElement("div");
+  actions.className = "study-block-actions";
+  if (window.studyLog.ready) actions.appendChild(window.studyLog.button(session));
+  // ✎: move, change length or skip this week (study-edit.js)
+  if (plan.editable && session.key) {
+    card.classList.add("has-edit");
+    actions.appendChild(window.studyEdit.button(session, loadStudyPlan));
+  }
+  card.appendChild(actions);
+  if (session.edited) {
+    card.classList.add("edited");
+    card.title = "You changed this one";
+  }
+  return card;
+}
+
+// "4 sessions · 6h of solo study · Next: Today at 1:00 PM"
+function showSummary(plan) {
+  const box = $("study-summary");
+  box.innerHTML = "";
+  const sessions = plan.sessions;
+  box.hidden = !sessions.length;
+  if (!sessions.length) return;
+  const total = sessions.reduce((sum, s) => sum + toMinutes(s.end) - toMinutes(s.start), 0);
+  const dates = thisWeekDates();
+  const now = new Date();
+  const upcoming = sessions
+    .map((s) => {
+      const d = new Date(dates[s.day]);
+      const [h, m] = s.start.split(":").map(Number);
+      d.setHours(h, m, 0, 0);
+      return { s, d };
+    })
+    .filter((x) => x.d > now)
+    .sort((x, y) => x.d - y.d)[0];
+  const stat = (value, label, cls) => {
+    const el = document.createElement("span");
+    el.className = "study-stat" + (cls ? " " + cls : "");
+    const v = document.createElement("strong");
+    v.textContent = value;
+    el.appendChild(v);
+    if (label) el.append(" " + label);
+    box.appendChild(el);
+    return el;
+  };
+  stat(String(sessions.length), sessions.length === 1 ? "session" : "sessions");
+  stat(formatLength(total), "of solo study");
+  if (upcoming) {
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const day = upcoming.d.toDateString() === now.toDateString() ? "Today"
+      : upcoming.d.toDateString() === tomorrow.toDateString() ? "Tomorrow"
+      : upcoming.d.toLocaleDateString(undefined, { weekday: "long" });
+    stat(day + " at " + formatTime(upcoming.s.start), "", "next").prepend("Next: ");
+  } else {
+    stat("That's the week", "", "next");
+  }
 }
 
 function renderStudyTimes(plan) {
@@ -89,68 +194,48 @@ function renderStudyTimes(plan) {
   window.studyLog.progress.setGoal(plan.weeklyGoalMinutes || plan.goalMinutes);
   updatePlanned();
   const todayKey = DAYS[(new Date().getDay() + 6) % 7][0]; // JS weeks start on Sunday
+  const todayIndex = DAYS.findIndex(([key]) => key === todayKey);
+  const dates = thisWeekDates();
+  const free = []; // [{ label, reason }]: days with no study time
 
-  for (const [key, label] of DAYS) {
-    const col = document.createElement("div");
-    col.className = "study-day" + (key === todayKey ? " today" : "");
-    const title = document.createElement("h3");
-    title.textContent = label;
-    col.appendChild(title);
-
+  DAYS.forEach(([key, label], index) => {
     const sessions = plan.sessions.filter((s) => s.day === key);
-    if (sessions.length === 0) {
-      // No study time this day: say why (classes, the gym) or that it's a rest day (day-emoji.js)
-      const { classes, workout } = window.dayEmoji.of(window.studyDates.thisWeek(calendar), key);
-      const [icon, text] = classes && workout ? ["📚 🏋️", "Classes + gym"]
-        : classes ? ["📚", "Class day"]
-        : workout ? ["🏋️", "Gym day"]
-        : [window.dayEmoji.rest(key), "Rest day"];
-      const empty = document.createElement("p");
-      empty.className = "empty";
-      const emoji = document.createElement("span");
-      emoji.className = "empty-icon";
-      emoji.setAttribute("aria-hidden", "true");
-      emoji.textContent = icon;
-      empty.append(emoji, text);
-      col.appendChild(empty);
+    if (!sessions.length) {
+      free.push({ label: label.slice(0, 3), reason: freeReason(key) });
+      return;
     }
-    for (const session of sessions) {
-      const card = document.createElement("div");
-      card.className = "study-block";
-      card.title = "Planned for you by StudySync";
-      const sparkle = document.createElement("span");
-      sparkle.className = "study-sparkle";
-      sparkle.setAttribute("aria-hidden", "true");
-      sparkle.textContent = "✦";
-      card.appendChild(sparkle);
-      const time = document.createElement("strong");
-      time.textContent = formatTime(session.start) + " – " + formatTime(session.end);
-      const meta = document.createElement("span");
-      meta.textContent = session.label + " · " + formatLength(toMinutes(session.end) - toMinutes(session.start));
-      card.append(time, meta);
-      if (session.reason) {
-        const reason = document.createElement("span");
-        reason.className = "study-reason";
-        reason.textContent = session.reason;
-        card.appendChild(reason);
-      }
-      if (window.studyLog.ready) card.appendChild(window.studyLog.button(session));
-      // ✎: move, change length or skip this week (study-edit.js)
-      if (plan.editable && session.key) {
-        card.classList.add("has-edit");
-        card.appendChild(window.studyEdit.button(session, loadStudyPlan));
-      }
-      if (session.edited) {
-        card.classList.add("edited");
-        card.title = "You changed this one";
-      }
-      col.appendChild(card);
-    }
-    week.appendChild(col);
-  }
+    const row = document.createElement("div");
+    row.className = "agenda-day" + (key === todayKey ? " today" : "") + (index < todayIndex ? " past" : "");
+    const badge = document.createElement("div");
+    badge.className = "agenda-date";
+    const weekday = document.createElement("span");
+    weekday.className = "agenda-weekday";
+    weekday.textContent = key === todayKey ? "Today" : label.slice(0, 3);
+    const num = document.createElement("span");
+    num.className = "agenda-num";
+    num.textContent = dates[key].getDate();
+    badge.append(weekday, num);
+    badge.setAttribute("aria-label", label + ", " + dates[key].toLocaleDateString(undefined, { month: "long", day: "numeric" }) + (key === todayKey ? ", today" : ""));
+    const list = document.createElement("div");
+    list.className = "agenda-sessions";
+    for (const session of sessions) list.appendChild(sessionRow(session, plan));
+    row.append(badge, list);
+    week.appendChild(row);
+  });
+
+  // Days without study time, grouped by why: "Mon, Tue (class days) · Sat (rest day)"
+  const byReason = new Map();
+  for (const day of free) byReason.set(day.reason, [...(byReason.get(day.reason) || []), day.label]);
+  const plural = (reason, n) => (n > 1 && reason.endsWith("day") ? reason + "s" : reason);
+  const freeLine = $("study-free");
+  freeLine.textContent = byReason.size
+    ? "No study time: " + [...byReason].map(([reason, days]) => days.join(", ") + " (" + plural(reason, days.length) + ")").join(" · ")
+    : "";
+  freeLine.hidden = !byReason.size || !plan.sessions.length;
 
   updateViews();
   showSplit(plan);
+  showSummary(plan);
   window.studyEdit.skippedNote($("skipped-note"), plan.skipped || [], loadStudyPlan);
 }
 

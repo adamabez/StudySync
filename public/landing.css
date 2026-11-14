@@ -887,3 +887,86 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 @media (max-width: 600px) {
   .study-week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- Study plan: the week's study time as an agenda (landing.js renderStudyTimes) ----------
+   One panel: a teal header with the pickers, the week's numbers, then a row per study day. */
+.study-panel { margin-top: 24px; border: 1px solid #d7ece9; border-radius: 16px; background: white; overflow: hidden; box-shadow: 0 2px 10px rgba(15, 148, 136, 0.06); }
+.study-panel-head.alone-head { margin: 0; padding: 16px 18px; background: linear-gradient(135deg, #e6f6f3 0%, #eef4ff 100%); border-bottom: 1px solid #d7ece9; }
+.study-panel-head h2 { color: #0b5f57; font-size: 19px; }
+.study-panel-head .goal-picker select { background: white; }
+.study-panel-body { padding: 14px 18px 18px; }
+.study-panel-body .study-how { margin: 0 0 12px; color: #5f6b80; }
+.study-panel-body .plan-split { margin-bottom: 12px; }
+
+/* "4 sessions · 6h of solo study · Next: Today at 1:00 PM" */
+.study-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.study-summary[hidden] { display: none; }
+.study-stat { padding: 6px 12px; border-radius: 999px; background: #f2f5fb; color: #4a5372; font-size: 13.5px; }
+.study-stat strong { color: #1d2a5c; }
+.study-stat.next { background: #e6f6f3; color: #0b5f57; }
+.study-stat.next strong { color: #0b5f57; }
+
+/* A row per day: date badge on the left, its sessions on the right */
+.study-agenda { display: flex; flex-direction: column; gap: 10px; }
+.study-agenda.refreshing { opacity: 0.55; transition: opacity 0.2s; }
+.agenda-day { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: start; }
+.agenda-day.past { opacity: 0.6; }
+.agenda-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  border-radius: 14px;
+  background: #f2f5fb;
+  color: #4a5372;
+}
+.agenda-weekday { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.agenda-num { font-size: 22px; font-weight: 800; line-height: 1.1; color: #1d2a5c; }
+.agenda-day.today .agenda-date { background: #0f9488; color: white; box-shadow: 0 4px 12px rgba(15, 148, 136, 0.3); }
+.agenda-day.today .agenda-num { color: white; }
+.agenda-sessions { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.agenda-ghost { height: 64px; margin: 0; border-radius: 14px; }
+
+/* One session: time and chips on the left, Mark done and ✎ on the right */
+.study-agenda .study-block {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 12px 12px 16px;
+  border: 1px solid #f3dfb6;
+  border-left: 5px solid #f0a020;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffaf0 0%, #fff4f8 100%);
+  box-shadow: 0 1px 4px rgba(240, 160, 32, 0.12);
+  font-size: 14px;
+}
+.study-agenda .agenda-day.today .study-block { border-color: #f0c46a; box-shadow: 0 4px 14px rgba(240, 160, 32, 0.22); }
+.study-block-main { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.study-agenda .study-time-range { font-size: 16px; color: #1d2a5c; white-space: nowrap; }
+.study-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.study-agenda .study-chip { padding: 2px 8px; border-radius: 999px; background: rgba(240, 160, 32, 0.14); color: #8a5a00; font-size: 12px; font-weight: 600; }
+.study-agenda .study-chip.edited { background: #eef1fd; color: #2b4acb; }
+.study-agenda .study-reason { color: #6b5a3a; font-size: 13px; font-style: normal; }
+.study-block-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.study-agenda .study-check { width: auto; padding: 6px 12px; white-space: nowrap; }
+.study-agenda .se-button { position: static; }
+.study-agenda .study-block.studied { border-color: #b7e0c0 !important; border-left-color: #2e9d48 !important; }
+
+/* Days without study time, on one line */
+.study-free { margin: 12px 0 0; padding-top: 12px; border-top: 1px dashed #e3e6f0; color: #6b7391; font-size: 13.5px; }
+.study-free[hidden] { display: none; }
+
+/* Phones: a smaller date badge; Mark done drops under the time */
+@media (max-width: 600px) {
+  .study-panel-head.alone-head, .study-panel-body { padding-left: 14px; padding-right: 14px; }
+  .agenda-day { grid-template-columns: 48px 1fr; gap: 10px; }
+  .agenda-date { height: 54px; border-radius: 12px; }
+  .agenda-weekday { font-size: 10.5px; }
+  .agenda-num { font-size: 18px; }
+  .study-agenda .study-block { flex-wrap: wrap; padding: 10px 10px 10px 12px; }
+  .study-block-actions { width: 100%; justify-content: space-between; }
+  .study-agenda .study-check { flex: 1; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .study-agenda.refreshing { transition: none; } }
