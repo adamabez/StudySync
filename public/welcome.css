@@ -223,3 +223,46 @@ html[data-theme="dark"] .welcome .groups-hero-icon { background: #8ff0c0; color:
   .welcome .groups-hero-features li { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; padding: 10px 12px; }
   .welcome .groups-hero-icon { grid-row: span 2; width: 34px; height: 34px; margin: 0; }
 }
+
+/* ---------- Color: each feature tile, step and "What you get" card has its own ---------- */
+/* Hero tiles: mint, sunny yellow, pink icons */
+.welcome .groups-hero-features li:nth-child(1) { --tile: #8ff0c0; }
+.welcome .groups-hero-features li:nth-child(2) { --tile: #fde68a; }
+.welcome .groups-hero-features li:nth-child(3) { --tile: #f9a8d4; }
+.welcome .groups-hero-features li { border-top: 3px solid var(--tile); }
+.welcome .groups-hero-icon,
+html[data-theme="dark"] .welcome .groups-hero-icon { background: var(--tile, #8ff0c0); color: #13235f; }
+
+/* How it works: blue, teal, purple */
+.wl-steps li:nth-child(1) { --h: 228; }
+.wl-steps li:nth-child(2) { --h: 168; }
+.wl-steps li:nth-child(3) { --h: 270; }
+/* What you get: green, blue, purple, amber */
+.wl-grid article:nth-child(1) { --h: 150; }
+.wl-grid article:nth-child(2) { --h: 210; }
+.wl-grid article:nth-child(3) { --h: 275; }
+.wl-grid article:nth-child(4) { --h: 35; }
+
+.wl-steps li, .wl-grid article {
+  border-top: 4px solid hsl(var(--h), 70%, 55%);
+  background: linear-gradient(180deg, hsl(var(--h), 80%, 97%) 0%, white 70%);
+}
+.wl-step-num {
+  width: 36px;
+  height: 36px;
+  background: hsl(var(--h), 70%, 55%);
+  color: white;
+  box-shadow: 0 4px 12px hsla(var(--h), 70%, 50%, 0.3);
+}
+.wl-steps h3, .wl-grid h3 { color: hsl(var(--h), 55%, 28%); }
+
+html[data-theme="dark"] .wl-steps li,
+html[data-theme="dark"] .wl-grid article {
+  border-color: #343a4d;
+  border-top-color: hsl(var(--h), 60%, 58%);
+  background: linear-gradient(180deg, hsl(var(--h), 30%, 18%) 0%, #23262e 70%);
+}
+html[data-theme="dark"] .wl-step-num { background: hsl(var(--h), 60%, 58%); color: #10131c; box-shadow: none; }
+html[data-theme="dark"] .wl-steps h3,
+html[data-theme="dark"] .wl-grid h3 { color: hsl(var(--h), 80%, 82%); }
+html[data-theme="dark"] .welcome .groups-hero-features li { border-top: 3px solid var(--tile); }
