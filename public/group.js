@@ -350,15 +350,22 @@ function renderNext() {
     card.appendChild(forLine);
   }
 
-  // When + where
+  // The class's color (same as its card on the study plan: public/members.js)
+  if (currentGroup) card.style.setProperty("--g-hue", window.studyMembers.hueFor(currentGroup.course || currentGroup.name.split(" | ")[0]));
+
+  // When + where: a calendar tile, then the day, time and place
   const head = document.createElement("div");
   head.className = "ns-head";
-  head.innerHTML = `<div class="ns-when">
+  head.innerHTML = `<div class="ns-tile" aria-hidden="true"><span class="ns-tile-day"></span><span class="ns-tile-num"></span></div>
+    <div class="ns-when">
       <span class="ns-soon${live ? " live" : ""}"></span>
       <strong class="ns-date"></strong>
       <span class="ns-time"></span>
-    </div>
-    <div class="ns-where"><span aria-hidden="true">📍</span><span class="ns-place"></span></div>`;
+      <div class="ns-where"><span aria-hidden="true">📍</span><span class="ns-place"></span></div>
+    </div>`;
+  const tileDate = atTime(session.date, "12:00");
+  head.querySelector(".ns-tile-day").textContent = DAY_LONG[tileDate.getDay()].slice(0, 3);
+  head.querySelector(".ns-tile-num").textContent = tileDate.getDate();
   head.querySelector(".ns-soon").textContent = live ? "Happening now" : soonText(session.date);
   head.querySelector(".ns-date").textContent = prettyDate(session.date);
   head.querySelector(".ns-time").textContent = formatTime(session.start) + " – " + formatTime(session.end);

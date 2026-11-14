@@ -970,3 +970,78 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
   .study-agenda .study-check { flex: 1; justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .study-agenda.refreshing { transition: none; } }
+
+/* ---------- Group page: the next session, chat and meeting spot, restyled ----------
+   (overrides the earlier .ns- / .sc- / .spot rules above) */
+.ns-card {
+  --g: hsl(var(--g-hue, 228), 62%, 46%);
+  --g-soft: hsl(var(--g-hue, 228), 75%, 95%);
+  position: relative;
+  overflow: hidden;
+  padding: 22px 20px 18px;
+}
+.ns-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--g); }
+.ns-class { background: var(--g); }
+.ns-group { background: var(--g-soft); color: var(--g); }
+
+/* A calendar tile, then the day, time and place */
+.ns-head { flex-wrap: nowrap; align-items: center; justify-content: flex-start; gap: 16px; }
+.ns-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  width: 68px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e3e6f0;
+  box-shadow: 0 2px 8px rgba(20, 30, 70, 0.08);
+}
+.ns-tile-day { width: 100%; padding: 3px 0; background: var(--g); color: white; font-size: 12px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; }
+.ns-tile-num { padding: 4px 0 6px; font-size: 26px; font-weight: 800; color: #1d2a5c; line-height: 1.1; }
+.ns-when { gap: 3px; min-width: 0; }
+.ns-soon { color: var(--g); }
+.ns-date { font-size: 21px; }
+.ns-where { align-self: flex-start; margin-top: 6px; padding: 4px 12px 4px 8px; background: #f2f4fa; font-size: 13.5px; }
+
+/* RSVP: each answer in its own color; yours filled in */
+.ns-rsvp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
+.ns-choice { justify-content: center; padding: 10px 12px; border-width: 1.5px; font-size: 14.5px; }
+.ns-choice.going { border-color: #bfe5cf; color: #17633b; background: #f3fbf6; }
+.ns-choice.late { border-color: #f3d9a6; color: #7a4f00; background: #fffaf0; }
+.ns-choice.cant { border-color: #f1c4c2; color: #9b2420; background: #fdf5f5; }
+.ns-choice.going:hover { background: #e7f6ee; }
+.ns-choice.late:hover { background: #fff3dc; }
+.ns-choice.cant:hover { background: #fceaea; }
+.ns-choice.going[aria-pressed="true"] { background: #2fa36b; border-color: #2fa36b; color: white; }
+.ns-choice.late[aria-pressed="true"] { background: #e09a1a; border-color: #e09a1a; color: white; }
+.ns-choice.cant[aria-pressed="true"] { background: #d9534f; border-color: #d9534f; color: white; }
+
+.ns-summary { margin-top: 18px; font-weight: 600; color: #4a5372; }
+.ns-person { padding: 4px 12px 4px 6px; background: white; border: 1px solid #e6e9f2; }
+.ns-person.going { border-color: #bfe5cf; background: #f3fbf6; }
+.ns-person.late { border-color: #f3d9a6; background: #fffaf0; }
+.ns-person.cant { border-color: #f1c4c2; background: #fdf5f5; }
+.ns-move { margin-top: 18px; }
+
+/* Talk it over: filled bubbles */
+.sc { margin-top: 14px; padding: 16px 18px 18px; background: white; box-shadow: 0 2px 10px rgba(20, 30, 70, 0.05); }
+.sc-head h3 { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; }
+.sc-head h3 svg { color: #2b4acb; }
+.sc-log { gap: 4px; padding: 4px 2px; }
+.sc-msg:not(.mine) .sc-bubble { background: #f0f2f8; border-color: #f0f2f8; color: #1f2547; }
+.sc-idea { background: #f5f7fc; border-color: #e3e7f2; }
+
+/* Where we're meeting: ideas as cards; the chosen spot tinted green */
+.spot { background: white; border: 1px solid #e3e6f0; box-shadow: 0 1px 3px rgba(20, 30, 70, 0.04); }
+.spot.is-the-spot { background: #f1faf3; border-color: #b7e0c0; }
+
+@media (max-width: 600px) {
+  .ns-card { padding: 20px 14px 16px; }
+  .ns-tile { width: 56px; }
+  .ns-tile-num { font-size: 22px; }
+  .ns-date { font-size: 18px; }
+  .ns-rsvp { grid-template-columns: 1fr 1fr; }
+  .ns-choice.cant { grid-column: 1 / -1; }
+}
