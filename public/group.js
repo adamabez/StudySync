@@ -5,10 +5,6 @@ const { DAY_SHORT, formatTime } = window.studyFormat; // public/format.js
 const $ = (id) => document.getElementById(id);
 const groupId = new URLSearchParams(location.search).get("id") || "";
 
-function formatDate(iso) {
-  return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-}
-
 function showError(message) {
   $("load-error").textContent = message;
   $("load-error").hidden = false;
@@ -166,83 +162,8 @@ function renderGroup(group) {
 // Each note: the author's initials (public/members.js), their name and how long ago, the title,
 // and the note (long ones fold, with Show more). Yours can be deleted.
 
-// "Just now", "5 min ago", "3 hours ago", "Yesterday", "Nov 12"
-function timeAgo(iso) {
-  const then = new Date(iso);
-  const minutes = Math.round((Date.now() - then) / 60000);
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return minutes + " min ago";
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return hours + (hours === 1 ? " hour ago" : " hours ago");
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (then.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return then.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function noteCard(note) {
-  const card = document.createElement("article");
-  card.className = "note-card";
-  const author = note.isYours ? "You" : note.author;
-  card.style.setProperty("--n-hue", window.studyMembers.hueFor(note.author || "you"));
-
-  const head = document.createElement("div");
-  head.className = "note-head";
-  head.appendChild(window.studyMembers.face({ name: note.author || "You", isYou: note.isYours }, "note-face"));
-  const who = document.createElement("div");
-  who.className = "note-who";
-  const name = document.createElement("strong");
-  name.textContent = author;
-  const when = document.createElement("span");
-  when.className = "note-when";
-  when.textContent = timeAgo(note.createdAt);
-  when.title = formatDate(note.createdAt);
-  who.append(name, when);
-  head.appendChild(who);
-
-  if (note.isYours) {
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "note-delete";
-    remove.textContent = "Delete";
-    remove.setAttribute("aria-label", "Delete " + note.title);
-    remove.addEventListener("click", async () => {
-      if (!confirm("Delete this note for everyone in the group?")) return;
-      const res = await fetch("/api/groups/" + groupId + "/notes/" + note.id, { method: "DELETE" });
-      if (res.ok) card.remove();
-      updateEmpty();
-    });
-    head.appendChild(remove);
-  }
-  card.appendChild(head);
-
-  const title = document.createElement("h3");
-  title.className = "note-title";
-  title.textContent = note.title;
-  card.appendChild(title);
-
-  const body = document.createElement("p");
-  body.className = "note-body";
-  body.textContent = note.body;
-  card.appendChild(body);
-
-  // Long notes fold to a few lines, with Show more / Show less
-  if (note.body.length > 360 || note.body.split("\n").length > 8) {
-    body.classList.add("folded");
-    const more = document.createElement("button");
-    more.type = "button";
-    more.className = "note-more";
-    more.textContent = "Show more";
-    more.setAttribute("aria-expanded", "false");
-    more.addEventListener("click", () => {
-      const open = body.classList.toggle("folded") === false;
-      more.textContent = open ? "Show less" : "Show more";
-      more.setAttribute("aria-expanded", String(open));
-    });
-    card.appendChild(more);
-  }
-  return card;
-}
+// The card itself is shared with the Notes page: public/note-card.js
+const noteCard = (note) => window.studyNotes.card(note, { groupId, onRemoved: updateEmpty });
 
 function updateEmpty() {
   const count = $("notes").children.length;

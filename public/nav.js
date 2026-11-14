@@ -1,11 +1,11 @@
 // StudySync - the header on every logged-in page (runs in the browser).
 //
-// Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan | Calendar tabs · light/dark switch (theme.js puts it next to the
+// Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan | Notes | Calendar tabs · light/dark switch (theme.js puts it next to the
 // account circle) · account circle. The circle opens a menu: who's logged in, Edit schedule,
 // Account settings, Get the app (early), Log out. In the demo it offers sign-up and "Exit demo" instead.
 //
 // Phones get a tab bar fixed to the bottom of the screen instead of the top tabs: Dashboard,
-// Study plan, Calendar, Schedule, Account, always one tap away (dashboard.css shows it at 600px and under).
+// Study plan, Notes, Calendar, Schedule, Account, always one tap away (dashboard.css shows it at 600px and under).
 //
 // Each page has <nav id="app-nav" data-page="dashboard|plan|..."></nav> where the header
 // goes; data-page picks which tab is highlighted (none for other pages). Load this script
@@ -22,6 +22,7 @@
   const TABS = [
     { page: "dashboard", href: "/dashboard", label: "Dashboard" },
     { page: "plan", href: "/landing", label: "Study plan" },
+    { page: "notes", href: "/notes", label: "Notes" },
     { page: "calendar", href: "/calendar", label: "Calendar" },
   ];
 
@@ -74,6 +75,7 @@
   const ICONS = {
     dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
     plan: '<path d="M12 3l2.4 6.1L21 12l-6.6 2.9L12 21l-2.4-6.1L3 12l6.6-2.9z"/>',
+    notes: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
     calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="15" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="16" cy="15" r="1"/>',
     schedule: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M14.5 13.5l2 2-4 4h-2v-2z"/>',
     account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',

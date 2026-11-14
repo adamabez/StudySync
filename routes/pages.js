@@ -130,8 +130,9 @@ module.exports = [
   ["GET", "/setup", appPage("setup.html")], // "Edit schedule" works in the demo too (always with the banner)
   ["GET", "/landing", appPage("landing.html", { demoBanner: "auto" })],
   ["GET", "/dashboard", appPage("dashboard.html", { demoBanner: "auto" })],
-  ["GET", "/group", appPage("group.html", { demoBanner: "auto" })],
-  ["GET", "/calendar", appPage("calendar.html", { demoBanner: "auto" })], // the semester, month by month // one study group: /group?id=<group id>
+  ["GET", "/group", appPage("group.html", { demoBanner: "auto" })], // one study group: /group?id=<group id>
+  ["GET", "/calendar", appPage("calendar.html", { demoBanner: "auto" })], // the semester, month by month
+  ["GET", "/notes", appPage("notes.html", { demoBanner: "auto" })], // every group's notes in one place
 
   // Account settings: change email / password, dark mode, delete account
   ["GET", "/account", ({ res, loggedIn, inDemo }) => {

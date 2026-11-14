@@ -1,0 +1,58 @@
+/* StudySync - the Notes page (pages/notes.html). Note cards, the form and the "coming soon"
+   card come from landing.css (shared with the group page); this adds the group filter and the
+   group tag on each card. */
+
+#notes-main[hidden], #note-group-row[hidden], .notes-filters[hidden] { display: none; }
+#notes-main { margin-top: 8px; }
+
+/* Filter chips: All · CSC 130 (3) · MATH 31 (1) */
+.notes-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.notes-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid #dfe4f3;
+  border-radius: 999px;
+  background: white;
+  color: #3d4562;
+  font-size: 14px;
+  font-weight: 600;
+}
+.notes-filter span { padding: 0 7px; border-radius: 999px; background: #eef1fd; color: #2b4acb; font-size: 12px; }
+.notes-filter:hover { background: #f5f7ff; }
+.notes-filter[aria-pressed="true"] {
+  border-color: hsl(var(--g-hue, 228), 62%, 48%);
+  background: hsl(var(--g-hue, 228), 70%, 95%);
+  color: hsl(var(--g-hue, 228), 60%, 30%);
+}
+.notes-filter[aria-pressed="true"] span { background: white; color: inherit; }
+
+/* Which group a note is from (links to the group's page) */
+.note-card .note-group {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: hsl(var(--g-hue, 228), 70%, 94%);
+  color: hsl(var(--g-hue, 228), 55%, 32%);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.note-card .note-group:hover { text-decoration: underline; }
+.note-card .note-group + .note-title { margin-top: 8px; }
+
+#note-group { font: inherit; }
+
+/* Dark mode */
+html[data-theme="dark"] .notes-filter { background: #23262e; border-color: #343a4d; color: #d3d8ea; }
+html[data-theme="dark"] .notes-filter span { background: #262d45; color: #a9b8f5; }
+html[data-theme="dark"] .notes-filter:hover { background: #262d45; }
+html[data-theme="dark"] .notes-filter[aria-pressed="true"] {
+  border-color: hsl(var(--g-hue, 228), 60%, 62%);
+  background: hsl(var(--g-hue, 228), 30%, 22%);
+  color: hsl(var(--g-hue, 228), 80%, 85%);
+}
+html[data-theme="dark"] .notes-filter[aria-pressed="true"] span { background: rgba(255, 255, 255, 0.12); }
+html[data-theme="dark"] .note-card .note-group { background: hsl(var(--g-hue, 228), 30%, 22%); color: hsl(var(--g-hue, 228), 80%, 82%); }
