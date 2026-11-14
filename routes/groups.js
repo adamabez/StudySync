@@ -55,6 +55,9 @@ module.exports = [
   // Each of your classes and whether you're in a group for it yet (landing page "still looking")
   ["GET", "/api/groups/classes", async ({ res, db }) => sendJson(res, await groups.listClassGroups(db))],
 
+  // The Notes page: every group's notes in one place
+  ["GET", "/api/notes", async ({ res, db, userId }) => sendJson(res, await groups.listAllNotes(db, userId))],
+
   // --- One group and its shared notes ---
   groupRoute("GET", "", async ({ res, db, group, userId }) => {
     // A missing Discord table (schema.sql not re-run yet) shouldn't break the group page

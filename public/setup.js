@@ -278,7 +278,7 @@ $("cancel-bottom").addEventListener("click", () => leave());
 // first if anything changed, the same as Back. Log out and the app window are left alone.
 document.addEventListener("click", (event) => {
   if (!editing) return;
-  const link = event.target.closest && event.target.closest(".app-nav a[href], .app-tabbar a[href]");
+  const link = event.target.closest && event.target.closest(".app-nav a[href]");
   if (!link || link.hasAttribute("data-install-app")) return;
   const url = new URL(link.href, location.href);
   if (url.origin !== location.origin || url.pathname === "/logout" || url.pathname === location.pathname) return;

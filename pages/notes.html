@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/public/favicon.png">
+  <!-- Installable as an app: public/manifest.webmanifest, public/install.js -->
+  <link rel="manifest" href="/public/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-title" content="StudySync">
+  <script src="/public/install.js" defer></script>
+  <script src="/public/theme.js"></script>
+  <title>StudySync – Notes</title>
+  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/dashboard.css">
+  <link rel="stylesheet" href="/public/landing.css">
+  <link rel="stylesheet" href="/public/notes.css">
+  <link rel="stylesheet" href="/public/feedback.css">
+  <link rel="stylesheet" href="/public/dark.css">
+</head>
+<body>
+  <div class="box wide">
+    <nav id="app-nav" data-page="notes"></nav>
+    <script src="/public/nav.js"></script>
+    <!-- Your private notes and every note shared in your study groups, in one place (public/notes.js) -->
+    <p class="page-sub">Your own notes and your study groups' notes, in one place</p>
+
+    <p id="notes-loading" class="hint">Loading your notes…</p>
+
+    <!-- Not in a study group yet -->
+    <div id="notes-no-groups" class="waiting-box" hidden>
+      <strong>You're not in a study group yet.</strong>
+      <p>Once you are, everyone in it can share notes here. Groups are matched for you on the
+        <a href="/landing">Study plan</a> page when a classmate's schedule fits yours.</p>
+    </div>
+
+    <section id="notes-main" hidden>
+      <div class="notes-head">
+        <h2>Notes <span id="notes-count" class="notes-count"></span></h2>
+        <button type="button" id="note-open" class="notes-add">+ Add a note</button>
+      </div>
+      <p class="hint" id="notes-hint"></p>
+
+      <!-- Coming soon: every member's notes combined into one study guide -->
+      <aside class="notes-summary-soon" aria-label="Coming soon: group study guide">
+        <span class="nss-icon" aria-hidden="true">✦</span>
+        <div class="nss-text">
+          <p class="nss-title">One study guide from everyone's notes <span class="nss-tag">Coming soon</span></p>
+          <p>StudySync will combine the notes your group shares into one clean summary: the key ideas,
+            definitions and practice points, in one place to review before the exam.</p>
+        </div>
+        <button type="button" class="nss-link" data-feedback-open="idea">Tell us what you'd want in it</button>
+      </aside>
+
+      <!-- Opens from "+ Add a note" -->
+      <form id="note-form" class="note-form note-composer" hidden>
+        <label id="note-group-row">Group
+          <select id="note-group" class="note-select"></select>
+        </label>
+        <!-- Private (only you) or shared with the group: public/notes.js -->
+        <div id="note-visibility-row" class="note-visibility-row">
+          <span class="note-field-label" id="note-visibility-label">Who sees it</span>
+          <div id="note-visibility" class="note-visibility" role="group" aria-labelledby="note-visibility-label">
+            <button type="button" data-value="private" aria-pressed="true">🔒 Private</button>
+            <button type="button" data-value="shared" aria-pressed="false">👥 Shared with group</button>
+          </div>
+          <span class="note-who" id="note-who"></span>
+        </div>
+        <label>Title
+          <input id="note-title" type="text" maxlength="120" required placeholder="e.g. Chapter 4 review">
+        </label>
+        <label>Note
+          <textarea id="note-body" rows="5" maxlength="20000" required placeholder="Write or paste your notes here"></textarea>
+        </label>
+        <p id="note-error" class="error" hidden></p>
+        <div class="note-actions">
+          <button type="submit" id="note-submit">Add note</button>
+          <button type="button" id="note-cancel" class="link-button">Cancel</button>
+        </div>
+      </form>
+
+      <!-- Filter by group: All · CSC 130 · MATH 31 -->
+      <div id="notes-filters" class="notes-filters" role="group" aria-label="Show notes from" hidden></div>
+
+      <p id="notes-empty" class="hint" hidden></p>
+      <div id="notes" class="note-list"></div>
+    </section>
+  </div>
+  <script src="/public/members.js"></script>
+  <script src="/public/note-card.js"></script>
+  <script src="/public/notes.js"></script>
+  <script src="/public/feedback.js"></script>
+</body>
+</html>

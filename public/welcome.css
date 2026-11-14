@@ -174,3 +174,52 @@ html[data-theme="dark"] .wl-grid article { background: #23262e; border-color: #3
 html[data-theme="dark"] .wl-steps p,
 html[data-theme="dark"] .wl-grid p { color: #a9b0c8; }
 html[data-theme="dark"] .wl-step-num { background: #262d45; color: #8ea0e7; }
+
+/* ---------- Hero: the study groups banner (same look as it had on the study plan page) ---------- */
+.wl-hero { max-width: 980px; }
+.welcome .groups-hero {
+  padding: 36px 36px 28px;
+  background: linear-gradient(135deg, #2b4acb 0%, #3b3fd0 55%, #5a34c9 100%);
+  border-radius: 20px;
+  color: #fff;
+  text-align: left;
+  box-shadow: 0 14px 40px rgba(43, 74, 203, 0.28);
+}
+.welcome .groups-hero-eyebrow { margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #cdd6ff; }
+.welcome .groups-hero-title { margin: 0 0 14px; font-size: clamp(30px, 5vw, 46px); line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+.welcome .groups-hero-title span { color: #8ff0c0; }
+.welcome .groups-hero-sub { max-width: 680px; margin: 0 0 24px; font-size: 17px; line-height: 1.5; color: #e4e9ff; }
+.welcome .groups-hero-sub strong { color: #fff; }
+.welcome .groups-hero-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.welcome .groups-hero-features li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: rgba(10, 16, 60, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+}
+.welcome .groups-hero-features strong { font-size: 16px; color: #fff; }
+.welcome .groups-hero-features li > span:last-child { font-size: 14px; line-height: 1.4; color: #d5dcff; }
+.welcome .groups-hero-icon { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; margin-bottom: 6px; border-radius: 10px; background: #8ff0c0; color: #13235f; }
+@media (max-width: 600px) {
+  .welcome .groups-hero { padding: 24px 18px 18px; border-radius: 16px; }
+  .welcome .groups-hero-sub { font-size: 15px; }
+}
+/* Dark mode: the banner is already dark, so it keeps its colors */
+html[data-theme="dark"] .welcome .groups-hero { box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4); }
+html[data-theme="dark"] .welcome .groups-hero-eyebrow { color: #cdd6ff; }
+html[data-theme="dark"] .welcome .groups-hero-title { color: #fff; }
+html[data-theme="dark"] .welcome .groups-hero-title span { color: #8ff0c0; }
+html[data-theme="dark"] .welcome .groups-hero-sub { color: #e4e9ff; }
+html[data-theme="dark"] .welcome .groups-hero-features li { border: 1px solid rgba(255, 255, 255, 0.18); }
+html[data-theme="dark"] .welcome .groups-hero-features strong { color: #fff; }
+html[data-theme="dark"] .welcome .groups-hero-features li > span:last-child { color: #d5dcff; }
+html[data-theme="dark"] .welcome .groups-hero-icon { background: #8ff0c0; color: #13235f; }
+@media (max-width: 600px) {
+  .welcome .groups-hero-title { font-size: 26px; }
+  .welcome .groups-hero-features { gap: 8px; }
+  .welcome .groups-hero-features li { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; padding: 10px 12px; }
+  .welcome .groups-hero-icon { grid-row: span 2; width: 34px; height: 34px; margin: 0; }
+}

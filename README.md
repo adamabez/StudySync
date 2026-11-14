@@ -174,6 +174,8 @@ To refresh the class list (new semester): `node scripts/import-courses.js`, then
 Which sections are collapsed and which chat was last open are stored in your browser only.
 
 ## Calendar
+The **Notes** page (`/notes`) collects your notes and your study groups' notes in one place, newest first. Each note belongs to one of your groups and is either **shared** with the group or **private** (only you see it; `private_notes` table: run `supabase/private-notes.sql`). Pick when adding a note, and switch your own notes either way later. Filter by group or Private.
+
 The **Calendar** page (`/calendar`) shows the whole semester a month at a time. Classes repeat from the first to the last day of classes and skip holidays.
 - **Semester dates** come from Sac State's class schedule automatically (`lib/terms.js`). **Holidays aren't in that data:** update `TERMS` in `lib/terms.js` each semester from the official calendar (catalog.csus.edu/academic-calendar), then set `checked: true`.
 - **Add to my calendar:** each student gets a private link that Google Calendar, Apple Calendar or Outlook subscribe to (`routes/calendar.js`, `lib/calendarfeed.js`). It holds classes, weekly items, one-time tasks and study group meetings for the semester. Solo study time isn't in it, because it's planned a week at a time.
