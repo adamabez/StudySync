@@ -24,24 +24,24 @@
   <div class="box wide">
     <nav id="app-nav" data-page="notes"></nav>
     <script src="/public/nav.js"></script>
-    <!-- Every note shared in your study groups, in one place (public/notes.js) -->
-    <p class="page-sub">Notes from all your study groups, in one place</p>
+    <!-- Your solo notes and every note shared in your study groups, in one place (public/notes.js) -->
+    <p class="page-sub">Your own notes and your study groups' notes, in one place</p>
 
     <p id="notes-loading" class="hint">Loading your notes…</p>
 
     <!-- Not in a study group yet -->
     <div id="notes-no-groups" class="waiting-box" hidden>
-      <strong>Notes live in your study groups.</strong>
-      <p>Once you're in a study group, everyone in it can share notes here. Groups are matched for you on the
+      <strong>You're not in a study group yet.</strong>
+      <p>Once you are, everyone in it can share notes here. Groups are matched for you on the
         <a href="/landing">Study plan</a> page when a classmate's schedule fits yours.</p>
     </div>
 
     <section id="notes-main" hidden>
       <div class="notes-head">
-        <h2>Group notes <span id="notes-count" class="notes-count"></span></h2>
+        <h2>Notes <span id="notes-count" class="notes-count"></span></h2>
         <button type="button" id="note-open" class="notes-add">+ Add a note</button>
       </div>
-      <p class="hint">Everyone in a group can see its notes. You can delete the ones you added.</p>
+      <p class="hint" id="notes-hint"></p>
 
       <!-- Coming soon: every member's notes combined into one study guide -->
       <aside class="notes-summary-soon" aria-label="Coming soon: group study guide">
@@ -56,8 +56,9 @@
 
       <!-- Opens from "+ Add a note" -->
       <form id="note-form" class="note-form note-composer" hidden>
-        <label id="note-group-row">Group
-          <select id="note-group"></select>
+        <label id="note-place-row">Who sees it
+          <select id="note-place"></select>
+          <span class="note-who" id="note-who"></span>
         </label>
         <label>Title
           <input id="note-title" type="text" maxlength="120" required placeholder="e.g. Chapter 4 review">

@@ -56,6 +56,7 @@ const apiRoutes = compile([
   ...require("./routes/study"),
   ...require("./routes/schedule"),
   ...require("./routes/groups"),
+  ...require("./routes/notes"),
   ...require("./routes/notebook"),
   ...require("./routes/canvas"),
   ...calendar.apiRoutes,

@@ -1,10 +1,15 @@
-// StudySync - the Notes page (runs in the browser): every note shared in your study groups,
-// newest first, with a filter per group and a form to add one to any of your groups.
-// Data: GET /api/notes → [{ group, notes }] (routes/groups.js). Cards: public/note-card.js.
+// StudySync - the Notes page (runs in the browser): your solo notes (only you see them) and every
+// note shared in your study groups, newest first, with a filter (All · Just me · each group) and a
+// form to add a note just for yourself or to any of your groups.
+// Data: GET /api/solo-notes → { notes, notSetUp? } (routes/notes.js) and GET /api/notes →
+// [{ group, notes }] (routes/groups.js). Cards: public/note-card.js.
 
 const $ = (id) => document.getElementById(id);
-let groups = []; // [{ id, course, label, hue, notes }]
-let showing = "all"; // "all" or a group ID
+const SOLO = "solo";
+// Where notes live: your solo notes first (when set up), then each group.
+// [{ id, solo, course, label, hue, notes }]
+let places = [];
+let showing = "all"; // "all", SOLO or a group ID
 
 // "CSC 130 | Group A" → { course: "CSC 130", label: "Group A" }
 function splitName(group) {
@@ -12,33 +17,42 @@ function splitName(group) {
   return { course: group.course || course, label: rest.join(" | ") };
 }
 
+const placeName = (p) => (p.solo ? "Just me (private)" : p.course + (p.label ? " · " + p.label : ""));
+const total = () => places.reduce((sum, p) => sum + p.notes.length, 0);
+
+function redraw() {
+  renderFilters();
+  render();
+}
+
 function render() {
   const list = $("notes");
   list.innerHTML = "";
-  const shown = groups.filter((g) => showing === "all" || g.id === showing);
+  const shown = places.filter((p) => showing === "all" || p.id === showing);
   const notes = shown
-    .flatMap((g) => g.notes.map((note) => ({ note, group: g })))
+    .flatMap((p) => p.notes.map((note) => ({ note, place: p })))
     .sort((a, b) => new Date(b.note.createdAt) - new Date(a.note.createdAt));
-  for (const { note, group } of notes) {
+  for (const { note, place } of notes) {
     list.appendChild(window.studyNotes.card(note, {
-      groupId: group.id,
-      group: showing === "all" ? group : null,
-      onRemoved: () => { group.notes = group.notes.filter((n) => n.id !== note.id); renderFilters(); render(); },
+      groupId: place.id,
+      solo: place.solo,
+      showTag: showing === "all",
+      group: showing === "all" && !place.solo ? place : null,
+      onRemoved: () => { place.notes = place.notes.filter((n) => n.id !== note.id); redraw(); },
     }));
   }
-  const total = groups.reduce((sum, g) => sum + g.notes.length, 0);
-  $("notes-count").textContent = total ? String(total) : "";
+  $("notes-count").textContent = total() ? String(total()) : "";
   $("notes-empty").hidden = notes.length > 0;
-  $("notes-empty").textContent = showing === "all"
-    ? "No notes yet. Add the first one, and everyone in that group will see it."
+  $("notes-empty").textContent = showing === "all" ? "No notes yet. Add your first one!"
+    : showing === SOLO ? "No solo notes yet. Notes you add for \"Just me\" are only visible to you."
     : "No notes in this group yet. Add the first one!";
 }
 
-// Filter chips: All · CSC 130 (3) · MATH 31 (1)
+// Filter chips: All · 🔒 Just me · CSC 130 · MATH 31 (each with how many notes)
 function renderFilters() {
   const box = $("notes-filters");
   box.innerHTML = "";
-  box.hidden = groups.length < 2;
+  box.hidden = places.length < 2;
   const chip = (id, text, count, hue) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -49,31 +63,37 @@ function renderFilters() {
     const n = document.createElement("span");
     n.textContent = count;
     button.appendChild(n);
-    button.addEventListener("click", () => { showing = id; renderFilters(); render(); });
+    button.addEventListener("click", () => { showing = id; redraw(); });
     box.appendChild(button);
   };
-  chip("all", "All", groups.reduce((sum, g) => sum + g.notes.length, 0));
-  for (const g of groups) chip(g.id, g.course, g.notes.length, g.hue);
+  chip("all", "All", total());
+  for (const p of places) chip(p.id, p.solo ? "🔒 Just me" : p.course, p.notes.length, p.hue);
 }
 
-// The form's group picker: the filtered group if there is one
-function fillGroupPicker() {
-  const pick = $("note-group");
+// Who sees the note: Just me, or one of your groups (starts on the filter you're looking at)
+function fillPicker() {
+  const pick = $("note-place");
   pick.innerHTML = "";
-  for (const g of groups) {
+  for (const p of places) {
     const option = document.createElement("option");
-    option.value = g.id;
-    option.textContent = g.course + (g.label ? " · " + g.label : "");
+    option.value = p.id;
+    option.textContent = p.solo ? "Just me (private)" : "Group: " + placeName(p);
     pick.appendChild(option);
   }
   if (showing !== "all") pick.value = showing;
-  $("note-group-row").hidden = groups.length < 2;
+  $("note-place-row").hidden = places.length < 2;
+  updateWho();
 }
+function updateWho() {
+  const place = places.find((p) => p.id === $("note-place").value) || places[0];
+  $("note-who").textContent = place.solo ? "Only you will see this note." : "Everyone in " + placeName(place) + " will see this note.";
+}
+$("note-place").addEventListener("change", updateWho);
 
 function showNoteForm(open) {
   $("note-form").hidden = !open;
   $("note-open").hidden = open;
-  if (open) { fillGroupPicker(); $("note-title").focus(); }
+  if (open) { fillPicker(); $("note-title").focus(); }
   else { $("note-form").reset(); $("note-error").hidden = true; }
 }
 $("note-open").addEventListener("click", () => showNoteForm(true));
@@ -83,19 +103,18 @@ $("note-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   $("note-error").hidden = true;
   $("note-submit").disabled = true;
-  const group = groups.find((g) => g.id === $("note-group").value) || groups[0];
+  const place = places.find((p) => p.id === $("note-place").value) || places[0];
   try {
-    const res = await fetch("/api/groups/" + group.id + "/notes", {
+    const res = await fetch(place.solo ? "/api/solo-notes" : "/api/groups/" + place.id + "/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: $("note-title").value, body: $("note-body").value }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Couldn't add the note. Try again.");
-    group.notes.unshift(data);
+    place.notes.unshift(data);
     showNoteForm(false);
-    renderFilters();
-    render();
+    redraw();
   } catch (error) {
     $("note-error").textContent = error.message;
     $("note-error").hidden = false;
@@ -105,25 +124,30 @@ $("note-form").addEventListener("submit", async (event) => {
 });
 
 async function load() {
+  let groups, solo;
   try {
-    const res = await fetch("/api/notes");
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    groups = data.map(({ group, notes }) => {
-      const { course, label } = splitName(group);
-      return { id: group.id, course, label, hue: window.studyMembers.hueFor(course), notes };
-    });
+    const [groupRes, soloRes] = await Promise.all([fetch("/api/notes"), fetch("/api/solo-notes")]);
+    if (!groupRes.ok) throw new Error();
+    groups = await groupRes.json();
+    solo = soloRes.ok ? await soloRes.json() : { notes: [], notSetUp: true };
   } catch {
     $("notes-loading").textContent = "Couldn't load your notes. Refresh the page to try again.";
     return;
   }
   $("notes-loading").hidden = true;
-  if (!groups.length) {
-    $("notes-no-groups").hidden = false;
-    return;
-  }
+  places = groups.map(({ group, notes }) => {
+    const { course, label } = splitName(group);
+    return { id: group.id, solo: false, course, label, hue: window.studyMembers.hueFor(course), notes };
+  });
+  if (!solo.notSetUp) places.unshift({ id: SOLO, solo: true, course: "Just me", label: "", hue: 265, notes: solo.notes });
+
+  // Not in a group yet: say where group notes come from (solo notes still work)
+  $("notes-no-groups").hidden = groups.length > 0;
+  if (!places.length) return;
   $("notes-main").hidden = false;
-  renderFilters();
-  render();
+  $("notes-hint").textContent = groups.length
+    ? "Solo notes are only for you. Group notes are shared with everyone in that group, and you can delete the ones you added."
+    : "Solo notes are only for you. Once you're in a study group, you can share notes with it here too.";
+  redraw();
 }
 load();

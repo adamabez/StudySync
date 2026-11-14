@@ -1,8 +1,8 @@
 /* StudySync - the Notes page (pages/notes.html). Note cards, the form and the "coming soon"
-   card come from landing.css (shared with the group page); this adds the group filter and the
-   group tag on each card. */
+   card come from landing.css (shared with the group page); this adds the filter (All · Just me · each group)
+   and the tag on each card saying where it's from. */
 
-#notes-main[hidden], #note-group-row[hidden], .notes-filters[hidden] { display: none; }
+#notes-main[hidden], #note-place-row[hidden], .notes-filters[hidden] { display: none; }
 #notes-main { margin-top: 8px; }
 
 /* Filter chips: All · CSC 130 (3) · MATH 31 (1) */
@@ -43,8 +43,6 @@
 .note-card .note-group:hover { text-decoration: underline; }
 .note-card .note-group + .note-title { margin-top: 8px; }
 
-#note-group { font: inherit; }
-
 /* Dark mode */
 html[data-theme="dark"] .notes-filter { background: #23262e; border-color: #343a4d; color: #d3d8ea; }
 html[data-theme="dark"] .notes-filter span { background: #262d45; color: #a9b8f5; }
@@ -56,3 +54,10 @@ html[data-theme="dark"] .notes-filter[aria-pressed="true"] {
 }
 html[data-theme="dark"] .notes-filter[aria-pressed="true"] span { background: rgba(255, 255, 255, 0.12); }
 html[data-theme="dark"] .note-card .note-group { background: hsl(var(--g-hue, 228), 30%, 22%); color: hsl(var(--g-hue, 228), 80%, 82%); }
+
+/* Solo notes: "🔒 Just me" instead of a group tag; the form says who will see the note */
+.note-card .note-group.solo { background: #f1ecfd; color: #5b34c9; }
+.note-composer .note-who { color: #6b7391; font-size: 13px; font-weight: 400; }
+#note-place { font: inherit; }
+html[data-theme="dark"] .note-card .note-group.solo { background: #2e2747; color: #cdbcff; }
+html[data-theme="dark"] .note-composer .note-who { color: #8d94ab; }

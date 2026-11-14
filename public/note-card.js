@@ -2,7 +2,8 @@
 // (group.js) and the Notes page (notes.js). Load after members.js.
 //
 // The card: the author's initials, their name and how long ago, the title and the note (long
-// ones fold, with Show more). Yours can be deleted. The Notes page also shows which group it's in.
+// ones fold, with Show more). Yours can be deleted. The Notes page also shows which group it's in,
+// or "Just me" for your solo notes.
 
 (function () {
   // "Just now", "5 min ago", "3 hours ago", "Yesterday", "Nov 12"
@@ -22,7 +23,8 @@
   const fullDate = (iso) =>
     new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
-  // options: { groupId, onRemoved(), group: { id, course, label, hue } (Notes page: which group) }
+  // options: { groupId, onRemoved(), group: { id, course, label, hue } (Notes page: which group),
+  //            solo: true for your private notes (showTag: label it "Just me") }
   function card(note, options) {
     const members = window.studyMembers;
     const el = document.createElement("article");
@@ -50,8 +52,9 @@
       remove.textContent = "Delete";
       remove.setAttribute("aria-label", "Delete " + note.title);
       remove.addEventListener("click", async () => {
-        if (!confirm("Delete this note for everyone in the group?")) return;
-        const res = await fetch("/api/groups/" + options.groupId + "/notes/" + note.id, { method: "DELETE" });
+        if (!confirm(options.solo ? "Delete this note?" : "Delete this note for everyone in the group?")) return;
+        const url = options.solo ? "/api/solo-notes/" + note.id : "/api/groups/" + options.groupId + "/notes/" + note.id;
+        const res = await fetch(url, { method: "DELETE" });
         if (res.ok) el.remove();
         if (options.onRemoved) options.onRemoved();
       });
@@ -59,8 +62,14 @@
     }
     el.appendChild(head);
 
-    // Notes page: which group it's from, linking to the group's page
-    if (options.group) {
+    // Notes page: a solo note says it's private; a group note says which group, linking to its page
+    if (options.solo && options.showTag) {
+      const tag = document.createElement("span");
+      tag.className = "note-group solo";
+      tag.textContent = "🔒 Just me";
+      tag.title = "Only you can see this note";
+      el.appendChild(tag);
+    } else if (options.group) {
       const tag = document.createElement("a");
       tag.className = "note-group";
       tag.href = "/group?id=" + encodeURIComponent(options.group.id);
