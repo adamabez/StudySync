@@ -50,6 +50,12 @@ a  { color: #2b4acb; font-size: 14px; }
 form { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; text-align: left; }
 label { font-size: 14px; color: #444; }
 .field-hint { display: block; margin-top: 4px; font-size: 12px; color: #888; }
+/* What a new password needs, ticking off as you type (public/password-rules.js) */
+.pw-rules { list-style: none; margin: -4px 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2px 12px; font-size: 12.5px; color: #6b7391; text-align: left; }
+.pw-rules li { position: relative; padding-left: 18px; }
+.pw-rules li::before { content: ""; position: absolute; left: 3px; top: 50%; width: 7px; height: 7px; margin-top: -4px; border-radius: 50%; border: 1.5px solid #b8c0dc; }
+.pw-rules li.ok { color: #2f7a4a; }
+.pw-rules li.ok::before { content: "✓"; left: 1px; width: auto; height: auto; margin-top: -0.6em; border: none; font-weight: 700; line-height: 1.2; color: #2f7a4a; }
 
 input {
   width: 100%;
