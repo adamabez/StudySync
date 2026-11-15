@@ -646,15 +646,26 @@ drop function if exists public.set_group_discord(uuid, text);
 -- (every table cascades from auth.users). Study groups they started are handed to another
 -- member first, so classmates keep their group and its notes. (PDF files in Storage are
 -- removed by the server before this runs: see server.js /api/account/delete.)
-create or replace function public.delete_my_account()
+-- Needs your password (checked here too, not just by the server): supabase/delete-account-password.sql
+create extension if not exists pgcrypto with schema extensions;
+
+create or replace function public.delete_my_account(p_password text)
 returns void
 language plpgsql security definer set search_path = ''
 as $$
 declare
   uid uuid := auth.uid();
+  saved text;
 begin
   if uid is null then raise exception 'Not logged in'; end if;
 
+  select u.encrypted_password into saved from auth.users u where u.id = uid;
+  if saved is null or saved = '' or p_password is null
+     or extensions.crypt(p_password, saved) <> saved then
+    raise exception 'Wrong password' using errcode = '28P01';
+  end if;
+
+  -- Groups they started go to another member first, so classmates keep their group and notes
   update public.study_groups sg
   set created_by = (
     select m.user_id from public.group_members m
@@ -664,11 +675,14 @@ begin
     and exists (select 1 from public.group_members m where m.group_id = sg.id and m.user_id <> uid);
 
   delete from public.study_groups where created_by = uid; -- groups only they were in
-  delete from auth.users where id = uid;
+  delete from auth.users where id = uid;                  -- everything else cascades
 end;
 $$;
-revoke execute on function public.delete_my_account() from public, anon;
-grant execute on function public.delete_my_account() to authenticated;
+revoke execute on function public.delete_my_account(text) from public, anon;
+grant execute on function public.delete_my_account(text) to authenticated;
+
+-- The old version without a password can't be called any more
+drop function if exists public.delete_my_account();
 
 -- Rename groups made before the "CSC 20 | Group A" names, oldest first
 do $$
