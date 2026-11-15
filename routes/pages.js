@@ -18,16 +18,6 @@ const QRCode = require("qrcode");
 const { siteUrl, sendPage, sendJson, redirect, readBody, readJson } = require("../lib/http");
 const { feedbackLimited } = require("../lib/limits");
 
-// Someone who has logged in on this device before: the front page goes straight to the login
-// form (so the browser fills in their password) instead of the welcome page. Set when they log
-// in or sign up; it isn't a login itself, just "show this device the login page".
-const RETURNING = "ss_returning";
-const returningCookie = () => {
-  const secure = (process.env.PUBLIC_URL || "").trim().startsWith("https://") ? "; Secure" : "";
-  return `${RETURNING}=1; Path=/; HttpOnly; SameSite=Lax; Max-Age=${400 * 24 * 60 * 60}${secure}`;
-};
-const isReturning = (req) => (req.headers.cookie || "").split(";").some((part) => part.trim() === RETURNING + "=1");
-
 // Pages only for students with an account or a demo (others go to the login page)
 const appPage = (fileName, { demoBanner = "full" } = {}) => ({ res, loggedIn, inDemo, demoMode }) => {
   if (!loggedIn && !inDemo) return redirect(res, "/login");
@@ -78,13 +68,11 @@ module.exports = [
   // Front page: what StudySync is, with the live demo and sign-up (skipped if logged in).
   // Older links (email confirmation, errors, "account deleted") pointed at /?..., so those
   // go to the login page with the same query; the browser keeps any #... part.
-  // Returning students go to the login form too; /?about=1 shows them the welcome page anyway.
-  ["GET", "/", ({ req, res, url, loggedIn, inDemo }) => {
+  ["GET", "/", ({ res, url, loggedIn }) => {
     if (loggedIn) return redirect(res, "/home");
     if (["error", "checkEmail", "confirmed", "deleted"].some((key) => url.searchParams.has(key))) {
       return redirect(res, "/login" + url.search);
     }
-    if (isReturning(req) && !inDemo && !url.searchParams.has("about")) return redirect(res, "/login");
     sendPage(res, "welcome.html");
   }],
 
@@ -97,7 +85,7 @@ module.exports = [
     const form = new URLSearchParams(body);
     const result = await auth.logIn((form.get("email") || "").trim(), form.get("password") || "");
     if (result.error) return redirect(res, `/login?error=${result.error}`);
-    redirect(res, "/home", { "Set-Cookie": [...[].concat(endDemo(result.cookies)), returningCookie()] });
+    redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
   })],
 
   ["GET", "/signup", ({ res, loggedIn }) => {
@@ -111,8 +99,8 @@ module.exports = [
     if (name.error) return redirect(res, `/signup?error=${name.code}`);
     const result = await auth.signUp((form.get("email") || "").trim(), form.get("password") || "", name.value, `${siteUrl(req)}/?confirmed=1`);
     if (result.error) return redirect(res, `/signup?error=${result.error}`);
-    if (result.confirmEmail) return redirect(res, "/login?checkEmail=1", { "Set-Cookie": returningCookie() });
-    redirect(res, "/home", { "Set-Cookie": [...[].concat(endDemo(result.cookies)), returningCookie()] });
+    if (result.confirmEmail) return redirect(res, "/login?checkEmail=1");
+    redirect(res, "/home", { "Set-Cookie": endDemo(result.cookies) });
   })],
 
   // Loading screen, then the dashboard (logged-in users only)
