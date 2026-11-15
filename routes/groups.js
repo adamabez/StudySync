@@ -49,7 +49,10 @@ module.exports = [
   // Opening the landing page tries to match the student, then shows their groups
   ["POST", "/api/groups/match", async ({ res, db, userId }) => {
     await groups.match(db);
-    sendJson(res, await groups.listMyGroups(db, userId));
+    const list = await groups.listMyGroups(db, userId);
+    // Who's in for each session: suggested until meetups.ON_AT members are (lib/meetups.js)
+    const counts = await meetups.inCounts(db, list.map((g) => g.id));
+    sendJson(res, list.map((g) => ({ ...g, inCounts: meetups.countList(counts[g.id]), onAt: meetups.ON_AT })));
   }],
 
   // Each of your classes and whether you're in a group for it yet (landing page "still looking")

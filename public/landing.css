@@ -856,6 +856,7 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 .settings-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end; margin-top: 10px; }
 .settings-form label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; min-width: 0; }
 .settings-form .form-message, .settings-form button { grid-column: 1 / -1; }
+.settings-form .pw-rules { grid-column: 1 / -1; margin: -4px 0 0; } /* the password checklist: its own row under the boxes */
 .settings-form button { justify-self: start; padding: 10px 18px; }
 .form-message { margin: 0; font-size: 14px; text-align: left; }
 .form-message.ok { color: #2e7d32; }
@@ -1115,3 +1116,143 @@ a.group-card:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
   .notes-summary-soon { grid-template-columns: auto 1fr; }
   .nss-link { grid-column: 1 / -1; justify-self: start; }
 }
+
+/* ---------- Profiles (lib/profiles.js) ---------- */
+/* A photo in a member's circle (public/members.js), over the initials */
+.group-face { position: relative; overflow: hidden; }
+.group-face .face-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.group-face.large { width: 96px; height: 96px; margin: 0; border-width: 3px; font-size: 34px; }
+
+/* Your photo in the header's account circle (public/nav.js) */
+.avatar { position: relative; overflow: hidden; }
+.avatar-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+/* Group page: click a member to see their profile card */
+.member-row.clickable { padding: 0; }
+.member-open { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 999px; background: transparent; color: inherit; font: inherit; text-align: left; }
+.member-open:hover { background: #f3f5fc; }
+.member-open:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+
+/* A classmate's profile card (public/profile-card.js), built on the install window */
+.profile-face { display: flex; justify-content: center; margin-bottom: 10px; }
+.profile-sub { margin: -2px 0 12px; color: #4a5272; font-size: 15px; }
+.profile-classes { text-align: left; margin-top: 6px; }
+.profile-classes h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7391; }
+.profile-classes ul, .profile-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.profile-classes li, .profile-chips li { padding: 4px 10px; border-radius: 999px; background: #eef1fb; color: #2b4acb; font-size: 13px; font-weight: 600; }
+.profile-chips li.empty { background: none; padding-left: 0; color: #6b7391; font-weight: 400; }
+.profile-empty { margin: 4px 0 0; color: #6b7391; font-size: 14px; }
+.profile-actions { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
+.profile-actions:empty { display: none; }
+.profile-edit { font-size: 14px; font-weight: 600; color: #2b4acb; }
+.profile-report { padding: 6px 12px; background: none; color: #b3261e; font-size: 13px; }
+.profile-report:hover { background: #fdecea; }
+.profile-report-form { display: flex; flex-direction: column; gap: 4px; width: 100%; font-size: 13px; text-align: left; color: #4a5272; }
+.profile-report-form textarea { font: inherit; padding: 8px; border: 1px solid #d6dcf6; border-radius: 8px; resize: vertical; }
+.profile-report-send { width: 100%; background: #b3261e; }
+.profile-report-send:hover { background: #8f1e18; }
+.profile-status { min-height: 1.2em; margin: 8px 0 0; font-size: 13px; color: #4a5272; }
+
+/* Account settings → Your profile */
+.profile-editor { margin-top: 12px; }
+.profile-form { display: grid; gap: 14px; margin-top: 14px; }
+.profile-form button { justify-self: start; padding: 10px 18px; }
+.profile-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 6px 16px; padding-bottom: 12px; border-bottom: 1px solid #eceef5; }
+.profile-row > label:not(.share-toggle), .profile-classes-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; min-width: 0; font-size: 14px; }
+.profile-field-label { font-size: 14px; }
+.profile-photo-row { align-items: center; justify-content: flex-start; }
+.profile-photo-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1 1 200px; }
+.profile-photo-buttons { display: flex; align-items: center; gap: 8px; }
+.button-like { display: inline-block; padding: 8px 14px; border-radius: 8px; background: #2b4acb; color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
+.button-like:hover { background: #2240b0; }
+.button-like:focus-within { outline: 2px solid #2b4acb; outline-offset: 2px; }
+.share-toggle { display: inline-flex; align-items: center; gap: 6px; flex: none; font-size: 13.5px; color: #4a5272; cursor: pointer; white-space: nowrap; }
+.share-toggle input { width: 16px; height: 16px; margin: 0; padding: 0; accent-color: #2b4acb; }
+.profile-row select { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px; border: 1px solid #ccd; border-radius: 8px; background: white; color: inherit; font-size: 15px; }
+
+/* ---------- This week's session: suggested until 2 are in, then it's on (public/group.js) ---------- */
+.ns-state { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding: 10px 14px; border-radius: 12px; }
+.ns-state div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ns-state strong { font-size: 15px; }
+.ns-state span { font-size: 13px; }
+.ns-state.suggested { background: #fff7e6; border: 1.5px dashed #f0c56b; color: #6b4a00; }
+.ns-state.on { background: #e9f8ef; border: 1.5px solid #9fdcb8; color: #15603a; }
+.ns-dots { display: flex; flex: none; gap: 5px; }
+.ns-dots span { width: 11px; height: 11px; border-radius: 50%; border: 2px solid currentColor; opacity: 0.45; }
+.ns-dots span.in { background: currentColor; opacity: 1; }
+/* A suggestion looks pencilled in: dashed tile, striped top bar */
+.ns-card.suggested::before { background: repeating-linear-gradient(90deg, var(--g) 0 14px, transparent 14px 22px); }
+.ns-card.suggested .ns-tile { border-style: dashed; box-shadow: none; }
+.ns-rsvp.two { grid-template-columns: 1fr 1fr; }
+@media (max-width: 600px) {
+  .ns-rsvp.two .ns-choice.cant { grid-column: auto; }
+}
+
+/* ---------- Group page: who's in, "find a time" and the picker, restyled (public/group.js) ---------- */
+/* "Who's in" heading with the tally next to it */
+.ns-summary { display: flex; align-items: baseline; gap: 8px; margin: 20px 0 8px; font-weight: 400; }
+.ns-summary-label { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--g); }
+.ns-summary-text { font-size: 13px; color: #6b7190; }
+
+/* "Want a different time?": a tile you tap, tinted in the group's color */
+.ns-move {
+  display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap; gap: 12px; width: 100%;
+  margin-top: 18px; padding: 12px 14px;
+  border: 1.5px solid transparent; border-top: none; border-radius: 14px;
+  background: var(--g-soft); color: #1d2a5c; text-align: left; font: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.ns-move:hover { border-color: var(--g); background: var(--g-soft); }
+.ns-move:focus-visible { outline: 2px solid var(--g); outline-offset: 2px; }
+.ns-move-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--g); color: white; }
+.ns-move-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.ns-move-text strong { font-size: 15px; color: #1d2a5c; }
+.ns-move-text span { font-size: 13px; color: #5a6284; }
+.ns-move-go { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: white; color: var(--g); transition: transform 0.2s; }
+.ns-move.open .ns-move-go { transform: rotate(90deg); }
+.ns-move.needed { background: #fdecea; }
+.ns-move.needed:hover { border-color: #d9534f; }
+.ns-move.needed .ns-move-icon { background: #d9534f; }
+.ns-move.needed .ns-move-go { color: #d9534f; }
+
+/* The picker: a mini calendar tile per day, then the times as big tappable chips */
+.ns-times { margin-top: 10px; padding: 16px; border: 1.5px solid var(--g-soft); border-radius: 14px; background: white; }
+.ns-times-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; }
+.ns-times-head strong { font-size: 15px; color: #1d2a5c; }
+.ns-times-head span { font-size: 13px; color: #6b7190; }
+.ns-times-empty { margin: 0; font-size: 14px; color: #5a6284; }
+.ns-day { display: flex; align-items: center; gap: 14px; padding: 10px 0; flex-wrap: nowrap; }
+.ns-day + .ns-day { border-top: 1px dashed #e3e6f0; }
+.ns-day-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: none; width: 74px; padding: 6px 0; border-radius: 12px; background: var(--g-soft); }
+.ns-day-dow { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--g); }
+.ns-day-num { font-size: 15px; font-weight: 800; color: #1d2a5c; }
+.ns-day-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; flex: 1; min-width: 0; }
+.ns-time-option {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  padding: 8px 6px; border: 1.5px solid #e3e6f0; border-radius: 12px; background: white; color: #1d2a5c;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.ns-time-option strong { font-size: 14px; }
+.ns-time-option span { font-size: 11.5px; color: #7a8099; font-weight: 500; }
+.ns-time-option:hover { border-color: var(--g); background: var(--g); color: white; transform: translateY(-1px); }
+.ns-time-option:hover span { color: rgba(255, 255, 255, 0.85); }
+@media (max-width: 600px) {
+  .ns-day { align-items: flex-start; }
+  .ns-day-tile { width: 62px; }
+  .ns-day-times { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Profile page: "Show to my study groups" as a little switch instead of a checkbox */
+.share-toggle input {
+  appearance: none; -webkit-appearance: none;
+  position: relative; flex: none; width: 36px; height: 20px; margin: 0; padding: 0;
+  border: none; border-radius: 999px; background: #c9cfe3; cursor: pointer; transition: background 0.2s;
+}
+.share-toggle input::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: white; box-shadow: 0 1px 3px rgba(20, 30, 70, 0.3); transition: transform 0.2s;
+}
+.share-toggle input:checked { background: #2b4acb; }
+.share-toggle input:checked::after { transform: translateX(16px); }
+.share-toggle input:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .share-toggle input, .share-toggle input::after { transition: none; } }

@@ -5,6 +5,7 @@ const ai = require("../lib/ai");
 const schedule = require("../lib/schedule");
 const onboarding = require("../lib/onboarding");
 const groups = require("../lib/groups");
+const meetups = require("../lib/meetups");
 const studyplan = require("../lib/studyplan");
 const studylog = require("../lib/studylog");
 const { sendJson, readJson, sendResult } = require("../lib/http");
@@ -86,6 +87,8 @@ module.exports = [
       groups.listMyGroups(db, userId),
     ]);
     const inGroups = profile.preference === "group" ? myGroups : [];
+    // Who's in for each session: suggested until meetups.ON_AT members are (lib/meetups.js)
+    const counts = await meetups.inCounts(db, inGroups.map((g) => g.id));
     const meetings = inGroups.map((g) => ({
       type: "group",
       id: g.id,
@@ -94,6 +97,9 @@ module.exports = [
       start: g.start,
       end: g.end,
       note: g.members.length + (g.members.length === 1 ? " member" : " members"),
+      members: g.members.length,
+      inCounts: meetups.countList(counts[g.id]), // [{ date: "2026-11-17", count: 2 }]
+      onAt: meetups.ON_AT,
     }));
     const { plan } = await studyplan.editedPlan(db, userId, calendar, profile, inGroups);
     sendJson(res, [...meetings, ...plan.sessions.map((s) => ({

@@ -295,8 +295,16 @@
         ],
         "end": "string",
         "id": "string",
+        "inCounts": [
+          {
+            "count": "number",
+            "date": "string"
+          }
+        ],
+        "members": "number",
         "name": "string",
         "note": "string",
+        "onAt": "number",
         "start": "string",
         "type": "string"
       }
@@ -467,13 +475,22 @@
         ],
         "end": "string",
         "id": "string",
+        "inCounts": [
+          {
+            "count": "number",
+            "date": "string"
+          }
+        ],
         "members": [
           {
             "isYou": "boolean",
-            "name": "string"
+            "name": "string",
+            "photoUrl": "null",
+            "profileId": "string"
           }
         ],
         "name": "string",
+        "onAt": "number",
         "start": "string"
       }
     ]
@@ -493,7 +510,9 @@
         "members": [
           {
             "isYou": "boolean",
-            "name": "string"
+            "name": "string",
+            "photoUrl": "null",
+            "profileId": "string"
           }
         ],
         "name": "string",

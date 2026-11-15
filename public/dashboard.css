@@ -903,3 +903,7 @@ h2 { font-size: 18px; color: #222; margin: 28px 0 12px; }
 .kind-picker label:has(input[value="class"]:checked) { background: #0f9d78; color: #fff; box-shadow: 0 3px 10px rgba(15, 157, 120, 0.3); }
 .kind-picker label:has(input[value="other"]:checked) { background: #7c4ddb; color: #fff; box-shadow: 0 3px 10px rgba(124, 77, 219, 0.3); }
 @media (prefers-reduced-motion: reduce) { .add-form, .add-form > button[type="submit"] { transition: none; } .add-form > button[type="submit"]:hover { transform: none; } }
+
+/* Study group sessions: suggested until 2 members are in (public/dashboard.js), dashed until then */
+.class-card.study-time.group-suggested { border-style: dashed; background: transparent; }
+.class-card.study-time.group-on .kind-tag { color: #15603a; background: #c9efd8; }

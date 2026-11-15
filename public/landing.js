@@ -336,7 +336,7 @@ $("goal-select").addEventListener("change", async () => {
 // ---------- Group: matched automatically ----------
 
 function describeGroup(group) {
-  return "Meets " + group.days.map((d) => DAY_SHORT[d]).join(", ") + " · " + formatTime(group.start) + " – " + formatTime(group.end);
+  return "Suggested time: " + group.days.map((d) => DAY_SHORT[d]).join(", ") + " · " + formatTime(group.start) + " – " + formatTime(group.end);
 }
 
 // ---------- Group cards ----------
@@ -423,10 +423,17 @@ function groupCard(group) {
   facts.appendChild(when);
   const next = nextMeeting(group);
   if (next) {
+    // Each week's session is a suggestion until enough members say they're in (group page)
+    const d = next.date;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const inCount = ((group.inCounts || []).find((c) => c.date === key) || {}).count || 0;
+    const isOn = inCount >= (group.onAt || 2);
     const soon = document.createElement("span");
-    soon.className = "group-fact group-next" + (next.soon ? " soon" : "");
+    soon.className = "group-fact group-next" + (next.soon ? " soon" : "") + (isOn ? " on" : " suggested");
     soon.innerHTML = ICON.next;
-    soon.append("Next: " + nextLabel(next));
+    soon.append(isOn
+      ? "On: " + nextLabel(next) + " · " + inCount + " in"
+      : "Suggested: " + nextLabel(next) + (inCount ? " · " + inCount + " of " + group.members.length + " in" : ""));
     facts.appendChild(soon);
   }
   card.appendChild(facts);

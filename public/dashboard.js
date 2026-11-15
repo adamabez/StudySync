@@ -222,6 +222,14 @@ function makeCard(c) {
   return card;
 }
 
+// "YYYY-MM-DD" of a weekday in the week shown (Monday to Sunday, this week)
+function dateThisWeek(dayKey) {
+  const order = DAYS.map(([key]) => key);
+  const d = new Date();
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + order.indexOf(dayKey));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // A study session or study group meeting. Read-only: it's planned for you, so no pencil.
 function makeStudyCard(s, dayKey = s.days[0]) {
   const card = document.createElement("div");
@@ -237,6 +245,16 @@ function makeStudyCard(s, dayKey = s.days[0]) {
   const tag = document.createElement("span");
   tag.className = "kind-tag";
   tag.textContent = s.type === "group" ? "Study group" : "Study";
+  // A group's session is a suggestion until enough members say they're in (group page)
+  let groupState = "";
+  if (s.type === "group" && s.inCounts) {
+    const day = dateThisWeek(dayKey);
+    const inCount = (s.inCounts.find((c) => c.date === day) || {}).count || 0;
+    const isOn = inCount >= (s.onAt || 2);
+    card.classList.add(isOn ? "group-on" : "group-suggested");
+    tag.textContent = isOn ? "Group · on" : "Group · suggested";
+    groupState = isOn ? inCount + " in" : inCount + " of " + (s.members || "?") + " in";
+  }
 
   // Screen readers get the "planned by StudySync" part in words
   const hidden = document.createElement("span");
@@ -248,7 +266,7 @@ function makeStudyCard(s, dayKey = s.days[0]) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = formatTime(s.start) + " – " + formatTime(s.end) + (s.note ? " · " + s.note : "");
+  meta.textContent = formatTime(s.start) + " – " + formatTime(s.end) + (groupState ? " · " + groupState : s.note ? " · " + s.note : "");
 
   card.append(sparkle, hidden, tag, name, meta);
   // ✎ on solo sessions: move, change length or skip this week (study-edit.js)

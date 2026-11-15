@@ -22,13 +22,25 @@
     return ((words[0] || "?")[0] + (words.length > 1 ? words[words.length - 1][0] : "")).toUpperCase();
   }
 
-  // One member's circle (yours gets an outline in the group's color)
+  // One member's circle (yours gets an outline in the group's color): their photo if they
+  // share one (lib/profiles.js), otherwise their initials. A photo that won't load falls back
+  // to the initials.
   function face(member, extraClass) {
     const el = document.createElement("span");
     el.className = "group-face" + (member.isYou ? " you" : "") + (extraClass ? " " + extraClass : "");
     el.style.setProperty("--f-hue", hueFor(member.name));
     el.textContent = initials(member.name);
     el.setAttribute("aria-hidden", "true");
+    if (member.photoUrl) {
+      const img = document.createElement("img");
+      img.className = "face-photo";
+      img.src = member.photoUrl;
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("error", () => img.remove());
+      el.classList.add("has-photo");
+      el.appendChild(img);
+    }
     return el;
   }
 

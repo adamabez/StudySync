@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/public/favicon.png">
+  <!-- Installable as an app: public/manifest.webmanifest, public/install.js -->
+  <link rel="manifest" href="/public/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-title" content="StudySync">
+  <script src="/public/install.js" defer></script>
+  <script src="/public/share.js" defer></script>
+  <title>StudySync – Your profile</title>
+  <script src="/public/theme.js"></script>
+  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/dashboard.css">
+  <link rel="stylesheet" href="/public/landing.css">
+  <link rel="stylesheet" href="/public/feedback.css">
+  <link rel="stylesheet" href="/public/dark.css">
+</head>
+<body>
+  <div class="box wide account-page">
+    <nav id="app-nav" data-page="profile"></nav>
+    <script src="/public/nav.js"></script>
+    <h1 class="page-title">Your profile</h1>
+    <p class="page-sub">How you show up to your study groups. Your email and password are in <a href="/account">Account settings</a>.</p>
+
+    <!-- Name: what study group members see -->
+    <section class="settings-card" id="name">
+      <h2>Your name</h2>
+      <p class="hint">This is how your study groups will know you. Your email stays private.</p>
+      <form id="name-form" class="settings-form">
+        <label>Full name
+          <input id="display-name" type="text" autocomplete="name" maxlength="40" required placeholder="e.g. Peter Griffin">
+        </label>
+        <p id="name-message" class="form-message" hidden></p>
+        <button type="submit">Save name</button>
+      </form>
+    </section>
+
+    <!-- Profile: photo, major, year, classes, each shared with study groups or kept private
+         (public/account.js, lib/profiles.js) -->
+    <section class="settings-card" id="profile">
+      <h2>About you</h2>
+      <p class="hint">People in your study groups can click your name to see your profile. Everything here is shown to them unless you switch it off.</p>
+      <p id="profile-off" class="hint" hidden>Profiles aren't switched on yet. Check back soon.</p>
+      <div id="profile-editor" class="profile-editor" hidden>
+        <div class="profile-row profile-photo-row">
+          <span id="profile-photo-preview" class="profile-preview"></span>
+          <div class="profile-photo-controls">
+            <div class="profile-photo-buttons">
+              <label class="button-like" id="photo-pick-label">
+                <span id="photo-pick-text">Add a photo</span>
+                <input id="photo-file" type="file" accept="image/*" hidden>
+              </label>
+              <button type="button" id="photo-remove" class="link-button" hidden>Remove</button>
+            </div>
+            <span class="field-hint">Your study groups see your photo. Classmates can report photos that aren't appropriate.</span>
+          </div>
+        </div>
+        <form id="profile-form" class="profile-form">
+          <div class="profile-row">
+            <label>Major
+              <input id="profile-major" type="text" maxlength="60" placeholder="e.g. Computer Science">
+            </label>
+            <label class="share-toggle"><input type="checkbox" data-share="major"> Show to my study groups</label>
+          </div>
+          <div class="profile-row">
+            <label>Year
+              <select id="profile-year">
+                <option value="">Not set</option>
+                <option value="freshman">Freshman</option>
+                <option value="sophomore">Sophomore</option>
+                <option value="junior">Junior</option>
+                <option value="senior">Senior</option>
+                <option value="grad">Grad student</option>
+              </select>
+            </label>
+            <label class="share-toggle"><input type="checkbox" data-share="year"> Show to my study groups</label>
+          </div>
+          <div class="profile-row">
+            <div class="profile-classes-field">
+              <span class="profile-field-label">Classes</span>
+              <ul id="profile-classes" class="profile-chips"></ul>
+              <span class="field-hint">From your schedule. <a href="/setup">Change your classes</a></span>
+            </div>
+            <label class="share-toggle"><input type="checkbox" data-share="classes"> Show to my study groups</label>
+          </div>
+          <p id="profile-message" class="form-message" hidden></p>
+          <button type="submit">Save profile</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="/public/members.js"></script>
+  <script src="/public/profile.js"></script>
+  <script src="/public/feedback.js"></script>
+</body>
+</html>
