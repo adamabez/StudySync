@@ -5,6 +5,7 @@
 const auth = require("../lib/auth");
 const materials = require("../lib/materials");
 const onboarding = require("../lib/onboarding");
+const profiles = require("../lib/profiles");
 const { sendJson, readJson } = require("../lib/http");
 
 // Changing the account needs the current password; these explain what went wrong
@@ -20,6 +21,13 @@ const ACCOUNT_ERRORS = {
   rate: "Too many tries. Wait a minute and try again.",
   unreachable: "Couldn't reach the login service. Try again.",
 };
+// The header's account circle shows your photo, if you have one (lib/profiles.js)
+async function myPhotoUrl(db) {
+  const { data, error } = await db.from("profiles").select("profile_id, photo_updated_at").maybeSingle();
+  if (error || !data) return null; // includes "supabase/profiles.sql not run yet"
+  return profiles.photoUrl(data.profile_id, profiles.photoVersion(data.photo_updated_at));
+}
+
 const accountError = (code) => ({ error: ACCOUNT_ERRORS[code] || "Something went wrong. Try again." });
 
 module.exports = [
@@ -36,11 +44,17 @@ module.exports = [
     sendJson(res, result);
   })],
 
-  ["POST", "/api/account/delete", ({ req, res, db }) => readJson(req, res, 10_000, async (input) => {
+  ["POST", "/api/account/delete", ({ req, res, db, userId }) => readJson(req, res, 10_000, async (input) => {
     if (input.confirm !== "DELETE") return sendJson(res, { error: "Type DELETE to confirm." }, 400);
     const result = await auth.deleteAccount(req, input.password, async () => {
       // PDFs live in Storage, which doesn't clean up by itself: remove them first
       for (const source of await materials.listSources(db)) await materials.removeSource(db, source.id);
+      // and their profile photo (lib/profiles.js), if they have one
+      try {
+        await profiles.removePhoto(db, userId);
+      } catch (error) {
+        if (!profiles.isNotSetUp(error)) throw error;
+      }
     });
     if (result.error) return sendJson(res, accountError(result.error), 400);
     res.setHeader("Set-Cookie", result.cookies);
@@ -50,6 +64,6 @@ module.exports = [
   // "Logged in as ..." on the dashboard
   ["GET", "/api/me", async ({ req, res, db, userId }) => {
     const profile = await onboarding.getProfile(db, userId);
-    sendJson(res, { email: req.user.email, name: onboarding.displayName(profile, req.user) });
+    sendJson(res, { email: req.user.email, name: onboarding.displayName(profile, req.user), photoUrl: await myPhotoUrl(db) });
   }],
 ];

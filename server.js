@@ -54,6 +54,7 @@ const publicRoutes = compile([...require("./routes/pages"), ...calendar.feedRout
 const apiRoutes = compile([
   ...require("./routes/account"),
   ...require("./routes/study"),
+  ...require("./routes/profiles"),
   ...require("./routes/schedule"),
   ...require("./routes/groups"),
   ...require("./routes/notes"),

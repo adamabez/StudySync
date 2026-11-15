@@ -53,7 +53,11 @@
       if (!inTerm || !s.days.includes(key)) continue;
       if (s.type === "group") {
         if (holiday) continue;
-        out.push({ kind: "group", name: s.name, start: s.start, end: s.end, note: s.note });
+        // Suggested until enough members say they're in (group page)
+        const inCount = ((s.inCounts || []).find((c) => c.date === date) || {}).count || 0;
+        const isOn = inCount >= (s.onAt || 2);
+        out.push({ kind: "group", name: s.name, start: s.start, end: s.end, suggested: !isOn,
+          note: s.inCounts ? (isOn ? `On · ${inCount} in` : `Suggested · ${inCount} of ${s.members || "?"} in`) : s.note });
       } else if (date >= thisMonday) {
         out.push({ kind: "study", name: "Study time", start: s.start, end: s.end, note: date >= addDays(thisMonday, 7) ? "Planned" : s.note });
       }
@@ -121,7 +125,7 @@
       chips.className = "cal-chips";
       for (const e of events.slice(0, MAX_CHIPS)) {
         const chip = document.createElement("span");
-        chip.className = "cal-chip " + e.kind;
+        chip.className = "cal-chip " + e.kind + (e.suggested ? " suggested" : "");
         if (e.color) chip.style.setProperty("--c", e.color);
         chip.textContent = (e.start ? formatTime(e.start).replace(":00", "").replace(" ", "").toLowerCase() + " " : "") + e.name;
         chips.appendChild(chip);
@@ -184,7 +188,7 @@
     list.className = "cal-day-list";
     for (const e of events) {
       const li = document.createElement("li");
-      li.className = "cal-day-item " + e.kind;
+      li.className = "cal-day-item " + e.kind + (e.suggested ? " suggested" : "");
       if (e.color) li.style.setProperty("--c", e.color);
       const time = document.createElement("span");
       time.className = "cal-day-time";

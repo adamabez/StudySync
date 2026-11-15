@@ -144,6 +144,13 @@ module.exports = [
   ["GET", "/calendar", appPage("calendar.html", { demoBanner: "auto" })], // the semester, month by month
   ["GET", "/notes", appPage("notes.html", { demoBanner: "auto" })], // every group's notes in one place
 
+  // Your profile: name, photo, major, year, classes and what study groups see (lib/profiles.js)
+  ["GET", "/profile", ({ res, loggedIn, inDemo }) => {
+    if (inDemo) return redirect(res, "/signup"); // a profile needs an account
+    if (!loggedIn) return redirect(res, "/login");
+    sendPage(res, "profile.html");
+  }],
+
   // Account settings: change email / password, dark mode, delete account
   ["GET", "/account", ({ res, loggedIn, inDemo }) => {
     if (inDemo) return redirect(res, "/signup"); // no account to change in the demo

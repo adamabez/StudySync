@@ -118,7 +118,7 @@ $("discord-remove").addEventListener("click", async () => {
 function renderGroup(group) {
   document.title = "StudySync – " + group.name;
   $("group-name").textContent = group.name;
-  $("group-when").textContent = "Meets " + group.days.map((d) => DAY_SHORT[d]).join(", ") +
+  $("group-when").textContent = "Suggested time: " + group.days.map((d) => DAY_SHORT[d]).join(", ") +
     " · " + formatTime(group.start) + " – " + formatTime(group.end);
 
   // Members: initials in colored circles (public/members.js, same as the study plan's cards),
@@ -138,20 +138,30 @@ function renderGroup(group) {
   for (const member of group.members) {
     const li = document.createElement("li");
     li.className = "member-row";
+    // Click a member to see their profile card (public/profile-card.js), when profiles are on
+    const row = member.profileId && window.studyProfile ? document.createElement("button") : li;
+    if (row !== li) {
+      row.type = "button";
+      row.className = "member-open";
+      row.setAttribute("aria-label", (member.isYou ? "Your profile" : member.name + "'s profile"));
+      row.addEventListener("click", () => window.studyProfile.open(member.profileId, member));
+      li.classList.add("clickable");
+      li.appendChild(row);
+    }
     const name = document.createElement("span");
     name.className = "member-name";
     name.textContent = member.name;
-    li.append(members.face(member), name);
+    row.append(members.face(member), name);
     if (member.isYou) {
       const you = document.createElement("span");
       you.className = "member-tag you";
       you.textContent = "You";
-      li.appendChild(you);
+      row.appendChild(you);
     } else if (changed.joined.includes(member.name)) {
       const fresh = document.createElement("span");
       fresh.className = "member-tag new";
       fresh.textContent = "New";
-      li.appendChild(fresh);
+      row.appendChild(fresh);
     }
     list.appendChild(li);
   }
@@ -285,11 +295,18 @@ function renderAll() {
   renderMeetup();
 }
 
-// ----- Next session: when and where, RSVPs, who's coming -----
+// ----- This week's session: a suggested time until ON_AT members are in, then it's on -----
+// Going or Running late counts as "in" (lib/meetups.js ON_AT on the server says the same).
+const ON_AT = 2;
 const STATUS = {
   going: { label: "Going", icon: "✓" },
   late: { label: "Running late", icon: "⏱" },
   cant: { label: "Can't make it", icon: "✕" },
+};
+// Before it's on, the choices are simpler: in, or not this week
+const SUGGESTED_STATUS = {
+  going: { label: "I'm in", icon: "✓" },
+  cant: { label: "Can't this week", icon: "✕" },
 };
 
 let picker = null; // open "find another time" list: { sessionDate } or null
@@ -305,8 +322,13 @@ function renderNext() {
   openChat(session.sessionDate);
   const answers = info.rsvps.filter((r) => r.sessionDate === session.sessionDate);
   const mine = answers.find((r) => r.isYou)?.status || null;
+  const inCount = answers.filter((r) => r.status === "going" || r.status === "late").length;
+  const isOn = inCount >= ON_AT;
   const now = new Date();
-  const live = session.startsAt <= now && now < session.endsAt;
+  const live = isOn && session.startsAt <= now && now < session.endsAt;
+  $("next-title").textContent = isOn ? "Next session" : "This week's session";
+  card.classList.toggle("suggested", !isOn);
+  card.classList.toggle("on", isOn);
 
   // Which class and group it's for: "CSC 130 · Group A" (names look like "CSC 130 | Group A")
   if (currentGroup) {
@@ -331,6 +353,35 @@ function renderNext() {
   // The class's color (same as its card on the study plan: public/members.js)
   if (currentGroup) card.style.setProperty("--g-hue", window.studyMembers.hueFor(currentGroup.course || currentGroup.name.split(" | ")[0]));
 
+  // Suggested or on: a strip with one dot per member, filled for each one who's in
+  const state = document.createElement("div");
+  state.className = "ns-state " + (isOn ? "on" : "suggested");
+  const stateText = document.createElement("div");
+  const stateTitle = document.createElement("strong");
+  const stateSub = document.createElement("span");
+  const size = currentGroup.members.length;
+  if (isOn) {
+    stateTitle.textContent = "It's on! 🎉";
+    stateSub.textContent = `${inCount} of ${size} in`;
+  } else {
+    const more = ON_AT - inCount;
+    stateTitle.textContent = "Suggested time";
+    stateSub.textContent = inCount
+      ? `${inCount} of ${size} in · ${more} more and it's on`
+      : `Everyone's free then. It's on once ${ON_AT} of you are in.`;
+  }
+  stateText.append(stateTitle, stateSub);
+  const dots = document.createElement("span");
+  dots.className = "ns-dots";
+  dots.setAttribute("aria-hidden", "true");
+  for (let i = 0; i < size; i++) {
+    const dot = document.createElement("span");
+    if (i < inCount) dot.className = "in";
+    dots.appendChild(dot);
+  }
+  state.append(stateText, dots);
+  card.appendChild(state);
+
   // When + where: a calendar tile, then the day, time and place
   const head = document.createElement("div");
   head.className = "ns-head";
@@ -344,7 +395,7 @@ function renderNext() {
   const tileDate = atTime(session.date, "12:00");
   head.querySelector(".ns-tile-day").textContent = DAY_LONG[tileDate.getDay()].slice(0, 3);
   head.querySelector(".ns-tile-num").textContent = tileDate.getDate();
-  head.querySelector(".ns-soon").textContent = live ? "Happening now" : soonText(session.date);
+  head.querySelector(".ns-soon").textContent = live ? "Happening now" : soonText(session.date) + (isOn ? "" : " · if enough of you are in");
   head.querySelector(".ns-date").textContent = prettyDate(session.date);
   head.querySelector(".ns-time").textContent = formatTime(session.start) + " – " + formatTime(session.end);
   const place = head.querySelector(".ns-place");
@@ -375,8 +426,11 @@ function renderNext() {
   const rsvp = document.createElement("div");
   rsvp.className = "ns-rsvp";
   rsvp.setAttribute("role", "group");
-  rsvp.setAttribute("aria-label", "Are you coming?");
-  for (const [key, s] of Object.entries(STATUS)) {
+  rsvp.setAttribute("aria-label", isOn ? "Are you coming?" : "Are you in for this week?");
+  // Before it's on: I'm in / Can't this week (and Running late, if that's already your answer)
+  const choices = isOn ? STATUS : { ...SUGGESTED_STATUS, ...(mine === "late" ? { late: STATUS.late } : {}) };
+  rsvp.classList.toggle("two", !isOn && mine !== "late");
+  for (const [key, s] of Object.entries(choices)) {
     const b = document.createElement("button");
     b.type = "button";
     b.className = `ns-choice ${key}`;
@@ -403,37 +457,50 @@ function renderNext() {
     li.className = "ns-person " + status;
     li.innerHTML = '<span class="ns-name"></span><span class="ns-status"></span>';
     li.querySelector(".ns-name").textContent = member.isYou ? "You" : member.name;
-    li.querySelector(".ns-status").textContent = status === "none" ? "No answer yet" : STATUS[status].label;
+    li.querySelector(".ns-status").textContent = status === "none" ? "No answer yet" : isOn ? STATUS[status].label : (status === "cant" ? "Can't this week" : status === "late" ? "In, running late" : "In");
     li.insertBefore(window.studyMembers.face(member, "small"), li.firstChild); // their initials, after the status dot
     people.appendChild(li);
   }
-  const summary = document.createElement("p");
+  // "Who's coming" / "Who's in" heading, with the tally beside it
+  const summary = document.createElement("div");
   summary.className = "ns-summary";
-  summary.textContent = [
+  const summaryLabel = document.createElement("span");
+  summaryLabel.className = "ns-summary-label";
+  summaryLabel.textContent = isOn ? "Who's coming" : "Who's in";
+  const summaryText = document.createElement("span");
+  summaryText.className = "ns-summary-text";
+  summary.append(summaryLabel, summaryText);
+  summaryText.textContent = (isOn ? [
     counts.going && `${counts.going} going`,
     counts.late && `${counts.late} running late`,
     counts.cant && `${counts.cant} can't make it`,
     counts.none && `${counts.none} haven't answered`,
-  ].filter(Boolean).join(" · ");
+  ] : [
+    counts.cant && `${counts.cant} can't this week`,
+    counts.none && `${counts.none} haven't answered`,
+  ]).filter(Boolean).join(" · ");
   card.append(summary, people);
 
-  // Can't make it? Find a time that works for everyone
+  // Can't make it? Find a time that works for everyone: one button-like tile
   const cantNames = answers.filter((r) => r.status === "cant").map((r) => (r.isYou ? "You" : r.name));
-  const move = document.createElement("div");
-  move.className = "ns-move" + (cantNames.length ? " needed" : "");
-  const prompt = document.createElement("p");
-  prompt.textContent = cantNames.length
-    ? `${cantNames.join(" and ")} can't make this one. Want to move it?`
-    : "This time doesn't work this week?";
-  const find = document.createElement("button");
-  find.type = "button";
-  find.className = cantNames.length ? "ns-find primary" : "ns-find";
-  find.textContent = "Find a time that works for everyone";
-  find.addEventListener("click", () => {
-    picker = picker ? null : { sessionDate: session.sessionDate };
+  const open = Boolean(picker && picker.sessionDate === session.sessionDate);
+  const move = document.createElement("button");
+  move.type = "button";
+  move.className = "ns-move" + (cantNames.length ? " needed" : "") + (open ? " open" : "");
+  move.setAttribute("aria-expanded", String(open));
+  move.innerHTML = `<span class="ns-move-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="15.5" r="2.5"/></svg></span>
+    <span class="ns-move-text"><strong></strong><span></span></span>
+    <span class="ns-move-go" aria-hidden="true"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></span>`;
+  move.querySelector("strong").textContent = cantNames.length
+    ? `${cantNames.join(" and ")} can't make this one`
+    : isOn ? "This time doesn't work?" : "Want a different time?";
+  move.querySelector(".ns-move-text span").textContent = open
+    ? "Hide the times"
+    : "See when everyone in the group is free this week";
+  move.addEventListener("click", () => {
+    picker = open ? null : { sessionDate: session.sessionDate };
     renderNext();
   });
-  move.append(prompt, find);
   card.appendChild(move);
 
   if (picker && picker.sessionDate === session.sessionDate) {
@@ -473,12 +540,12 @@ async function loadTimes(session, box) {
 
   box.innerHTML = "";
   if (options.length === 0) {
-    box.innerHTML = '<p class="hint">No time this week works for everyone. Try marking yourself as running late, or skip this one.</p>';
+    box.innerHTML = '<p class="ns-times-empty">No time this week works for everyone. Try marking yourself as running late, or skip this one.</p>';
     return;
   }
-  const title = document.createElement("p");
-  title.className = "ns-times-title";
-  title.textContent = "Everyone is free at these times:";
+  const title = document.createElement("div");
+  title.className = "ns-times-head";
+  title.innerHTML = "<strong>Everyone's free at these times</strong><span>Pick one to move this week's session. Everyone answers again for the new time.</span>";
   box.appendChild(title);
 
   // A few per day, for the first few days that have any, so the list stays short
@@ -490,9 +557,13 @@ async function loadTimes(session, box) {
   for (const [date, list] of [...byDay].slice(0, 4)) {
     const row = document.createElement("div");
     row.className = "ns-day";
+    // A small calendar tile for the day, like the session's own
+    const d = atTime(date, "12:00");
     const label = document.createElement("span");
-    label.className = "ns-day-label";
-    label.textContent = (soonText(date) === "Today" || soonText(date) === "Tomorrow" ? soonText(date) + " · " : "") + prettyDate(date);
+    label.className = "ns-day-tile";
+    label.innerHTML = '<span class="ns-day-dow"></span><span class="ns-day-num"></span>';
+    label.querySelector(".ns-day-dow").textContent = ["Today", "Tomorrow"].includes(soonText(date)) ? soonText(date) : DAY_LONG[d.getDay()].slice(0, 3);
+    label.querySelector(".ns-day-num").textContent = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     row.appendChild(label);
     const times = document.createElement("div");
     times.className = "ns-day-times";
@@ -502,7 +573,9 @@ async function loadTimes(session, box) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "ns-time-option";
-      b.textContent = formatTime(o.start);
+      b.innerHTML = "<strong></strong><span></span>";
+      b.querySelector("strong").textContent = formatTime(o.start);
+      b.querySelector("span").textContent = "to " + formatTime(o.end);
       b.title = formatTime(o.start) + " – " + formatTime(o.end);
       b.addEventListener("click", async () => {
         if (!confirm(`Move this week's session to ${prettyDate(o.date)}, ${formatTime(o.start)} – ${formatTime(o.end)}? Everyone will see the new time and answer again.`)) return;
@@ -647,7 +720,7 @@ async function sendChat() {
       showNote("sc-error", data.error || "Couldn't send that. Try again.");
       if (data.needsName) {
         const link = document.createElement("a");
-        link.href = "/account#name";
+        link.href = "/profile#name";
         link.textContent = " Add your name";
         $("sc-error").appendChild(link);
       }

@@ -2,7 +2,7 @@
 //
 // Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan | Notes | Calendar tabs ·
 // Share button (a QR code friends can scan, public/share.js) · light/dark switch (theme.js puts it next to the
-// account circle) · account circle. The circle opens a menu: who's logged in, Edit schedule,
+// account circle) · account circle. The circle opens a menu: who's logged in, Your profile, Edit schedule,
 // Account settings, Get the app (early), Log out. In the demo it offers sign-up and "Exit demo" instead.
 //
 // Phones get the same tabs, on their own row under the logo (dashboard.css, 600px and under).
@@ -59,12 +59,13 @@
   const email = el("span", { class: "account-email" }, "your account");
   const links = el("div", { class: "account-links" });
   const item = (href, text) => el("a", { href, class: "account-item" }, text);
+  const profileLink = item("/profile", "Your profile"); // name, photo, major, year (pages/profile.html)
   const editLink = item("/setup", "Edit schedule");
   const settingsLink = item("/account", "Account settings");
   const logoutLink = item("/logout", "Log out");
   const appLink = item("#", "Get the app (early)"); // opens the install window (public/install.js)
   appLink.setAttribute("data-install-app", "");
-  links.append(editLink, settingsLink, appLink, logoutLink);
+  links.append(profileLink, editLink, settingsLink, appLink, logoutLink);
   card.append(label, name, email, links);
   menu.append(card);
   account.append(button, menu);
@@ -113,6 +114,12 @@
     if (!info || !info.email) return;
     const who = info.name || info.email;
     initial.textContent = who[0].toUpperCase();
+    if (info.photoUrl) {
+      // Your profile photo (lib/profiles.js); the initial stays underneath if it won't load
+      const photo = el("img", { src: info.photoUrl, alt: "", class: "avatar-photo" });
+      photo.addEventListener("error", () => photo.remove());
+      button.append(photo);
+    }
     button.setAttribute("aria-label", "Account: " + who);
     email.textContent = info.email;
     email.title = info.email; // the full address, in case it's cut off
@@ -123,6 +130,7 @@
     if (info.demo) {
       // No account to open in the demo
       label.textContent = "Trying the demo";
+      profileLink.remove(); // a profile needs an account
       email.hidden = true;
       settingsLink.textContent = "Create a free account";
       settingsLink.href = "/signup";

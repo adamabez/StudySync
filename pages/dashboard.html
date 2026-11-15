@@ -394,7 +394,7 @@
       if (!me || !me.email) return;
       const welcome = document.getElementById("dash-welcome");
       if (me.name) welcome.textContent = "Welcome back, " + me.name.split(" ")[0] + "!";
-      else if (!me.demo) welcome.innerHTML = 'Welcome! <a href="/account#name">Add your full name</a> so your study group knows who you are.';
+      else if (!me.demo) welcome.innerHTML = 'Welcome! <a href="/profile#name">Add your full name</a> so your study group knows who you are.';
     });
   </script>
   <script src="/public/password-toggle.js"></script>
