@@ -85,6 +85,33 @@
       error.textContent = MESSAGES[code] || MESSAGES.unknown;
       error.hidden = false;
     }
+
+    // Keep the name and email after a failed try, so only the field that was wrong needs
+    // fixing. They're saved in this tab only (sessionStorage) when the form is sent, put back
+    // when the server sends you back with an error, and forgotten otherwise. Never the password.
+    (function () {
+      const form = document.querySelector('form[action="/signup"]');
+      const fields = { name: form.elements.name, email: form.elements.email, password: form.elements.password };
+      const KEY = "studysync-signup";
+      const store = {
+        get() { try { return JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch { return null; } },
+        set(value) { try { sessionStorage.setItem(KEY, JSON.stringify(value)); } catch {} },
+        clear() { try { sessionStorage.removeItem(KEY); } catch {} },
+      };
+
+      form.addEventListener("submit", () => store.set({ name: fields.name.value, email: fields.email.value }));
+
+      const saved = store.get();
+      if (!code || !saved) return store.clear();
+      fields.name.value = saved.name || "";
+      fields.email.value = saved.email || "";
+      // Put the cursor in the box that needs fixing
+      const wrong = code.startsWith("name") ? fields.name
+        : code === "exists" || code === "email" ? fields.email
+        : fields.password;
+      wrong.focus();
+      if (wrong !== fields.password) wrong.select();
+    })();
   </script>
   <script src="/public/feedback.js"></script>
   <script src="/public/password-toggle.js"></script>
