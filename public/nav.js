@@ -1,6 +1,7 @@
 // StudySync - the header on every logged-in page (runs in the browser).
 //
-// Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan | Notes | Calendar tabs · light/dark switch (theme.js puts it next to the
+// Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan | Notes | Calendar tabs ·
+// Share button (a QR code friends can scan, public/share.js) · light/dark switch (theme.js puts it next to the
 // account circle) · account circle. The circle opens a menu: who's logged in, Edit schedule,
 // Account settings, Get the app (early), Log out. In the demo it offers sign-up and "Exit demo" instead.
 //
@@ -68,7 +69,12 @@
   menu.append(card);
   account.append(button, menu);
 
-  holder.append(logo, tabs, account);
+  // Share StudySync: opens the QR code window (public/share.js). theme.js groups it with the
+  // light/dark switch and the account circle.
+  const share = el("button", { type: "button", class: "nav-share", id: "nav-share", "data-share-app": "", "aria-label": "Share StudySync with a friend", title: "Share StudySync" });
+  share.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg><span class="nav-share-label">Share</span>';
+
+  holder.append(logo, tabs, share, account);
 
   // ---------- Opening and closing the menu ----------
   // Computers: hovering or tabbing to the circle opens it (CSS). Phones: tap to open; tapping
