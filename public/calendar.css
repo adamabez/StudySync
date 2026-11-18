@@ -1,4 +1,4 @@
-/* StudySync - the calendar page (pages/calendar.html, public/calendar.js). Dark mode at the bottom. */
+/* YoraBora - the calendar page (pages/calendar.html, public/calendar.js). Dark mode at the bottom. */
 
 /* ---------- Month header: ‹ November 2026 › Today ---------- */
 .cal-head { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }

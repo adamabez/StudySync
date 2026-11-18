@@ -1,4 +1,4 @@
-// StudySync - study time planner. Shared by the server (require("./public/planner"))
+// YoraBora - study time planner. Shared by the server (require("./public/planner"))
 // and the browser (window.StudyPlanner), so both always agree on what's free.
 //
 // Works out the free time in a student's week, plans study sessions that add up to

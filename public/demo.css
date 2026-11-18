@@ -1,4 +1,4 @@
-/* StudySync - the "You're trying a demo" banner (added to pages by demo.js) */
+/* YoraBora - the "You're trying a demo" banner (added to pages by demo.js) */
 
 /* Stack the banner above the page's card instead of beside it */
 body.is-demo { flex-direction: column; justify-content: flex-start; gap: 16px; }
@@ -121,7 +121,7 @@ body.is-demo > .box { margin: 0 auto; }
 .preview-tabs button[aria-current="true"] { background: #2b4acb; border-color: #2b4acb; color: white; }
 .preview-tabs button:focus-visible { outline: 2px solid #2b4acb; outline-offset: 2px; }
 
-/* The problem StudySync solves, above "See how it works" */
+/* The problem YoraBora solves, above "See how it works" */
 
 .preview-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
 .preview-hint { font-size: 13px; color: #777; }

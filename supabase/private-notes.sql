@@ -1,4 +1,4 @@
--- StudySync - private notes: notes only you can see, on the Notes page (lib/privatenotes.js).
+-- YoraBora - private notes: notes only you can see, on the Notes page (lib/privatenotes.js).
 -- A private note can belong to one of your groups (group_id) without being shared with it;
 -- sharing it moves it to group_notes, and making a group note private moves it back here.
 -- Only you can see, add or delete yours. Run once in the Supabase SQL Editor (also in schema.sql).

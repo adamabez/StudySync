@@ -1,4 +1,4 @@
-// StudySync - Homework from Canvas (the "Homework" section on the dashboard).
+// YoraBora - Homework from Canvas (the "Homework" section on the dashboard).
 //
 // Talks to the routes in canvas.js on the server:
 //   GET    /api/canvas/status       → { connected, canvasUrl }
@@ -54,7 +54,7 @@
       body: body ? JSON.stringify(body) : undefined,
     });
     if (res.status === 401) {
-      window.location.href = "/login"; // logged out of StudySync
+      window.location.href = "/login"; // logged out of YoraBora
       throw new Error("Not logged in");
     }
     let data = {};

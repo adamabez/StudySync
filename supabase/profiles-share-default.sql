@@ -1,4 +1,4 @@
--- StudySync - profiles are shared with your study groups by default. Run this once in the
+-- YoraBora - profiles are shared with your study groups by default. Run this once in the
 -- Supabase SQL Editor if you already ran supabase/profiles.sql before this change.
 --
 -- New profiles get everything shared (each part can be switched off on the profile page).

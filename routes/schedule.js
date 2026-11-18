@@ -1,4 +1,4 @@
-// StudySync - API: the student's calendar items (lib/schedule.js) and the Sac State course
+// YoraBora - API: the student's calendar items (lib/schedule.js) and the Sac State course
 // catalog the class picker uses (lib/courses.js, lib/sections.js).
 
 const schedule = require("../lib/schedule");

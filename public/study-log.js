@@ -1,4 +1,4 @@
-// StudySync - "I studied" checkmarks on study sessions, and the weekly progress bar (runs in the browser).
+// YoraBora - "I studied" checkmarks on study sessions, and the weekly progress bar (runs in the browser).
 // Used by the study plan page (landing.js) and the dashboard (dashboard.js).
 // Saved by date through /api/study-log (studylog.js), so each week starts fresh.
 

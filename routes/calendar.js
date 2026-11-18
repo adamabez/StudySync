@@ -1,4 +1,4 @@
-// StudySync - "Add to my calendar": a private link Google / Apple / Outlook Calendar subscribe to.
+// YoraBora - "Add to my calendar": a private link Google / Apple / Outlook Calendar subscribe to.
 //
 //   GET  /calendar/<code>.ics        the feed itself (no login: calendar apps fetch it on their own)
 //   GET  /api/calendar/link          the student's link (made the first time they ask)
@@ -46,12 +46,12 @@ const feedRoutes = [
     if (error && !isNotSetUp(error)) throw error;
     if (error || !data) {
       res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-      return res.end("This calendar link doesn't work anymore. Get a new one from the Calendar page in StudySync.");
+      return res.end("This calendar link doesn't work anymore. Get a new one from the Calendar page in YoraBora.");
     }
     const ics = buildFeed(data, await terms.getTerm());
     res.writeHead(200, {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": 'inline; filename="studysync.ics"',
+      "Content-Disposition": 'inline; filename="yorabora.ics"',
       "Cache-Control": "private, max-age=900",
     });
     res.end(ics);

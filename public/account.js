@@ -1,4 +1,4 @@
-// StudySync - account settings page (runs in the browser): theme, change email, change password,
+// YoraBora - account settings page (runs in the browser): theme, change email, change password,
 // delete account. Your name and profile are on the profile page (public/profile.js). Every account change asks for the current password.
 
 const $ = (id) => document.getElementById(id);
@@ -74,7 +74,7 @@ handle("password-form", "password-message", async (form) => {
 // ---------- Delete account ----------
 handle("delete-form", "delete-message", async () => {
   if ($("delete-confirm").value.trim() !== "DELETE") throw new Error("Type DELETE (in capitals) to confirm.");
-  if (!confirm("Delete your StudySync account for good? This can't be undone.")) return;
+  if (!confirm("Delete your YoraBora account for good? This can't be undone.")) return;
   const data = await post("/api/account/delete", { password: $("delete-password").value, confirm: "DELETE" });
   if (data) window.location.href = "/login?deleted=1";
 });

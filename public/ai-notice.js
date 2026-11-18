@@ -1,4 +1,4 @@
-// StudySync - the "Early access" notices (runs in the browser).
+// YoraBora - the "Early access" notices (runs in the browser).
 //
 // Login and sign-up (#ai-notice): only shown while the AI runs on Gemini's free tier
 // (the server says so at /ai-status). Starts minimized to its title on every page load;

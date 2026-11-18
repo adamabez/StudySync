@@ -1,4 +1,4 @@
-# StudySync: Team Plan
+# YoraBora: Team Plan
 
 How we're splitting the work. Each person owns different files, so we shouldn't hit many merge conflicts.
 

@@ -1,4 +1,4 @@
-// StudySync - the calendar page: the whole semester, a month at a time (runs in the browser).
+// YoraBora - the calendar page: the whole semester, a month at a time (runs in the browser).
 //
 // Classes and other weekly items repeat on their days from the first to the last day of classes
 // (/api/term, lib/terms.js); classes and study group meetings skip holidays. One-time items show
@@ -196,7 +196,7 @@
       const name = document.createElement("strong");
       name.textContent = e.name;
       li.append(time, name);
-      const extra = [e.kind === "study" ? "Study time, planned by StudySync" : e.kind === "group" ? "Study group" : "", e.once ? "One time" : "", e.note].filter(Boolean).join(" · ");
+      const extra = [e.kind === "study" ? "Study time, planned by YoraBora" : e.kind === "group" ? "Study group" : "", e.once ? "One time" : "", e.note].filter(Boolean).join(" · ");
       if (extra) {
         const note = document.createElement("span");
         note.className = "cal-day-note";

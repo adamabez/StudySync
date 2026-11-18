@@ -1,4 +1,4 @@
-// StudySync - API: the study assistant (Virtual Notebook): course materials
+// YoraBora - API: the study assistant (Virtual Notebook): course materials
 // (lib/materials.js), saved chats (lib/chats.js) and asking the AI (lib/ai.js).
 
 const ai = require("../lib/ai");

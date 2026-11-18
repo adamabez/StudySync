@@ -1,4 +1,4 @@
--- StudySync: "I studied" checkmarks on solo study sessions and study group meetings.
+-- YoraBora: "I studied" checkmarks on solo study sessions and study group meetings.
 -- Same as the study_log part of schema.sql, on its own so it's quick to run.
 -- Supabase dashboard → SQL Editor → paste this → Run. Safe to run more than once.
 

@@ -1,4 +1,4 @@
-// StudySync - the server: starts it up and sends each request to its route.
+// YoraBora - the server: starts it up and sends each request to its route.
 // Run with:  node --watch server.js   (or press F5 in VS Code)
 // Then open: http://localhost:3000
 //
@@ -106,7 +106,7 @@ async function handleRequest(req, res) {
 
 // ---------- Start the server ----------
 server.listen(PORT, () => {
-  console.log(`StudySync is running at ${(process.env.PUBLIC_URL || "").trim() || "http://localhost:" + PORT}`);
+  console.log(`YoraBora is running at ${(process.env.PUBLIC_URL || "").trim() || "http://localhost:" + PORT}`);
   if (!auth.isConfigured()) console.log("Login: put the real SUPABASE_URL and SUPABASE_KEY in .env (not the example values), then restart.");
   const aiInfo = ai.providerInfo();
   if (ai.providerProblem()) console.log("AI: " + ai.providerProblem());

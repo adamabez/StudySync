@@ -1,4 +1,4 @@
-// StudySync - show / hide password (runs in the browser).
+// YoraBora - show / hide password (runs in the browser).
 //
 // Adds an eye button inside every password box on the page. Clicking it shows what you typed;
 // clicking again hides it. Include this on any page with a password box (styles: .pw-wrap and

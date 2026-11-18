@@ -1,4 +1,4 @@
--- StudySync - profiles: a photo, major, year and classes for your study groups to see. The photo
+-- YoraBora - profiles: a photo, major, year and classes for your study groups to see. The photo
 -- always shows to them; major, year and classes can each be kept to yourself.
 -- Run this once in the Supabase SQL Editor (it's also at the end of schema.sql). Safe to run again.
 --

@@ -1,4 +1,4 @@
-// StudySync - builds public/dark.css (dark mode) from the other stylesheets.
+// YoraBora - builds public/dark.css (dark mode) from the other stylesheets.
 //
 // Run after changing colors in any stylesheet:   node scripts/build-dark-css.js
 //
@@ -63,7 +63,7 @@ function flip(text, role) {
   const alpha = c[3];
   let [h, s, l] = toHsl(c);
   const colorful = s > 0.3 && l > 0.12 && l < 0.88;
-  // Plain white / gray surfaces and borders get a faint StudySync blue instead of flat gray
+  // Plain white / gray surfaces and borders get a faint YoraBora blue instead of flat gray
   if (s < 0.05 && (role === "bg" || role === "border") && l >= 0.7) { h = 228; s = 0.22; }
 
   if (role === "text") {
@@ -286,7 +286,7 @@ ${PREFIX} .choice-solo:has(input:checked) .choice-check { border-color: #2a9d92;
 ${PREFIX} img.logo { content: url("/public/logo-dark.png"); }
 `;
 
-let output = `/* StudySync dark mode. MADE BY scripts/build-dark-css.js: don't edit by hand, re-run the script.
+let output = `/* YoraBora dark mode. MADE BY scripts/build-dark-css.js: don't edit by hand, re-run the script.
    Active when <html data-theme="dark"> (set by public/theme.js). */
 `;
 for (const file of SOURCES) {

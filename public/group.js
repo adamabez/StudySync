@@ -1,4 +1,4 @@
-// StudySync - one study group's page (runs in the browser): who's in it, when it meets,
+// YoraBora - one study group's page (runs in the browser): who's in it, when it meets,
 // the next session (who's coming, moving it, where), and the notes members share with each other.
 
 const { DAY_SHORT, formatTime } = window.studyFormat; // public/format.js
@@ -116,7 +116,7 @@ $("discord-remove").addEventListener("click", async () => {
 });
 
 function renderGroup(group) {
-  document.title = "StudySync – " + group.name;
+  document.title = "YoraBora – " + group.name;
   $("group-name").textContent = group.name;
   $("group-when").textContent = "Suggested time: " + group.days.map((d) => DAY_SHORT[d]).join(", ") +
     " · " + formatTime(group.start) + " – " + formatTime(group.end);

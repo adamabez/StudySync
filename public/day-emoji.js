@@ -1,4 +1,4 @@
-// StudySync - the little emoji on each day of the week (runs in the browser).
+// YoraBora - the little emoji on each day of the week (runs in the browser).
 // Used by the dashboard's week (dashboard.js) and the study plan's week (landing.js).
 //
 //   📚  a day with classes

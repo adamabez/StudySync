@@ -1,4 +1,4 @@
-// StudySync - first-login setup screen (runs in the browser).
+// YoraBora - first-login setup screen (runs in the browser).
 // Step 1: add classes and other commitments (saved with the same /api/classes routes
 // as the dashboard). Step 2: study alone or in a group? Step 3: hours a week. Finish → /landing.
 

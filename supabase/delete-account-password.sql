@@ -1,4 +1,4 @@
--- StudySync - "Delete my account" checks the password inside the database too.
+-- YoraBora - "Delete my account" checks the password inside the database too.
 -- Run this once in the Supabase SQL Editor (it's also in schema.sql). Safe to run again.
 --
 -- Before: the server checked your password, then called delete_my_account(), which only needed

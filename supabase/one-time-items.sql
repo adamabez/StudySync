@@ -1,4 +1,4 @@
--- StudySync: one-time items on the schedule (a task or "other" on one date, not every week).
+-- YoraBora: one-time items on the schedule (a task or "other" on one date, not every week).
 -- Same as the matching lines in schema.sql, on their own so they're quick to run.
 -- Supabase dashboard → SQL Editor → paste this → Run. Safe to run more than once.
 

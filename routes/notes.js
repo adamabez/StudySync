@@ -1,4 +1,4 @@
-// StudySync - API: private notes, only you can see them (lib/privatenotes.js), and switching a
+// YoraBora - API: private notes, only you can see them (lib/privatenotes.js), and switching a
 // note between private and shared with its group. Group notes themselves are in routes/groups.js.
 
 const priv = require("../lib/privatenotes");

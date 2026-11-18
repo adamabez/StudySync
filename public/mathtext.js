@@ -1,4 +1,4 @@
-// StudySync - turns LaTeX math in AI answers into plain readable text (runs in the browser,
+// YoraBora - turns LaTeX math in AI answers into plain readable text (runs in the browser,
 // loaded before notebook.js). The notebook can't render LaTeX, so
 //   $x = \frac{1}{2}at^2 + v_0 t + x_0$   →   x = ½at² + v₀t + x₀
 // The AI is asked to write math this way already (ai.js); this catches what slips through,

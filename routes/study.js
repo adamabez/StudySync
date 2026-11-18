@@ -1,4 +1,4 @@
-// StudySync - API: the student's profile (lib/onboarding.js), their weekly study plan and
+// YoraBora - API: the student's profile (lib/onboarding.js), their weekly study plan and
 // its quick edits (lib/studyplan.js), and "I studied" checkmarks (lib/studylog.js).
 
 const ai = require("../lib/ai");

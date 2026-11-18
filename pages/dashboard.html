@@ -9,11 +9,11 @@
   <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
   <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
-  <meta name="apple-mobile-web-app-title" content="StudySync">
+  <meta name="apple-mobile-web-app-title" content="YoraBora">
   <script src="/public/install.js" defer></script>
   <script src="/public/share.js" defer></script>
   <script src="/public/theme.js"></script>
-  <title>StudySync – Dashboard</title>
+  <title>YoraBora – Dashboard</title>
   <link rel="stylesheet" href="/public/style.css">
   <link rel="stylesheet" href="/public/dashboard.css">
   <link rel="stylesheet" href="/public/notebook.css">
@@ -45,7 +45,7 @@
         <li><span class="swatch class"></span>Classes</li>
         <li><span class="swatch task"></span>Tasks</li>
         <li><span class="swatch other"></span>Other</li>
-        <li class="legend-study"><span class="study-sparkle-inline" aria-hidden="true">✦</span>Study time, planned by StudySync</li>
+        <li class="legend-study"><span class="study-sparkle-inline" aria-hidden="true">✦</span>Study time, planned by YoraBora</li>
       </ul>
     </div>
     <!-- Async classes with no days picked show here, above the week -->
@@ -161,10 +161,10 @@
             <ol>
               <li>Log in to Canvas and click <strong>Account</strong>, then <strong>Settings</strong>.</li>
               <li>Under <strong>Approved Integrations</strong>, click <strong>+ New Access Token</strong>. (Some schools, like Sac State, turn this off. Use the Calendar Feed link instead.)</li>
-              <li>Type "StudySync" as the purpose, then click <strong>Generate Token</strong>.</li>
+              <li>Type "YoraBora" as the purpose, then click <strong>Generate Token</strong>.</li>
               <li>Copy the token and paste it here. Canvas only shows it once.</li>
             </ol>
-            <p class="hw-small">With a token, StudySync can see what you turned in and your scores.</p>
+            <p class="hw-small">With a token, YoraBora can see what you turned in and your scores.</p>
           </details>
         </div>
         <p id="canvas-connect-error" class="error"></p>
@@ -244,8 +244,8 @@
             <strong>AI answers aren't turned on yet.</strong>
             <p>You can still add and read your materials. They'll be ready to ask about once it's on.</p>
             <details>
-              <summary>Setting up StudySync?</summary>
-              <p>Create a file named <code>.env</code> in your StudySync folder containing
+              <summary>Setting up YoraBora?</summary>
+              <p>Create a file named <code>.env</code> in your YoraBora folder containing
                 <code>AI_PROVIDER=gemini</code> and <code>GEMINI_API_KEY=your-key-here</code>
                 (free key from aistudio.google.com/apikey), then restart the server.</p>
             </details>
@@ -366,7 +366,7 @@
 
     <!-- ========== Footer: feedback, bug reports, feature ideas (public/feedback.js) ========== -->
     <footer class="dash-footer">
-      <span>StudySync is still in development. What should we build next?</span>
+      <span>YoraBora is still in development. What should we build next?</span>
       <button type="button" class="link-button" data-feedback-open="idea">Suggest a feature</button>
       <span aria-hidden="true">·</span>
       <button type="button" class="link-button" data-feedback-open="bug">Report a bug</button>

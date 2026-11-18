@@ -1,4 +1,4 @@
-// StudySync - feedback, bug reports and feature ideas, from every page (runs in the browser).
+// YoraBora - feedback, bug reports and feature ideas, from every page (runs in the browser).
 //
 // Adds a "Suggest a feature" button to the bottom corner of the page and the popup form it
 // opens. Anything with data-feedback-open (or id="feedback-open") opens the form too.
@@ -12,9 +12,9 @@
   const KINDS = {
     idea: {
       label: "💡 Feature idea",
-      title: "What would you like StudySync to do?",
+      title: "What would you like YoraBora to do?",
       placeholder: "e.g. Remind me the night before an assignment is due",
-      starters: ["I wish StudySync could… ", "It would be easier if… ", "Can you connect it to… "],
+      starters: ["I wish YoraBora could… ", "It would be easier if… ", "Can you connect it to… "],
     },
     bug: {
       label: "🐞 Something broke",
@@ -39,7 +39,7 @@
   fab.className = "fb-fab";
   fab.setAttribute("aria-haspopup", "dialog");
   fab.innerHTML = '<span class="fb-fab-icon" aria-hidden="true">💡</span><span class="fb-fab-text">Suggest a feature</span><span class="fb-fab-beta">Beta</span>';
-  fab.title = "StudySync is still in development. Share an idea, report a bug, or tell us what you think.";
+  fab.title = "YoraBora is still in development. Share an idea, report a bug, or tell us what you think.";
 
   const dialog = document.createElement("dialog");
   dialog.className = "fb-dialog";
@@ -50,8 +50,8 @@
         <span class="fb-badge">Still in development</span>
         <button type="button" class="fb-close" aria-label="Close">×</button>
       </div>
-      <h2 id="fb-title">Help shape StudySync</h2>
-      <p class="fb-intro">StudySync is being built right now by a small student team, and your ideas decide what we build next. Big or small, we read every one.</p>
+      <h2 id="fb-title">Help shape YoraBora</h2>
+      <p class="fb-intro">YoraBora is being built right now by a small student team, and your ideas decide what we build next. Big or small, we read every one.</p>
 
       <fieldset class="fb-kinds">
         <legend class="fb-sr">What kind of message?</legend>
@@ -78,7 +78,7 @@
     <div class="fb-thanks" hidden>
       <div class="fb-thanks-icon" aria-hidden="true">🙌</div>
       <h2>Thank you!</h2>
-      <p>The StudySync team reads every message. Ideas like yours are how we decide what to build next.</p>
+      <p>The YoraBora team reads every message. Ideas like yours are how we decide what to build next.</p>
       <div class="fb-actions fb-thanks-actions">
         <button type="button" class="fb-another">Send another</button>
         <button type="button" class="fb-done">Done</button>
@@ -200,7 +200,7 @@
   }
   if (earlyBoxes.length) setEarly(earlyMinimized);
 
-  // A link ending in #feedback (e.g. studysync.../#feedback on a poster) opens the form right away
+  // A link ending in #feedback (e.g. yorabora.../#feedback on a poster) opens the form right away
   if (location.hash === "#feedback") open("idea");
 
   // ---------- Send ----------

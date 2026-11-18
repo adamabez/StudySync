@@ -1,4 +1,4 @@
-// StudySync - routes that work without logging in: the pages themselves, the login /
+// YoraBora - routes that work without logging in: the pages themselves, the login /
 // sign-up / password forms, starting and ending the demo, and feedback from any page.
 //
 // ctx (from server.js): { req, res, url, loggedIn, inDemo, demoMode, endDemo }
@@ -41,7 +41,7 @@ module.exports = [
   // so it works for everyone, the demo too.
   ["GET", "/api/term", async ({ res }) => sendJson(res, await terms.getTerm())],
 
-  // "Share StudySync" (public/share.js): the site's address and a QR code for it, so a friend
+  // "Share YoraBora" (public/share.js): the site's address and a QR code for it, so a friend
   // can scan it off your screen. Not private, so it works logged out and in the demo too.
   ["GET", "/share.json", async ({ req, res }) => {
     const url = siteUrl(req) + "/";
@@ -50,7 +50,7 @@ module.exports = [
     res.end(JSON.stringify({ url, svg }));
   }],
 
-  // Installing StudySync as an app: the service worker has to come from the top of the site
+  // Installing YoraBora as an app: the service worker has to come from the top of the site
   // (not /public/) to cover every page. no-cache: phones check for a new version each visit.
   ["GET", "/sw.js", ({ res }) => {
     res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache" });
@@ -65,7 +65,7 @@ module.exports = [
     sendJson(res, { freeTier: ai.providerInfo().freeTier }); // shown even before the key is added
   }],
 
-  // Front page: what StudySync is, with the live demo and sign-up (skipped if logged in).
+  // Front page: what YoraBora is, with the live demo and sign-up (skipped if logged in).
   // Older links (email confirmation, errors, "account deleted") pointed at /?..., so those
   // go to the login page with the same query; the browser keeps any #... part.
   ["GET", "/", ({ res, url, loggedIn }) => {

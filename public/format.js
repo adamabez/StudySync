@@ -1,4 +1,4 @@
-// StudySync - small text helpers shared by the browser scripts (load before them):
+// YoraBora - small text helpers shared by the browser scripts (load before them):
 // window.studyFormat.formatTime("14:30") → "2:30 PM", and DAY_SHORT.mon → "Mon".
 
 (function () {

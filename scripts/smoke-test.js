@@ -1,4 +1,4 @@
-// StudySync - smoke test: starts the server and checks that every page and API route
+// YoraBora - smoke test: starts the server and checks that every page and API route
 // still answers the same way. It uses the demo (sample data, no Supabase writes), so it's
 // safe to run anywhere.
 //

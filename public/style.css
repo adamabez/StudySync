@@ -1,4 +1,4 @@
-/* StudySync - shared look for every page */
+/* YoraBora - shared look for every page */
 
 body {
   margin: 0;
@@ -424,7 +424,7 @@ button:hover { background: #2240b0; }
 .install-steps { margin: 0; padding-left: 22px; text-align: left; font-size: 15px; line-height: 1.5; color: #333a55; }
 .install-steps li + li { margin-top: 8px; }
 .install-share { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 6px; background: #eef1fb; color: #2b4acb; font-weight: 600; white-space: nowrap; vertical-align: middle; }
-/* ---------- "Share StudySync" window (public/share.js), built on the install window ---------- */
+/* ---------- "Share YoraBora" window (public/share.js), built on the install window ---------- */
 .share-lead { margin: 0 0 14px; font-size: 15px; color: #4a5272; }
 /* The code keeps its own white background (in the SVG) so phones can scan it in dark mode too */
 .share-qr { display: flex; align-items: center; justify-content: center; width: 220px; height: 220px; margin: 0 auto; border-radius: 12px; overflow: hidden; }

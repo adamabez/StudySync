@@ -1,4 +1,4 @@
-// StudySync - the class picker (runs in the browser, on the setup page and the dashboard).
+// YoraBora - the class picker (runs in the browser, on the setup page and the dashboard).
 // While adding a class, the name box opens a dropdown: every subject A-Z to browse (MATH →
 // its classes), or, once you type, Sac State courses that match ("csc 2", "data struct",
 // from /api/courses). Arrow keys + Enter, or click. Picking one means you're matched with everyone else

@@ -1,4 +1,4 @@
-// StudySync - calendar colors (runs in the browser).
+// YoraBora - calendar colors (runs in the browser).
 // ★ The ONLY place calendar colors are set: the dashboard's cards and color key, and the
 // setup page's schedule list, all use this. Each kind has its own color family (hue range
 // on the color wheel, in degrees), and every item gets its own shade inside it, by name.

@@ -1,4 +1,4 @@
-// StudySync - "Every week" vs "One time" for schedule items (runs in the browser).
+// YoraBora - "Every week" vs "One time" for schedule items (runs in the browser).
 //
 // window.studyDates: helpers for one-time items (item.date = "2026-11-15"), on every page
 // that shows the week. window.repeatPicker: the "Every week / One time" switch in the Add

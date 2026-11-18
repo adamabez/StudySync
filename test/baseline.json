@@ -1,11 +1,11 @@
 {
   "out GET /": {
     "status": 200,
-    "title": "StudySync – Study smarter, together"
+    "title": "YoraBora – Study smarter, together"
   },
   "out GET /login": {
     "status": 200,
-    "title": "StudySync – Log in"
+    "title": "YoraBora – Log in"
   },
   "out GET /?error=invalid": {
     "status": 302,
@@ -24,15 +24,15 @@
   },
   "out GET /signup": {
     "status": 200,
-    "title": "StudySync – Sign up"
+    "title": "YoraBora – Sign up"
   },
   "out GET /forgot": {
     "status": 200,
-    "title": "StudySync – Forgot password"
+    "title": "YoraBora – Forgot password"
   },
   "out GET /reset-password": {
     "status": 200,
-    "title": "StudySync – New password"
+    "title": "YoraBora – New password"
   },
   "out GET /home": {
     "status": 302,
@@ -71,7 +71,7 @@
   },
   "out GET /nope": {
     "status": 404,
-    "title": "StudySync – Not found"
+    "title": "YoraBora – Not found"
   },
   "out GET /public/style.css": {
     "status": 200,
@@ -87,11 +87,11 @@
   },
   "out GET /public/../server.js": {
     "status": 404,
-    "title": "StudySync – Not found"
+    "title": "YoraBora – Not found"
   },
   "out GET /public/missing.js": {
     "status": 404,
-    "title": "StudySync – Not found"
+    "title": "YoraBora – Not found"
   },
   "out GET /public/manifest.webmanifest": {
     "status": 200,
@@ -107,7 +107,7 @@
   },
   "out GET /offline": {
     "status": 200,
-    "title": "StudySync – Offline"
+    "title": "YoraBora – Offline"
   },
   "returning GET /": {
     "status": 302,
@@ -116,7 +116,7 @@
   },
   "returning GET /?about=1": {
     "status": 200,
-    "title": "StudySync – Study smarter, together"
+    "title": "YoraBora – Study smarter, together"
   },
   "out GET /ai-status": {
     "status": 200,
@@ -152,7 +152,7 @@
   },
   "out GET calendar feed bad code": {
     "status": 404,
-    "title": "StudySync – Not found"
+    "title": "YoraBora – Not found"
   },
   "out GET /api/me": {
     "status": 401,
@@ -195,11 +195,11 @@
   },
   "demo GET /": {
     "status": 200,
-    "title": "StudySync – Study smarter, together"
+    "title": "YoraBora – Study smarter, together"
   },
   "demo GET /login": {
     "status": 200,
-    "title": "StudySync – Log in"
+    "title": "YoraBora – Log in"
   },
   "demo GET /home": {
     "status": 302,
@@ -213,15 +213,15 @@
   },
   "demo GET /setup": {
     "status": 200,
-    "title": "StudySync – Set up your week"
+    "title": "YoraBora – Set up your week"
   },
   "demo GET /landing": {
     "status": 200,
-    "title": "StudySync – Home"
+    "title": "YoraBora – Home"
   },
   "demo GET /dashboard": {
     "status": 200,
-    "title": "StudySync – Dashboard"
+    "title": "YoraBora – Dashboard"
   },
   "demo GET /account": {
     "status": 302,
@@ -230,19 +230,19 @@
   },
   "demo GET /group": {
     "status": 200,
-    "title": "StudySync – Study group"
+    "title": "YoraBora – Study group"
   },
   "demo GET /landing?embed=1": {
     "status": 200,
-    "title": "StudySync – Home"
+    "title": "YoraBora – Home"
   },
   "demo GET /dashboard?embed=1": {
     "status": 200,
-    "title": "StudySync – Dashboard"
+    "title": "YoraBora – Dashboard"
   },
   "demo GET /calendar": {
     "status": 200,
-    "title": "StudySync – Calendar"
+    "title": "YoraBora – Calendar"
   },
   "demo GET /api/me": {
     "status": 200,

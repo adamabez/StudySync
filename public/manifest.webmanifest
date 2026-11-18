@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "StudySync",
-  "short_name": "StudySync",
+  "name": "YoraBora",
+  "short_name": "YoraBora",
   "description": "Study time and study groups, planned around your classes.",
   "start_url": "/home",
   "scope": "/",

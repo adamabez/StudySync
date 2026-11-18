@@ -1,4 +1,4 @@
-// StudySync - quick edits to this week's solo study sessions: the ✎ menu (runs in the browser).
+// YoraBora - quick edits to this week's solo study sessions: the ✎ menu (runs in the browser).
 // Used on the study plan page (landing.js) and the dashboard (dashboard.js).
 //
 // ✎ on a session → Move to another open time, change its length, or skip it this week.

@@ -1,4 +1,4 @@
-// StudySync - service worker: what makes StudySync installable as an app, and shows a
+// YoraBora - service worker: what makes YoraBora installable as an app, and shows a
 // friendly "You're offline" page instead of the browser's error when there's no connection.
 //
 // It deliberately caches nothing else: every page and API request still goes straight to

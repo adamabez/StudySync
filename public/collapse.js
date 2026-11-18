@@ -1,4 +1,4 @@
-// StudySync - collapsible sections (an arrow: points up to collapse, down to expand).
+// YoraBora - collapsible sections (an arrow: points up to collapse, down to expand).
 //
 // To make any new section collapsible, add a button like this to its heading:
 //   <button type="button" class="collapse-toggle" data-target="ID-OF-SECTION-BODY" data-name="My section"></button>

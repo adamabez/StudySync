@@ -1,4 +1,4 @@
-// StudySync - builds supabase/courses.sql: every course in Sac State's public catalog
+// YoraBora - builds supabase/courses.sql: every course in Sac State's public catalog
 // (https://catalog.csus.edu/courses-a-z/), so students pick their classes from a list.
 //
 // Run:  node scripts/import-courses.js
@@ -14,7 +14,7 @@ const path = require("path");
 const BASE = "https://catalog.csus.edu";
 const PAUSE_MS = 300;
 const OUT = path.join(__dirname, "..", "supabase", "courses.sql");
-const HEADERS = { "User-Agent": "StudySync class list import (student project)" };
+const HEADERS = { "User-Agent": "YoraBora class list import (student project)" };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -113,7 +113,7 @@ function compareCourses(a, b) {
 
   const rows = list.map((c) => `(${sql(c.code)}, ${sql(c.subject)}, ${sql(c.number)}, ${sql(c.title.slice(0, 200))}, ${sql(c.units.slice(0, 30))}, ${sql(find(c.code))})`);
 
-  const header = `-- Sac State course catalog for StudySync's class picker: ${list.length} courses.
+  const header = `-- Sac State course catalog for YoraBora's class picker: ${list.length} courses.
 -- Made by scripts/import-courses.js from https://catalog.csus.edu/courses-a-z/ on ${new Date().toISOString().slice(0, 10)}.
 -- Run supabase/schema.sql first (it creates the courses table), then run this file in
 -- Supabase → SQL Editor. Safe to run again: it updates titles and adds new courses.

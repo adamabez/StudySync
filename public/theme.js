@@ -1,4 +1,4 @@
-// StudySync - light / dark mode (runs in the browser, in each page's <head> so there's no
+// YoraBora - light / dark mode (runs in the browser, in each page's <head> so there's no
 // flash of the wrong colors). The choice is made on the account page and saved on this
 // device: "system" (match the device's setting, the default), "light" or "dark".
 // Sets <html data-theme="dark"> for public/dark.css to style.

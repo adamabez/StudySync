@@ -1,4 +1,4 @@
-// StudySync - dashboard calendar (runs in the browser, not on the server).
+// YoraBora - dashboard calendar (runs in the browser, not on the server).
 // Talks to the server's /api/classes routes to load, add, edit and remove classes.
 
 const { formatTime } = window.studyFormat; // public/format.js
@@ -234,9 +234,9 @@ function dateThisWeek(dayKey) {
 function makeStudyCard(s, dayKey = s.days[0]) {
   const card = document.createElement("div");
   card.className = "class-card study-time";
-  card.title = "Planned for you by StudySync";
+  card.title = "Planned for you by YoraBora";
 
-  // Sparkle badge in the corner: this came from StudySync, not the student's own schedule
+  // Sparkle badge in the corner: this came from YoraBora, not the student's own schedule
   const sparkle = document.createElement("span");
   sparkle.className = "study-sparkle";
   sparkle.setAttribute("aria-hidden", "true");
@@ -256,10 +256,10 @@ function makeStudyCard(s, dayKey = s.days[0]) {
     groupState = isOn ? inCount + " in" : inCount + " of " + (s.members || "?") + " in";
   }
 
-  // Screen readers get the "planned by StudySync" part in words
+  // Screen readers get the "planned by YoraBora" part in words
   const hidden = document.createElement("span");
   hidden.className = "visually-hidden";
-  hidden.textContent = "Planned by StudySync: ";
+  hidden.textContent = "Planned by YoraBora: ";
 
   const name = document.createElement("strong");
   name.textContent = s.name;

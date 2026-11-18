@@ -1,4 +1,4 @@
--- StudySync: let people without an account (the demo, the login page) send feedback.
+-- YoraBora: let people without an account (the demo, the login page) send feedback.
 -- Same as the feedback part of schema.sql, on its own so it's quick to run.
 -- Supabase dashboard → SQL Editor → paste this → Run. Safe to run more than once.
 

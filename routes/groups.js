@@ -1,4 +1,4 @@
-// StudySync - API: study groups (lib/groups.js) and meeting up (lib/meetups.js).
+// YoraBora - API: study groups (lib/groups.js) and meeting up (lib/meetups.js).
 // Students are matched automatically; they never pick a group. Only members can see a group.
 
 const groups = require("../lib/groups");

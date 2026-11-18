@@ -1,4 +1,4 @@
--- StudySync database setup for Supabase.
+-- YoraBora database setup for Supabase.
 --
 -- How to run: Supabase dashboard → SQL Editor → New query → paste this whole file → Run.
 -- Safe to run more than once: it skips anything that already exists.
@@ -563,7 +563,7 @@ where course <> '' and course is distinct from public.course_key(null, course);
 
 -- The names of a group's members, for members of that group only. Profiles are private
 -- (each student only reads their own), so this hands out just the name: the one set in
--- StudySync, else the one given at sign-up, else "Classmate". Never the email.
+-- YoraBora, else the one given at sign-up, else "Classmate". Never the email.
 drop function if exists public.group_member_names(uuid);
 create function public.group_member_names(gid uuid)
 returns table (user_id uuid, name text, joined_at timestamptz)
@@ -1039,7 +1039,7 @@ $$;
 revoke all on function public.calendar_feed(uuid) from public;
 grant execute on function public.calendar_feed(uuid) to anon, authenticated;
 
--- StudySync - private notes: notes only you can see, on the Notes page (lib/privatenotes.js).
+-- YoraBora - private notes: notes only you can see, on the Notes page (lib/privatenotes.js).
 -- A private note can belong to one of your groups (group_id) without being shared with it;
 -- sharing it moves it to group_notes, and making a group note private moves it back here.
 -- Only you can see, add or delete yours. Run once in the Supabase SQL Editor (also in schema.sql).

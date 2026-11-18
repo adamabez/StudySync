@@ -1,4 +1,4 @@
-// StudySync - "Share StudySync": a window with a QR code friends can scan to open the site.
+// YoraBora - "Share YoraBora": a window with a QR code friends can scan to open the site.
 // Runs on every page (loaded next to install.js).
 //
 // Any button or link with data-share-app opens it (the account menu, the welcome page).
@@ -14,7 +14,7 @@
   let dialog = null;
   let info = null; // { url, svg } from the server, fetched the first time the window opens
 
-  const SHARE_TEXT = "I'm using StudySync to plan study time and find study groups for my classes. Try it:";
+  const SHARE_TEXT = "I'm using YoraBora to plan study time and find study groups for my classes. Try it:";
 
   function buildDialog() {
     dialog = document.createElement("dialog");
@@ -22,7 +22,7 @@
     dialog.setAttribute("aria-labelledby", "share-title");
     dialog.innerHTML = `
       <button type="button" class="install-close" aria-label="Close">×</button>
-      <h2 id="share-title">Share StudySync</h2>
+      <h2 id="share-title">Share YoraBora</h2>
       <p class="share-lead">Have a friend scan this with their phone camera.</p>
       <div class="share-qr" aria-busy="true"><span class="share-qr-loading">Making the code…</span></div>
       <p class="share-address"></p>
@@ -30,7 +30,7 @@
         <button type="button" class="share-native" hidden>Share…</button>
         <button type="button" class="share-copy">Copy link</button>
       </div>
-      <a class="share-save" download="studysync-qr.svg" hidden>Save QR code</a>
+      <a class="share-save" download="yorabora-qr.svg" hidden>Save QR code</a>
       <p class="share-status" role="status" aria-live="polite"></p>`;
     dialog.querySelector(".install-close").addEventListener("click", () => dialog.close());
     // Click outside the window closes it
@@ -93,7 +93,7 @@
 
   async function shareNative() {
     try {
-      await navigator.share({ title: "StudySync", text: SHARE_TEXT, url: link() });
+      await navigator.share({ title: "YoraBora", text: SHARE_TEXT, url: link() });
       say("Thanks for sharing!");
     } catch (error) {
       if (error && error.name === "AbortError") return; // they closed the share sheet

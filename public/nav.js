@@ -1,4 +1,4 @@
-// StudySync - the header on every logged-in page (runs in the browser).
+// YoraBora - the header on every logged-in page (runs in the browser).
 //
 // Logo (→ the dashboard, where logging in lands) · Dashboard | Study plan | Notes | Calendar tabs ·
 // Share button (a QR code friends can scan, public/share.js) · light/dark switch (theme.js puts it next to the
@@ -35,10 +35,10 @@
 
   // ---------- Build it ----------
   holder.classList.add("app-nav");
-  holder.setAttribute("aria-label", "StudySync");
+  holder.setAttribute("aria-label", "YoraBora");
 
-  const logo = el("a", { href: "/dashboard", class: "logo-link app-logo", "aria-label": "StudySync: go to your dashboard" });
-  logo.append(el("img", { src: "/public/logo.png", alt: "StudySync", class: "logo" }));
+  const logo = el("a", { href: "/dashboard", class: "logo-link app-logo", "aria-label": "YoraBora: go to your dashboard" });
+  logo.append(el("img", { src: "/public/logo.png", alt: "YoraBora", class: "logo" }));
 
   const tabs = el("div", { class: "app-tabs" });
   for (const tab of TABS) {
@@ -70,9 +70,9 @@
   menu.append(card);
   account.append(button, menu);
 
-  // Share StudySync: opens the QR code window (public/share.js). theme.js groups it with the
+  // Share YoraBora: opens the QR code window (public/share.js). theme.js groups it with the
   // light/dark switch and the account circle.
-  const share = el("button", { type: "button", class: "nav-share", id: "nav-share", "data-share-app": "", "aria-label": "Share StudySync with a friend", title: "Share StudySync" });
+  const share = el("button", { type: "button", class: "nav-share", id: "nav-share", "data-share-app": "", "aria-label": "Share YoraBora with a friend", title: "Share YoraBora" });
   share.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg><span class="nav-share-label">Share</span>';
 
   holder.append(logo, tabs, share, account);

@@ -1,7 +1,7 @@
-// StudySync - a classmate's profile card (runs in the browser). Opens when you click a member
+// YoraBora - a classmate's profile card (runs in the browser). Opens when you click a member
 // on the group page. Shows their photo, name, and whatever they chose to share with their study
 // groups: major, year and classes (lib/profiles.js, GET /api/members/<profileId>).
-// Classmates' cards have "Report photo", which goes to the StudySync team.
+// Classmates' cards have "Report photo", which goes to the YoraBora team.
 //
 // window.studyProfile.open(profileId, fallback): fallback is the member from the group list
 // ({ name, photoUrl, isYou }), shown right away while the card loads.
@@ -101,7 +101,7 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "Couldn't send that. Try again.");
         actions.innerHTML = "";
-        status.textContent = "Thanks. The StudySync team will take a look.";
+        status.textContent = "Thanks. The YoraBora team will take a look.";
       } catch (error) {
         status.textContent = error.message;
         send.disabled = false;

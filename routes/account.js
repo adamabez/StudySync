@@ -1,4 +1,4 @@
-// StudySync - API: account settings (lib/auth.js) and who's logged in.
+// YoraBora - API: account settings (lib/auth.js) and who's logged in.
 // Every API route gets ctx = { req, res, url, params, db, userId }: db runs queries as the
 // logged-in student, so they only ever see their own data.
 

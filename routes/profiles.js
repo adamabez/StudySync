@@ -1,4 +1,4 @@
-// StudySync - API: profiles (lib/profiles.js). Your photo, major, year and classes, and what
+// YoraBora - API: profiles (lib/profiles.js). Your photo, major, year and classes, and what
 // you share with your study groups; classmates' cards and photos (only what they chose to share,
 // and only if you share a study group).
 

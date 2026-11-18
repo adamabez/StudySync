@@ -1,4 +1,4 @@
--- Sac State course catalog for StudySync's class picker: 5298 courses.
+-- Sac State course catalog for YoraBora's class picker: 5298 courses.
 -- Made by scripts/import-courses.js from https://catalog.csus.edu/courses-a-z/ on 2026-11-08.
 -- Run supabase/schema.sql first (it creates the courses table), then run this file in
 -- Supabase → SQL Editor. Safe to run again: it updates titles and adds new courses.

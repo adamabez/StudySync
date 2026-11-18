@@ -1,4 +1,4 @@
-// StudySync - one shared group note as a card (runs in the browser). Used by the group page
+// YoraBora - one shared group note as a card (runs in the browser). Used by the group page
 // (group.js) and the Notes page (notes.js). Load after members.js.
 //
 // The card: the author's initials, their name and how long ago, the title and the note (long

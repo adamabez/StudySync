@@ -1,4 +1,4 @@
-// StudySync - study group members in the browser: initials in colored circles, and who joined
+// YoraBora - study group members in the browser: initials in colored circles, and who joined
 // or left since you last opened the group. Used by the study plan's group cards (landing.js)
 // and the group page (group.js). Load before them.
 //

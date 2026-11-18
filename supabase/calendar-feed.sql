@@ -1,4 +1,4 @@
--- StudySync - "Add to my calendar" (routes/calendar.js). Run this once in the Supabase SQL Editor
+-- YoraBora - "Add to my calendar" (routes/calendar.js). Run this once in the Supabase SQL Editor
 -- (it's also at the end of schema.sql). Safe to run again.
 --
 -- Google / Apple / Outlook Calendar fetch the feed on their own, without logging in. Each student

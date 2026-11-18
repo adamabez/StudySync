@@ -1,4 +1,4 @@
--- StudySync demo data: 20 fake students, each with 3-4 Sac State classes.
+-- YoraBora demo data: 20 fake students, each with 3-4 Sac State classes.
 --
 -- How to run: Supabase dashboard → SQL Editor → New query → paste this whole file → Run.
 -- Run supabase/schema.sql and supabase/courses.sql first.

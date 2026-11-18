@@ -1,4 +1,4 @@
-# StudySync - Capitol Hacks 5.0 (Sacramento State)
+# YoraBora - Capitol Hacks 5.0 (Sacramento State)
 
 A study dashboard for students. Plan your week, then study your course materials with an AI notebook that answers from *your* notes, with citations.
 
@@ -10,7 +10,7 @@ Built with plain Node.js (no framework), HTML, CSS and browser JavaScript. AI an
 - Sign up and log in with email and password (Supabase Auth), followed by a short loading screen, then the dashboard.
 
 **Try the demo (no account)**
-- **The welcome page** (`/`, `pages/welcome.html`) is what new visitors see first: what StudySync does, a live demo box they can click around in, and sign-up. Returning students log in at `/login`.
+- **The welcome page** (`/`, `pages/welcome.html`) is what new visitors see first: what YoraBora does, a live demo box they can click around in, and sign-up. Returning students log in at `/login`.
 - **Try the demo** on the welcome page, or any link to **`/demo`** (handy for a QR code), opens the real app with a sample student's week: classes, two study groups with notes, course materials, a saved notebook chat and Canvas homework.
 - Visitors can click around and change things; it's kept in server memory only (per visitor, for 3 hours) and never saved to Supabase. A banner on every page links to sign-up.
 - The notebook gives real AI answers about the sample materials, limited to 8 questions per visitor and 120 an hour overall (`lib/demo.js`). PDF uploads, feedback and linking a real Canvas need an account.
@@ -163,7 +163,7 @@ Each student who wants groups gets one group per class (up to 4 people), meeting
 
 Each group's page aims to get a group from matched to meeting without anyone having to message each other (`lib/meetups.js`):
 - **Next session**: the date, time and place, plus **Going / Running late / Can't make it** for each member.
-- **Find a time that works for everyone**: if someone can't make it, StudySync lists times in the next week when every member is free (their classes, tasks and other groups are checked by `group_free_slots` in the database), and one tap moves that week's session. Everyone answers again for the new time.
+- **Find a time that works for everyone**: if someone can't make it, YoraBora lists times in the next week when every member is free (their classes, tasks and other groups are checked by `group_free_slots` in the database), and one tap moves that week's session. Everyone answers again for the new time.
 - **Talk it over**: a small chat for each week's session, to settle details like the time. It starts fresh every week, so it stays about the next session instead of becoming a group chat. The page checks for new messages every 5 seconds while it's open; messages go through a light word filter, and members need a name on their account to post.
 - **Where we're meeting**: members suggest places and vote, and anyone can make one the meeting spot.
 
@@ -182,7 +182,7 @@ The **Calendar** page (`/calendar`) shows the whole semester a month at a time. 
 - **Setup:** the link needs `supabase/calendar-feed.sql` run in Supabase (it's also at the end of `schema.sql`). Until then, the page says links aren't set up yet.
 
 ## Installing it as an app
-StudySync can be added to a phone's home screen and opens full screen like an app (no app store needed):
+YoraBora can be added to a phone's home screen and opens full screen like an app (no app store needed):
 - **iPhone (Safari):** Share → Add to Home Screen. **Android (Chrome):** menu → Install app (or the prompt Chrome shows).
 - It needs the real site over https (e.g. Render). A phone opening your computer's http://… address won't offer to install.
 - Files: `public/manifest.webmanifest` (name, colors, icons), `public/icon-*.png` and `apple-touch-icon.png`, `public/sw.js` (served at `/sw.js`), `public/install.js`, `pages/offline.html`.

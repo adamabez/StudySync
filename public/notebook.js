@@ -1,4 +1,4 @@
-// StudySync - Course materials + study assistant (runs in the browser).
+// YoraBora - Course materials + study assistant (runs in the browser).
 // Left: the Library, a shelf of material cards for each class (MAX_TOTAL_BYTES in all).
 // Click a card to read it; the check in its corner decides if the assistant uses it.
 // Right: the study assistant, a chat that answers from the materials in use.

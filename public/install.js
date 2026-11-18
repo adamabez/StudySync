@@ -1,4 +1,4 @@
-// StudySync - installing the site as an app (home screen, Dock or Start menu). Runs on every page.
+// YoraBora - installing the site as an app (home screen, Dock or Start menu). Runs on every page.
 //
 // 1. Registers the service worker (public/sw.js, served at /sw.js), which makes the site
 //    installable and shows an offline page.
@@ -15,7 +15,7 @@
 //      - Chrome / Edge on a computer that didn't offer it: where the browser's own button is
 //    On the other kind of device (the phone button on a laptop), it says what to do over
 //    there, with the address to open.
-//    The buttons (and boxes marked data-install-app-box) hide once StudySync is opened as an installed app.
+//    The buttons (and boxes marked data-install-app-box) hide once YoraBora is opened as an installed app.
 
 (function () {
   if ("serviceWorker" in navigator) {
@@ -60,24 +60,24 @@
   const TEXT = {
     phone: {
       title: "Get the early phone app",
-      early: "<strong>Early version.</strong> This puts StudySync on your home screen so it opens like an app. Full apps for the App Store and Google Play are coming.",
+      early: "<strong>Early version.</strong> This puts YoraBora on your home screen so it opens like an app. Full apps for the App Store and Google Play are coming.",
     },
     computer: {
       title: "Get the early computer app",
-      early: "<strong>Early version.</strong> This opens StudySync in its own window, with an icon in your Dock or Start menu. Full Windows and Mac apps are coming.",
+      early: "<strong>Early version.</strong> This opens YoraBora in its own window, with an icon in your Dock or Start menu. Full Windows and Mac apps are coming.",
     },
   };
 
   // On this device, right now
   function installHere() {
     if (deferredPrompt) {
-      return { html: '<button type="button" class="install-go">Install StudySync</button><p class="install-note">Your browser will ask you to confirm.</p>', prompt: true };
+      return { html: '<button type="button" class="install-go">Install YoraBora</button><p class="install-note">Your browser will ask you to confirm.</p>', prompt: true };
     }
     if (isApple()) {
       return { html: `<ol class="install-steps">
           <li>Tap <span class="install-share">${SHARE_ICON} Share</span> in your browser's toolbar.</li>
           <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
-          <li>Tap <strong>Add</strong>. StudySync shows up with your other apps.</li>
+          <li>Tap <strong>Add</strong>. YoraBora shows up with your other apps.</li>
         </ol>
         <p class="install-note">On iPhone and iPad, apps can only be added from the Share menu.</p>` };
     }
@@ -85,14 +85,14 @@
       return { html: `<ol class="install-steps">
           <li>In Safari's menu bar at the top of the screen, click <strong>File</strong>.</li>
           <li>Click <strong>Add to Dock</strong>, then <strong>Add</strong>.</li>
-          <li>StudySync shows up in your Dock and Launchpad.</li>
+          <li>YoraBora shows up in your Dock and Launchpad.</li>
         </ol>
         <p class="install-note">Needs macOS Sonoma or newer. On older Macs, use Chrome or Edge.</p>` };
     }
     if (!isPhone() && isChromeOrEdge()) {
       return { html: `<ol class="install-steps">
           <li>Click the <strong>install icon</strong> at the right end of the address bar (a computer screen with an arrow).</li>
-          <li>No icon? Open the browser menu <strong>⋮</strong> → <strong>Cast, save and share</strong> (Chrome) or <strong>Apps</strong> (Edge) → <strong>Install StudySync</strong>.</li>
+          <li>No icon? Open the browser menu <strong>⋮</strong> → <strong>Cast, save and share</strong> (Chrome) or <strong>Apps</strong> (Edge) → <strong>Install YoraBora</strong>.</li>
         </ol>
         <p class="install-note">It opens in its own window, with an icon in your ${isMac() ? "Dock" : "Start menu"}.</p>` };
     }
@@ -103,7 +103,7 @@
         </ol>
         <p class="install-note">Works best in Chrome or Samsung Internet.</p>` };
     }
-    return { html: '<p class="install-note">This browser can\'t install apps. Open StudySync in <strong>Chrome</strong> or <strong>Edge</strong> ' +
+    return { html: '<p class="install-note">This browser can\'t install apps. Open YoraBora in <strong>Chrome</strong> or <strong>Edge</strong> ' +
       "(Windows, Mac or Android), or <strong>Safari</strong> (iPhone or Mac), and try again.</p>" };
   }
 
@@ -167,7 +167,7 @@
   function showDone() {
     if (!dialog || !dialog.open) return;
     dialog.querySelector(".install-body").innerHTML =
-      '<p class="install-note"><strong>Installed!</strong> Open StudySync from your home screen, Dock or Start menu.</p>';
+      '<p class="install-note"><strong>Installed!</strong> Open YoraBora from your home screen, Dock or Start menu.</p>';
   }
 
   document.addEventListener("click", (event) => {

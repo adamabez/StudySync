@@ -1,4 +1,4 @@
-// StudySync - landing page (runs in the browser).
+// YoraBora - landing page (runs in the browser).
 // Studying alone → free times in your week to set aside for studying.
 // Group → the group they were matched into automatically (or a "you're one of the first" note).
 
@@ -93,7 +93,7 @@ function freeReason(key) {
 function sessionRow(session, plan) {
   const card = document.createElement("div");
   card.className = "study-block";
-  card.title = "Planned for you by StudySync";
+  card.title = "Planned for you by YoraBora";
 
   const main = document.createElement("div");
   main.className = "study-block-main";

@@ -1,4 +1,4 @@
--- StudySync: let students pick how long their study sessions are (short / medium / long).
+-- YoraBora: let students pick how long their study sessions are (short / medium / long).
 -- Same as the line in schema.sql, on its own so it's quick to run.
 -- Supabase dashboard → SQL Editor → paste this → Run. Safe to run more than once.
 

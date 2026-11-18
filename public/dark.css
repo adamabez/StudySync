@@ -1,4 +1,4 @@
-/* StudySync dark mode. MADE BY scripts/build-dark-css.js: don't edit by hand, re-run the script.
+/* YoraBora dark mode. MADE BY scripts/build-dark-css.js: don't edit by hand, re-run the script.
    Active when <html data-theme="dark"> (set by public/theme.js). */
 
 /* ---------- from style.css ---------- */
@@ -2156,7 +2156,7 @@ html[data-theme="dark"] .pw-rules li.ok,
 html[data-theme="dark"] .pw-rules li.ok::before {
   color: #7fd39b;
 }
-/* "Share StudySync" window (public/share.js). The QR code keeps its white background. */
+/* "Share YoraBora" window (public/share.js). The QR code keeps its white background. */
 html[data-theme="dark"] .share-lead {
   color: #b3bad3;
 }

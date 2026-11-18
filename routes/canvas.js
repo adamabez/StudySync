@@ -1,4 +1,4 @@
-// StudySync - API: linking a Canvas account and loading homework (lib/canvas.js).
+// YoraBora - API: linking a Canvas account and loading homework (lib/canvas.js).
 
 const canvas = require("../lib/canvas");
 const { sendJson, readJson } = require("../lib/http");

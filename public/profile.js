@@ -1,4 +1,4 @@
-// StudySync - your profile page (runs in the browser): your name, photo, major, year and classes,
+// YoraBora - your profile page (runs in the browser): your name, photo, major, year and classes,
 // and which of them your study groups see (lib/profiles.js). Account things (email, password,
 // theme, deleting the account) are on the account settings page (public/account.js).
 

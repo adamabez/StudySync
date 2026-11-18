@@ -1,4 +1,4 @@
-// StudySync - the Notes page (runs in the browser): your notes and your study groups' notes,
+// YoraBora - the Notes page (runs in the browser): your notes and your study groups' notes,
 // newest first. Each note belongs to one of your groups and is either shared with the group or
 // private (only you see it). Filter: All · each group · 🔒 Private. Add a note to a group, private
 // or shared, and switch your own notes either way later.

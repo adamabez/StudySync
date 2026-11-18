@@ -1,4 +1,4 @@
-// StudySync - what a new password needs, as a checklist under the box (runs in the browser).
+// YoraBora - what a new password needs, as a checklist under the box (runs in the browser).
 //
 // Matches the password rules set in Supabase (Authentication → Sign In / Providers → Email):
 // at least 6 characters, with a lowercase letter, an uppercase letter, a number and a symbol.
