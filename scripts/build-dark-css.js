@@ -281,7 +281,7 @@ ${PREFIX} .choice-card:has(input:checked) .choice-check {
 ${PREFIX} .choice-solo:has(input:checked) { border-color: #2a9d92; background: #16302d; }
 ${PREFIX} .choice-solo:has(input:checked) .choice-icon { background: #0f766e; color: #fff; }
 ${PREFIX} .choice-solo:has(input:checked) .choice-check { border-color: #2a9d92; background-color: #0f766e; }
-/* Dark-mode logo: navy "Study" turned light, brighter blue (public/logo-dark.png).
+/* Dark-mode logo: white "Bora" instead of navy (public/logo-dark.png).
    theme.js swaps the image too, for browsers that ignore content on images. */
 ${PREFIX} img.logo { content: url("/public/logo-dark.png"); }
 `;

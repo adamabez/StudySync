@@ -6,7 +6,7 @@
 // Served from /sw.js (routes/pages.js) so it covers the whole site. Bump VERSION when
 // pages/offline.html or the files below change, so phones pick up the new copy.
 
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "studysync-offline-" + VERSION;
 const OFFLINE_FILES = ["/offline", "/public/style.css", "/public/dark.css", "/public/theme.js", "/public/logo.png", "/public/logo-dark.png"];
 
