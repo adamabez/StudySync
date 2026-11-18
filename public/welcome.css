@@ -21,7 +21,7 @@ body.welcome {
   padding: 18px 0;
 }
 .wl-brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; line-height: 0; }
-.wl-brand .logo { height: auto; max-height: 36px; width: auto; max-width: 160px; }
+.wl-brand .logo { height: auto; max-height: 48px; width: auto; max-width: 190px; }
 .wl-nav { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
 .wl-login { font-size: 15px; font-weight: 600; text-decoration: none; }
 .wl-login:hover { text-decoration: underline; }
@@ -140,7 +140,7 @@ body.welcome {
 }
 @media (max-width: 600px) {
   .wl-top { padding: 12px 0; }
-  .wl-brand .logo { max-height: 30px; max-width: 120px; }
+  .wl-brand .logo { max-height: 38px; max-width: 150px; }
   .wl-nav { gap: 10px; }
   .wl-hero { padding: 28px 0 24px; }
   .wl-lead { font-size: 16px; }
