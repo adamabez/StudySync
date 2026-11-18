@@ -196,7 +196,7 @@
       const name = document.createElement("strong");
       name.textContent = e.name;
       li.append(time, name);
-      const extra = [e.kind === "study" ? "Study time, planned by YoraBora" : e.kind === "group" ? "Study group" : "", e.once ? "One time" : "", e.note].filter(Boolean).join(" · ");
+      const extra = [e.kind === "study" ? "Study time, planned by Yora" : e.kind === "group" ? "Study group" : "", e.once ? "One time" : "", e.note].filter(Boolean).join(" · ");
       if (extra) {
         const note = document.createElement("span");
         note.className = "cal-day-note";

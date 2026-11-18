@@ -234,7 +234,7 @@ function dateThisWeek(dayKey) {
 function makeStudyCard(s, dayKey = s.days[0]) {
   const card = document.createElement("div");
   card.className = "class-card study-time";
-  card.title = "Planned for you by YoraBora";
+  card.title = "Planned for you by Yora";
 
   // Sparkle badge in the corner: this came from YoraBora, not the student's own schedule
   const sparkle = document.createElement("span");
@@ -259,7 +259,7 @@ function makeStudyCard(s, dayKey = s.days[0]) {
   // Screen readers get the "planned by YoraBora" part in words
   const hidden = document.createElement("span");
   hidden.className = "visually-hidden";
-  hidden.textContent = "Planned by YoraBora: ";
+  hidden.textContent = "Planned by Yora: ";
 
   const name = document.createElement("strong");
   name.textContent = s.name;

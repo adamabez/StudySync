@@ -93,7 +93,7 @@ function freeReason(key) {
 function sessionRow(session, plan) {
   const card = document.createElement("div");
   card.className = "study-block";
-  card.title = "Planned for you by YoraBora";
+  card.title = "Planned for you by Yora";
 
   const main = document.createElement("div");
   main.className = "study-block-main";
@@ -526,8 +526,8 @@ function updateViews() {
   $("length-picker").hidden = preference === "group";
   $("length-hint").hidden = preference === "group";
   $("pref-result-text").textContent = preference === "group"
-    ? "Group: we match you with classmates in each class and schedule a weekly session when everyone's free."
-    : "Solo: we set aside study sessions in your free time to reach your weekly goal.";
+    ? "Group: Yora matches you with classmates in each class and schedules a weekly session when everyone's free."
+    : "Solo: Yora sets aside study sessions in your free time to reach your weekly goal.";
   const radio = document.querySelector('input[name="preference"][value="' + preference + '"]');
   if (radio) radio.checked = true;
 }
